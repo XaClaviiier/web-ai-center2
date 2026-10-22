@@ -647,12 +647,16 @@ describe('CORS', () => {
     const res = await app.handle(
       new Request('http://localhost/api/berita', {
         method: 'OPTIONS',
-        headers: { Origin: 'http://localhost:5173' },
+        headers: {
+          Origin: 'http://localhost:5173',
+          'Access-Control-Request-Method': 'GET',
+          'Access-Control-Request-Headers': 'content-type,authorization',
+        },
       }),
     );
     expect(res.status).toBe(204);
-    expect(res.headers.get('Access-Control-Allow-Methods')).toBe('GET,POST,PUT,DELETE,OPTIONS');
-    expect(res.headers.get('Access-Control-Allow-Headers')).toBe('content-type,authorization');
+    expect(res.headers.get('Access-Control-Allow-Methods')).toBe('GET, POST, PUT, DELETE, OPTIONS');
+    expect(res.headers.get('Access-Control-Allow-Headers')).toBe('content-type, authorization');
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173');
   });
 });

@@ -1,8 +1,9 @@
 /**
- * Perakitan aplikasi: CORS (whitelist origin), penanganan error eksplisit,
- * lalu daftarkan semua route. DB disuntikkan lewat `Repositories`.
+ * Perakitan aplikasi: CORS (@elysia/cors, whitelist origin), penanganan error
+ * eksplisit, lalu daftarkan semua route. DB disuntikkan lewat `Repositories`.
  */
 import { Elysia } from 'elysia';
+import { cors } from '@elysia/cors';
 import { registerRoutes, type AnyElysia } from './routes';
 import type { Repositories } from './repositories/types';
 
@@ -15,17 +16,16 @@ export interface AppDeps {
 }
 
 export function createApp({ repos, corsOrigins, adminPassword }: AppDeps): AnyElysia {
-  const allowedOrigins = new Set(corsOrigins);
-
   const app = new Elysia()
-    // CORS sederhana: echo origin hanya bila ada di whitelist.
-    .onRequest(({ request, set }) => {
-      const origin = request.headers.get('Origin');
-      if (origin !== null && allowedOrigins.has(origin)) {
-        set.headers['Access-Control-Allow-Origin'] = origin;
-        set.headers['Vary'] = 'Origin';
-      }
-    })
+    .use(
+      cors({
+        origin: corsOrigins,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['content-type', 'authorization'],
+        maxAge: 86400,
+        preflight: true,
+      })
+    )
     .onError(({ code, error, set }) => {
       if (code === 'NOT_FOUND') {
         set.status = 404;
@@ -41,19 +41,6 @@ export function createApp({ repos, corsOrigins, adminPassword }: AppDeps): AnyEl
       console.error('[api] error tidak tertangani:', error);
       set.status = 500;
       return { error: 'Internal Server Error' };
-    })
-    // Preflight CORS.
-    .options('/*', ({ request, set }) => {
-      const origin = request.headers.get('Origin');
-      set.status = 204;
-      set.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS';
-      set.headers['Access-Control-Allow-Headers'] = 'content-type,authorization';
-      set.headers['Access-Control-Max-Age'] = '86400';
-      if (origin !== null && allowedOrigins.has(origin)) {
-        set.headers['Access-Control-Allow-Origin'] = origin;
-        set.headers['Vary'] = 'Origin';
-      }
-      return null;
     });
 
   return registerRoutes(app, repos, adminPassword);
