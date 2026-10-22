@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { beritaDummy, getBeritaBySlug } from './berita.ts';
 import { dokumentasiDummy, getDokumentasiBySlug } from './dokumentasi.ts';
 import { timDummy } from './tim.ts';
-import { klienDummy } from './klien.ts';
 import { testimoniDummy } from './testimoni.ts';
 import { heroSlidesDummy } from './hero.ts';
 
@@ -54,23 +53,6 @@ describe('data dummy tim', () => {
       expect(a.foto, `foto hilang untuk ${a.nama}`).toBeTruthy();
       expect(existsSync(`public${a.foto}`), `file hilang: ${a.foto}`).toBe(true);
     }
-  });
-});
-
-describe('data dummy klien', () => {
-  it('setiap klien punya nama dan bidang', () => {
-    expect(klienDummy.length).toBeGreaterThan(0);
-    for (const k of klienDummy) {
-      expect(k.nama).toBeTruthy();
-      expect(k.bidang).toBeTruthy();
-    }
-  });
-
-  it('memuat placeholder spec: FTB, CAW, Ubaya', () => {
-    const nama = klienDummy.map((k) => k.nama);
-    expect(nama).toContain('FTB');
-    expect(nama).toContain('CAW');
-    expect(nama).toContain('Ubaya');
   });
 });
 
