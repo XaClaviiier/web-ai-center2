@@ -9,7 +9,6 @@ import { describe, expect, test } from 'bun:test';
 import { beritaDummy } from '../../../src/data/berita';
 import { dokumentasiDummy } from '../../../src/data/dokumentasi';
 import { heroSlidesDummy } from '../../../src/data/hero';
-import { klienDummy } from '../../../src/data/klien';
 import { layananDummy } from '../../../src/data/layanan';
 import { kursusDummy } from '../../../src/data/pelatihan';
 import { profilDummy } from '../../../src/data/profil';
@@ -21,7 +20,6 @@ import {
   SEED_DOKUMENTASI,
   SEED_HERO,
   SEED_INFERENCE,
-  SEED_KLIEN,
   SEED_KURSUS,
   SEED_LAYANAN,
   SEED_PROFIL,
@@ -70,7 +68,6 @@ describe('sinkronisasi seed ↔ data frontend', () => {
       ...cariSelisih('tim', timDummy as unknown as Baris[], SEED_TIM as unknown as Baris[], 'nama'),
       ...cariSelisih('layanan', layananDummy as unknown as Baris[], SEED_LAYANAN as unknown as Baris[], 'slug'),
       ...cariSelisih('hero', heroSlidesDummy as unknown as Baris[], SEED_HERO as unknown as Baris[], 'eyebrow'),
-      ...cariSelisih('klien', klienDummy as unknown as Baris[], SEED_KLIEN as unknown as Baris[], 'nama'),
       ...cariSelisih('testimoni', testimoniDummy as unknown as Baris[], SEED_TESTIMONI as unknown as Baris[], 'nama'),
       ...cariSelisih('kursus', kursusDummy as unknown as Baris[], SEED_KURSUS as unknown as Baris[], 'kode'),
     ];
