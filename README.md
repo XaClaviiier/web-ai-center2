@@ -58,85 +58,109 @@ jalan penuh dengan data dummy.
 
 ## Deployment (produksi)
 
-Ringkas: **frontend = file statis `dist/`**, **backend = proses Bun + PostgreSQL**.
-Keduanya boleh beda domain — `src/lib/gambar.ts` otomatis menempelkan path
-`/uploads/…` ke origin backend, jadi gambar unggahan tetap termuat.
+Arsitektur target:
 
-### Backend
+- frontend: container Nginx, hanya menyajikan `dist/`;
+- backend: container Bun, hanya dapat diakses jaringan internal;
+- reverse proxy: `https://ai-center.example.com/`;
+- frontend admin: `https://ai-center.example.com/admin`;
+- API: `https://ai-center.example.com/api/*`;
+- PostgreSQL dan RustFS: layanan eksternal atau jaringan Docker yang sama.
 
-1. Isi `server/.env` (salin `server/.env.example`) — semua wajib di produksi:
-   `DATABASE_URL` (PostgreSQL asli), `CORS_ORIGIN` (origin frontend produksi,
-   pisah koma), `ADMIN_PASSWORD` (**jangan** sampai fallback `admin-dev`),
-   `PORT`, `UPLOAD_DIR` (folder persistent di luar repo, writable).
-2. ```bash
-   cd server
-   bun install            # lockfile: server/bun.lock
-   bun run db:migrate     # migrasi SQL ke DB produksi
-   bun run db:seed        # sekali saja — konten awal (idempoten)
-   bun run start          # tanpa watch; jalankan di balik systemd/PM2/nginx
-   ```
-3. Verifikasi: `GET <api>/api/health` → `{"status":"ok","db":"ok"}`, lalu uji
-   login `POST /api/admin/login`.
-4. Backup: folder `UPLOAD_DIR` + database secara terpisah. Token admin berlaku
-   6 jam (di memori proses); login di-rate-limit 5 gagal / 10 menit per IP.
+### Environment backend
 
-### Frontend
+Salin `server/.env.example` ke `server/.env`, lalu isi nilai produksi:
 
-1. Isi `.env` root **sebelum build** (nilainya di-bake ke `dist/`):
-   `VITE_API_BASE_URL=https://<api-domain>/api` — kosongkan bila ingin situs
-   berjalan murni dengan data dummy.
-2. ```bash
-   npm install
-   npm test && npx tsc -b --noEmit   # gerbang wajib lulus dulu
-   npm run build                     # hasil ke dist/
-   ```
-3. Salin isi `dist/` ke web server statis. **Path dasar** saat ini
-   `/coding/Web-AI-Center/` (konstanta `BASE` di `vite.config.ts`) — bila deploy
-   di root/subfolder lain, ubah `BASE` **dan** path preload hero di `index.html`
-   (`l.href` + `imagesrcset`), lalu build ulang. Untuk rute SPA di Nginx: tambah
-   fallback `try_files $uri /coding/Web-AI-Center/index.html`.
-4. Setelah domain fix: isi `VITE_SITE_URL`, daftarkan sitemap di
-   `public/robots.txt`, ukur ulang Lighthouse terhadap build hasil deploy.
+- `DATABASE_URL`;
+- `CORS_ORIGIN=https://ai-center.example.com`;
+- `ADMIN_PASSWORD`;
+- `RUSTFS_ENDPOINT`, `RUSTFS_ACCESS_KEY`, `RUSTFS_SECRET_KEY`, `RUSTFS_BUCKET`.
 
-Catatan: CORS backend **hanya** menerima origin terdaftar di `CORS_ORIGIN` — lupa
-mengisi membuat fetch frontend ditolak (halaman tetap tampil, tapi dengan data
-dummy, jadi gampang tidak ketahuan; cek tab Network saat verifikasi).
+Signing region SDK ditetapkan internal `us-east-1`.
+Jangan salin backend `.env` ke frontend atau image frontend.
 
-### Checklist sebelum final
+### Build dan jalankan container
 
-- [ ] Gerbang: `npm test` → `npx tsc -b --noEmit` → `npm run build`; di `server/`:
-      `bun run typecheck` + `bun test`
-- [ ] Lighthouse terhadap build produksi (`npm run preview`) — semua skor ≥ 90
-- [ ] Backend sehat: `GET :3000/api/health` → `{"status":"ok","db":"ok"}`
-- [ ] Demo: `http://localhost:5173/coding/Web-AI-Center/beranda` + login `/admin`
-      memakai `ADMIN_PASSWORD` dari `server/.env`
-- [ ] Repo bersih: `git status -sb` tidak ada perubahan menggantung
+File deployment:
+
+- `deploy/frontend.Dockerfile`;
+- `deploy/backend.Dockerfile`;
+- `deploy/frontend.nginx.conf`;
+- `deploy/nginx.conf`;
+- `docker-compose.production.yml`.
+
+Compose hanya mempublikasikan port reverse proxy `80`. Port backend hanya `expose`
+di jaringan Compose.
+
+```bash
+docker compose -f docker-compose.production.yml config
+docker compose -f docker-compose.production.yml up -d --build
+```
+
+Compose belum menyediakan PostgreSQL, RustFS, atau TLS certificate. Pastikan
+`DATABASE_URL` dan `RUSTFS_ENDPOINT` dapat dijangkau dari container backend.
+Pasang terminasi TLS di depan proxy, lalu arahkan HTTPS ke port proxy.
+
+Setelah database baru siap, jalankan migrasi dari container backend:
+
+```bash
+docker compose -f docker-compose.production.yml exec backend bun run db:migrate
+```
+
+`db:seed` menghapus dan mengisi ulang tabel. Perintah ini hanya untuk setup awal
+atau reset development, dan sekarang wajib memakai `SEED_CONFIRM=RESET`.
+Jangan jalankan seed pada database produksi berisi konten admin.
+
+### Frontend dan reverse proxy
+
+Tanpa `VITE_API_BASE_URL`, frontend memakai `/api`. Override tetap tersedia untuk
+development atau backend beda origin:
+
+```bash
+VITE_API_BASE_URL=http://localhost:3000/api
+```
+
+Vite memakai `base: '/'`. Nginx meneruskan `/api/*` dan `/uploads/*` ke backend,
+serta meneruskan rute lain ke frontend. Backend menerima prefix `/api` apa adanya;
+proxy tidak menambah prefix kedua.
+
+SPA fallback mendukung akses langsung ke `/`, `/admin`, dan semua rute React.
+Upload gambar tersimpan di RustFS dan dibaca melalui `/uploads/<nama>`.
+
+### Checklist smoke test
+
+- [ ] `GET https://ai-center.example.com/api/health` mengembalikan status `200`.
+- [ ] `https://ai-center.example.com/` tampil.
+- [ ] `https://ai-center.example.com/admin` tampil saat dibuka langsung.
+- [ ] Login admin berhasil dengan `ADMIN_PASSWORD`.
+- [ ] CRUD dokumentasi, berita, kursus, tim, dan testimoni berhasil.
+- [ ] Upload gambar tampil dari URL `/uploads/...`.
 
 ## Backend `server/` (baru)
 
-API **baca publik + tulis admin** — Bun + Elysia + Drizzle ORM + PostgreSQL. Dev
-lokal tidak butuh
-instalasi Postgres: kosongkan `DATABASE_URL` → otomatis memakai **PGlite**
-(Postgres in-process, data di `server/.pglite/`, di-gitignore). Isi `.env` dari
-`server/.env.example` untuk koneksi PostgreSQL asli (nilai dummy saja di sana).
+API **baca publik + tulis admin** — Bun + Elysia + Drizzle ORM + PostgreSQL.
+Dev lokal tidak butuh instalasi Postgres: kosongkan `DATABASE_URL` → otomatis
+memakai **PGlite** (Postgres in-process, data di `server/.pglite/`,
+di-gitignore). Upload gambar memakai AWS SDK S3 v3 ke RustFS.
+Isi `.env` dari `server/.env.example` untuk koneksi PostgreSQL dan RustFS
+(nilai dummy saja di sana).
 
 ```bash
 cd server
 bun install
 bun run db:migrate      # jalankan migrasi SQL (drizzle/)
-bun run db:seed         # isi data dummy (idempoten)
+SEED_CONFIRM=RESET bun run db:seed  # reset CMS; destruktif
 bun run dev             # http://localhost:3000/api/health (watch)
 bun test                # unit test backend (bun:test)
 bun run typecheck       # tsc --noEmit
 bun run db:generate     # generate migrasi — hanya setelah ubah schema.ts
 ```
 
-Cakupan test backend: 14 dari 15 unit logika punya `*.test.ts` di sebelah file
-yang diuji. Pengecualian sadar: `server/src/repositories/drizzle.ts` (lapisan SQL)
-— mengujinya butuh database, sementara aturan kerja melarang test integration;
-lapisan ini diverifikasi lewat E2E manual tiap putaran (curl + browser), sedangkan
-kontrak di atasnya diuji dengan fake repository (`app.test.ts`) plus
-`schema`/`mappers`/`seed` yang punya test sendiri.
+Seed hanya mengisi lima konten CMS. Tabel konten static legacy dipertahankan,
+tetapi tidak diisi ulang dan tidak memiliki route API.
+
+Unit test route memakai fake repository. Query Drizzle diverifikasi lewat
+typecheck dan smoke test database terpisah.
 
 ### Endpoint
 
@@ -148,25 +172,18 @@ kontrak di atasnya diuji dengan fake repository (`app.test.ts`) plus
 | `GET /api/dokumentasi` | `q`, `kategori`, `page`, `limit`, `order` | `{ items }` |
 | `GET /api/dokumentasi/:slug` | — | 404 `{ error }` |
 | `GET /api/tim` | `q`, `page`, `limit` | `{ items }` |
-| `GET /api/layanan` · `/:slug` | — | `{ items }` / 404 — tak dipakai FE (konten statis `src/data/layanan.ts`) |
 | `GET /api/kursus` · `/api/kursus/:kode` | `q`, `page`, `limit` | `{ items }` / 404; kode case-insensitive (`r01`) |
-| `GET /api/progress` | `pesertaId` (wajib), `kode` | **publik tanpa akun** — `{ items }` progres milik 1 peserta; `pesertaId` (8–64 `[A-Za-z0-9-]`) / `kode` tidak sah → 400 |
-| `POST /api/progress` | body `{ pesertaId, kode, state }` | **publik tanpa akun** — UPSERT per (peserta, kode); `state` objek JSON ≤ 32 KB; rate-limit 60 tulis/menit/IP → 429 + `Retry-After` |
-| `GET /api/hero-slides` · `/api/klien` · `/api/testimoni` | — | `{ items }` (hero-slides tak dipakai FE — statis `src/data/hero.ts`) |
-| `GET /api/profil` | — | tak dipakai FE (visi/misi statis `src/data/profil.ts`); 404 bila belum di-seed |
-| `GET /api/inference` | — | tak dipakai FE (statis `src/data/inference.ts`); 404 bila belum di-seed |
+| `GET /api/progress` | `pesertaId` (wajib), `kode` | **publik tanpa akun** — `{ items }` progres milik 1 peserta |
+| `POST /api/progress` | body `{ pesertaId, kode, state }` | **publik tanpa akun** — UPSERT per (peserta, kode); rate-limit 60 tulis/menit/IP |
+| `GET /api/testimoni` | — | `{ items }` |
 | `POST /api/admin/login` | body `{ password }` | rate-limit 5 gagal / 10 menit per IP → 429; balikan `{ token }` |
-| `POST` · `PUT` · `DELETE /api/dokumentasi[/:slug]` | — | butuh `Authorization: Bearer <token>`; 400/404/409 eksplisit |
-| `POST` · `PUT` · `DELETE /api/berita[/:slug]` | — | idem; slug dibuat server dari judul |
-| `POST` · `PUT` · `DELETE /api/kursus[/:kode]` | — | idem; `kode` jadi kunci unik; tiap item `modul` boleh bawa `video` (URL http(s) ≤ 300) & `quiz` (≤ 10 soal × 2–6 opsi, `kunci` = index opsi) |
-| `POST` · `PUT` · `DELETE /api/layanan[/:slug]` | — | idem; slug dibuat server dari nama; `fitur` 1–15 item — tak dipakai FE (tab Layanan dihapus) |
-| `PUT /api/profil` | — | profil baris tunggal (id = 1); kolom `statistik` dipertahankan — tak dipakai FE (tab Profil dihapus) |
-| `PUT /api/inference` | — | konten halaman inference (id = 1); wajib ≥1 item tiap daftar — tak dipakai FE (tab Inference dihapus) |
-| `POST` · `PUT` · `DELETE /api/tim[/:id]` | — | kunci `id` numerik; **POST**: `urutan` diabaikan → semua baris lama digeser +1 lalu item baru disimpan `urutan: 0` (selalu paling atas; tak ada yang dihapus); PUT tetap menerima `urutan` manual |
-| `POST` · `PUT` · `DELETE /api/testimoni[/:id]` | — | idem (tab Testimoni di `/admin`); `kutipan` ≤ 1000; **POST** idem: testimoni baru selalu jadi #1 (`urutan: 0`), yang lama turun |
-| `POST` · `PUT` · `DELETE /api/hero-slides[/:id]` | — | idem; `layout` hanya `default`/`image-left`/`teks-kanan` — tak dipakai FE (tab Hero dihapus) |
+| `POST` · `PUT` · `DELETE /api/dokumentasi[/:slug]` | — | Bearer token; 400/404/409 eksplisit |
+| `POST` · `PUT` · `DELETE /api/berita[/:slug]` | — | Bearer token; slug dibuat server dari judul |
+| `POST` · `PUT` · `DELETE /api/kursus[/:kode]` | — | Bearer token; `kode` unik |
+| `POST` · `PUT` · `DELETE /api/tim[/:id]` | — | Bearer token; POST menyimpan urutan 0 dalam transaksi |
+| `POST` · `PUT` · `DELETE /api/testimoni[/:id]` | — | Bearer token; POST menyimpan urutan 0 dalam transaksi |
 | `POST /api/admin/upload` | multipart `gambar` | file ≤ 2 MB (jpg/png/webp) → `{ url }` `/uploads/<nama>` |
-| `POST /api/admin/uploads/bersihkan` | `{ kering? }` | hapus file unggahan yang tidak dirujuk kolom manapun (gambar tidak terpakai); `kering: true` = mode uji |
+| `POST /api/admin/uploads/bersihkan` | `{ kering? }` | hapus file unggahan tidak terpakai; `kering: true` = mode uji |
 
 Semua field teks punya batas panjang di `server/src/lib/tulis.ts` (Prioritas 2) —
 body yang lewat batas ditolak 400 dengan pesan menyebut field + batasnya.
@@ -175,9 +192,10 @@ CORS: whitelist origin lewat `CORS_ORIGIN` (default `http://localhost:5173`).
 
 ### Status integrasi frontend
 
-Terintegrasi lewat `src/lib/useApiData.ts` (`useApiDaftar`/`useApiObjek`) —
-setiap halaman selalu punya fallback data di `src/data/` bila `VITE_API_BASE_URL`
-kosong, backend mati, respons gagal, atau saat unit test:
+Terintegrasi lewat `src/lib/useApiData.ts` (`useApiDaftar`/`useApiObjek`).
+Frontend memakai `/api` pada same-origin production; `VITE_API_BASE_URL` dapat
+dioverride. Fallback dipakai saat backend mati, override kosong, respons gagal,
+atau unit test:
 
 - Beranda: testimoni (tepat 3 teratas), highlight berita & dokumentasi
 - `/berita` + `/berita/:slug`, `/dokumentasi` + `/:slug`, `/tim`
@@ -199,20 +217,14 @@ Kontak footer/WA **sengaja statis** dari situs lama (nomor + pesan persis link
 
 Masih `TODO_BACKEND` (sadar — menunggu keputusan, bukan lupa):
 
-- konten video & kuis per modul — sistemnya sudah ada (field `modul.video` +
-  `modul.quiz` via tab Kursus, embed + kuis di ruang belajar; isi lewat
-  template `docs/data-kursus.md`); progres LMS **kini sudah terekam di
-  backend** tanpa akun (`/api/progress`, identitas = `pesertaId` per-browser) —
-  akun peserta baru dibutuhkan bila ingin sinkron **lintas perangkat**
-- section Our Client — endpoint `/api/klien` sudah siap, section dikomentari (rapat)
+- konten video & kuis per modul — sistemnya sudah ada (`modul.video` +
+  `modul.quiz`); isi lewat template `docs/data-kursus.md`;
+- akun peserta lintas perangkat belum ada; progres saat ini memakai identitas
+  browser `pesertaId`.
 
 CRUD admin kini **5 tab**: **dokumentasi**, **berita**, **kursus**, **tim** &
-**testimoni** — plus batas panjang semua field teks dan pembersih file gambar
-tidak terpakai (`POST /api/admin/uploads/bersihkan` + tombol "Bersihkan gambar
-tidak terpakai" di dashboard). Tab **Layanan/Profil/Inference/Hero dihapus**
-(Okt 2026): halaman publiknya tetap ada, tapi kontennya jadi **statis frontend**
-(`src/data/{hero,layanan,profil,inference}.ts`); endpoint lama di server
-dibiarkan utuh agar tidak merusak apa pun, hanya tidak dipakai lagi.
+**testimoni**. Hanya lima jenis konten itu yang masuk CMS. Konten hero, layanan,
+profil, inference, kontak, footer, dan klien tetap statis di frontend.
 
 Duanya khusus form **Tim** & **Testimoni**: saat **Tambah baru** field urutan
 **tidak ditampilkan** — item baru otomatis paling atas (server menggeser semua
@@ -262,7 +274,7 @@ gambar lama), dan slide tidak boleh dikosongkan (hero beranda jadi kosong).
 10. Audit backend terhadap 10 aturan kerja (`docs/prompt-persiapan-opencode.md`) — semua
     terpenuhi kecuali dua keputusan sadar yang dicatat di README ini: file test
     ikut repo, dan `drizzle.ts` tanpa unit test. Lalu putaran persiapan final:
-    `UPLOAD_DIR` didokumentasikan di `server/.env.example`, penanda
+    `RUSTFS_*` didokumentasikan di `server/.env.example`, penanda
     `TODO_BACKEND` di `robots.txt` diganti catatan deploy (penanda hanya untuk
     bagian yang butuh backend), `VITE_SITE_URL` dijelaskan fungsinya, serta
     section **Deployment (produksi)** + checklist sebelum final di README.

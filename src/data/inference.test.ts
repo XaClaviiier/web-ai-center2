@@ -45,7 +45,7 @@ describe('data inference (disusun dari pemahaman layanan — situs lama tidak pu
   });
 });
 
-describe('kontenInferenceDummy (kontrak GET /api/inference — fallback halaman)', () => {
+describe('kontenInferenceDummy (konten statis halaman)', () => {
   it('menggabungkan konstanta panel/alur/kebutuhan/contoh jadi satu objek', () => {
     expect(kontenInferenceDummy).toEqual({
       judulApaItu: apaItuInference.judul,

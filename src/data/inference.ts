@@ -83,9 +83,8 @@ export const contohInference = portofolioDummy.map((k) => ({
 }));
 
 /**
- * Konten halaman inference dalam satu objek — kontrak GET /api/inference
- * (server: interface KontenInference di src/api/types.ts). Field-nya adalah
- * gabungan konstanta di atas supaya fallback satu sumber dengan data CMS.
+ * Konten halaman inference statis frontend.
+ * `LayananDetail` memakai data ini langsung; backend tidak mengelolanya.
  */
 export interface KontenInference {
   /** Panel "Apa itu Inference Solution?" */
@@ -100,7 +99,7 @@ export interface KontenInference {
   contoh: Array<{ slug: string; judul: string }>;
 }
 
-/** Fallback konten inference — identik dengan SEED_INFERENCE di backend. */
+/** Konten inference frontend — bukan fallback API. */
 export const kontenInferenceDummy: KontenInference = {
   judulApaItu: apaItuInference.judul,
   deskripsiApaItu: apaItuInference.deskripsi,

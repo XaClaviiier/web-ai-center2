@@ -150,10 +150,9 @@ export interface ContohPenerapan {
 }
 
 /**
- * Konten halaman Inference Solution — baris tunggal (id = 1).
- * Panel "Apa itu", tanda kebutuhan, alur kerja, dan contoh penerapan
- * sebelumnya statis di src/data/inference.ts (TODO_BACKEND); kini dikelola CMS
- * lewat GET/PUT /api/inference.
+ * Legacy table retained for old data compatibility.
+ * Static inference content now lives in `src/data/inference.ts`;
+ * no route or seed writes this table.
  */
 export const inference = pgTable('inference', {
   id: integer('id').primaryKey(),

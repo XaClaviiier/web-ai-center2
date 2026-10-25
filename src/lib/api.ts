@@ -1,8 +1,7 @@
 /**
  * Lapisan akses API backend — SEMUA fetch ke backend melewati file ini.
- *
- * Konfigurasi: `VITE_API_BASE_URL` di `.env` (lihat `.env.example`), berisi
- * root API termasuk prefix `/api`, mis. `http://localhost:3000/api`.
+ * Konfigurasi: `VITE_API_BASE_URL` di `.env` (lihat `.env.example`) dapat
+ * mengganti root API. Tanpa override, same-origin production memakai `/api`.
  * Path yang diterima fungsi di bawah adalah bagian SETELAH prefix itu
  * (mis. `/berita`, `/kursus/R01`) — sama dengan route di server/src/routes.ts
  * tanpa prefix `/api`.
@@ -14,7 +13,9 @@
  * Lighthouse menghukum setiap console.error).
  */
 
-/** Root API dari env; `''` = integrasi belum dikonfigurasi (pakai data dummy). */
+export const DEFAULT_API_BASE_URL = '/api';
+
+/** Root API dari env; nilai kosong sengaja mematikan integrasi backend. */
 export const BASE_URL_API = resolveBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 /** Catat pemakaian fallback — DEV saja (console.warn, bukan error). */
@@ -26,7 +27,7 @@ function laporkanFallback(path: string, error: unknown): void {
 
 /** Normalisasi base URL: trim + buang slash berlebih di akhir. */
 export function resolveBaseUrl(raw: string | undefined): string {
-  if (raw === undefined) return '';
+  if (raw === undefined) return DEFAULT_API_BASE_URL;
   return raw.trim().replace(/\/+$/, '');
 }
 

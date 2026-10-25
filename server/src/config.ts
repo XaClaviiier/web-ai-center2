@@ -5,8 +5,9 @@
  */
 
 export const DEFAULT_PORT = 3000;
-// Origin frontend lokal yang diizinkan: dev (5173), `vite preview` (4173),
-// dan XAMPP tanpa port (http://localhost/coding/…). Produksi diset via env CORS_ORIGIN.
+
+export const DEFAULT_RUSTFS_ENDPOINT = 'http://localhost:9000';
+export const DEFAULT_RUSTFS_BUCKET = 'ai-center-images';
 export const DEFAULT_CORS_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:4173',
@@ -30,6 +31,14 @@ export interface ServerConfig {
   corsOrigins: string[];
   /** Password admin login sederhana (konsul PROGRESS 2). */
   adminPassword: string;
+
+  /** Endpoint S3-compatible RustFS. */
+  rustfsEndpoint: string;
+  /** Kredensial RustFS; wajib saat server runtime dibuat. */
+  rustfsAccessKey: string | null;
+  rustfsSecretKey: string | null;
+  /** Bucket object gambar. */
+  rustfsBucket: string;
 }
 
 type RawEnv = Record<string, string | undefined>;
@@ -80,5 +89,9 @@ export function resolveConfig(env: RawEnv): ServerConfig {
     databaseUrl: parseDatabaseUrl(env.DATABASE_URL),
     corsOrigins: parseCorsOrigins(env.CORS_ORIGIN),
     adminPassword: parseAdminPassword(env.ADMIN_PASSWORD),
+    rustfsEndpoint: env.RUSTFS_ENDPOINT?.trim() || DEFAULT_RUSTFS_ENDPOINT,
+    rustfsAccessKey: env.RUSTFS_ACCESS_KEY?.trim() || null,
+    rustfsSecretKey: env.RUSTFS_SECRET_KEY?.trim() || null,
+    rustfsBucket: env.RUSTFS_BUCKET?.trim() || DEFAULT_RUSTFS_BUCKET,
   };
 }

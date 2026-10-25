@@ -1,5 +1,3 @@
-# Catatan deploy: saat domain produksi sudah fix, daftarkan URL Sitemap di sini
-# (opsional: aturan Disallow untuk rute admin). Sub-folder /coding/Web-AI-Center/
-# sudah aman di-crawl apa adanya.
+# Aturan crawl berlaku pada root domain produksi.
 User-agent: *
 Allow: /

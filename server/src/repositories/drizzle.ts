@@ -193,21 +193,21 @@ export function createRepositories(db: Db): Repositories {
       const rows = await applyPagination(base, pagination);
       return rows.map(toAnggotaTim);
     },
-    async naikkanSemuaUrutan() {
-      await db.update(tim).set({ urutan: sql`${tim.urutan} + 1` });
-    },
-    async create(data) {
-      const rows = await db
-        .insert(tim)
-        .values({
-          nama: data.nama,
-          peran: data.peran,
-          kredensial: data.kredensial,
-          foto: data.foto,
-          urutan: data.urutan,
-        })
-        .returning();
-      return toAnggotaTim(rows[0]);
+    async createAtas(data) {
+      return db.transaction(async (tx) => {
+        await tx.update(tim).set({ urutan: sql`${tim.urutan} + 1` });
+        const rows = await tx
+          .insert(tim)
+          .values({
+            nama: data.nama,
+            peran: data.peran,
+            kredensial: data.kredensial,
+            foto: data.foto,
+            urutan: data.urutan,
+          })
+          .returning();
+        return toAnggotaTim(rows[0]);
+      });
     },
     async update(id, data) {
       const rows = await db
@@ -343,15 +343,15 @@ export function createRepositories(db: Db): Repositories {
         .orderBy(asc(testimoni.urutan), asc(testimoni.id));
       return rows.map(toTestimoni);
     },
-    async naikkanSemuaUrutan() {
-      await db.update(testimoni).set({ urutan: sql`${testimoni.urutan} + 1` });
-    },
-    async create(data) {
-      const rows = await db
-        .insert(testimoni)
-        .values({ nama: data.nama, peran: data.peran, kutipan: data.kutipan, urutan: data.urutan })
-        .returning();
-      return toTestimoni(rows[0]);
+    async createAtas(data) {
+      return db.transaction(async (tx) => {
+        await tx.update(testimoni).set({ urutan: sql`${testimoni.urutan} + 1` });
+        const rows = await tx
+          .insert(testimoni)
+          .values({ nama: data.nama, peran: data.peran, kutipan: data.kutipan, urutan: data.urutan })
+          .returning();
+        return toTestimoni(rows[0]);
+      });
     },
     async update(id, data) {
       const rows = await db
@@ -528,7 +528,8 @@ export function createRepositories(db: Db): Repositories {
 
   return {
     ping: async () => {
-      await db.execute(sql`select 1`);
+      // Check actual schema, not only network connectivity.
+      await db.select({ id: berita.id }).from(berita).limit(1);
     },
     referensiGambar: async () => {
       // Empat select kecil (bukan union SQL) — tetap portabel di kedua driver

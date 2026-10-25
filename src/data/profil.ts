@@ -31,7 +31,7 @@ export const profilDummy: Profil = {
   ],
 };
 
-/** Kontrak respons GET /api/profil — ↔ server/src/api/types.ts Profil. */
+/** Bentuk legacy untuk test mapper; halaman publik memakai `profilDummy` statis. */
 export interface ProfilApi {
   nama: string;
   tagline: string;

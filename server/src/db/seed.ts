@@ -1,9 +1,9 @@
 /**
- * Seed data dummy development — menyalin data dummy frontend (src/data/*.ts)
- * ke database supaya API bisa langsung diuji.
+ * Seed data development untuk lima konten CMS:
+ * dokumentasi, berita, kursus, tim, dan testimoni.
  *
- * Idempoten: semua tabel dihapus lalu diisi ulang (deterministik untuk dummy).
- * Jalankan: `bun run db:seed` (setelah `bun run db:migrate`).
+ * Reset bersifat destruktif dan wajib memakai confirmation eksplisit.
+ * Tabel konten static legacy tidak disentuh.
  */
 import type { Db } from './client';
 import { createDb, resolveDbTarget } from './client';
@@ -454,39 +454,41 @@ export const SEED_KURSUS: KursusSeed[] = [
   },
 ];
 
+/** Confirmation required before destructive seed reset. */
+export const SEED_CONFIRMATION = 'RESET';
+
 /** Isi ulang semua tabel dummy (hapus dulu → idempoten & deterministik). */
-export async function runSeed(db: Db): Promise<void> {
+export async function runSeed(db: Db, options: { allowDestructive?: boolean } = {}): Promise<void> {
+  if (options.allowDestructive !== true) {
+    throw new Error(`Seed destruktif diblokir — set SEED_CONFIRM=${SEED_CONFIRMATION} untuk reset eksplisit`);
+  }
+
   await db.delete(berita);
   await db.delete(dokumentasi);
   await db.delete(tim);
-  await db.delete(layanan);
-  await db.delete(heroSlides);
-  await db.delete(klien);
   await db.delete(testimoni);
   await db.delete(kursus);
-  await db.delete(profil);
-  await db.delete(inference);
 
   if (SEED_BERITA.length > 0) await db.insert(berita).values(SEED_BERITA);
   if (SEED_DOKUMENTASI.length > 0) await db.insert(dokumentasi).values(SEED_DOKUMENTASI);
   if (SEED_TIM.length > 0) await db.insert(tim).values(SEED_TIM);
-  if (SEED_LAYANAN.length > 0) await db.insert(layanan).values(SEED_LAYANAN);
-  if (SEED_HERO.length > 0) await db.insert(heroSlides).values(SEED_HERO);
-  if (SEED_KLIEN.length > 0) await db.insert(klien).values(SEED_KLIEN);
   if (SEED_TESTIMONI.length > 0) await db.insert(testimoni).values(SEED_TESTIMONI);
   if (SEED_KURSUS.length > 0) await db.insert(kursus).values(SEED_KURSUS);
-  await db.insert(profil).values(SEED_PROFIL);
-  await db.insert(inference).values(SEED_INFERENCE);
 }
 
-/** CLI: `bun run db:seed` — exit code 1 bila gagal (tidak silent). */
+/** CLI: `SEED_CONFIRM=RESET bun run db:seed` — exit code 1 bila gagal. */
 if (import.meta.main) {
+  if (process.env.SEED_CONFIRM !== SEED_CONFIRMATION) {
+    console.error(`Seed diblokir — jalankan ulang dengan SEED_CONFIRM=${SEED_CONFIRMATION}`);
+    process.exit(1);
+  }
+
   const config = resolveConfig(process.env);
   const target = resolveDbTarget(config.databaseUrl);
   try {
     const handle = await createDb(target);
     try {
-      await runSeed(handle.db);
+      await runSeed(handle.db, { allowDestructive: true });
       console.log(`Seed selesai (db: ${target.kind}).`);
     } finally {
       await handle.close();

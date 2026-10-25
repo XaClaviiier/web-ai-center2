@@ -1,0 +1,12 @@
+node_modules
+server
+.env
+.env.*
+dist
+dist-ssr
+coverage
+.pglite
+uploads
+lighthouse_report
+.git
+.gitignore

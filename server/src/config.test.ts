@@ -89,6 +89,10 @@ describe('resolveConfig', () => {
       databaseUrl: null,
       corsOrigins: DEFAULT_CORS_ORIGINS,
       adminPassword: DEFAULT_ADMIN_PASSWORD,
+      rustfsEndpoint: 'http://localhost:9000',
+      rustfsAccessKey: null,
+      rustfsSecretKey: null,
+      rustfsBucket: 'ai-center-images',
     });
   });
 
@@ -99,12 +103,20 @@ describe('resolveConfig', () => {
         DATABASE_URL: 'postgres://u:p@localhost:5432/ai',
         CORS_ORIGIN: 'https://ai-center.ubaya.ac.id',
         ADMIN_PASSWORD: 'katasandi-lokal',
+        RUSTFS_ENDPOINT: 'http://rustfs:9000',
+        RUSTFS_ACCESS_KEY: 'ai-key',
+        RUSTFS_SECRET_KEY: 'ai-secret',
+        RUSTFS_BUCKET: 'gambar-test',
       }),
     ).toEqual({
       port: 4000,
       databaseUrl: 'postgres://u:p@localhost:5432/ai',
       corsOrigins: ['https://ai-center.ubaya.ac.id'],
       adminPassword: 'katasandi-lokal',
+      rustfsEndpoint: 'http://rustfs:9000',
+      rustfsAccessKey: 'ai-key',
+      rustfsSecretKey: 'ai-secret',
+      rustfsBucket: 'gambar-test',
     });
   });
 });

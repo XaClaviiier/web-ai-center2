@@ -1,8 +1,7 @@
-# SPA fallback untuk React Router (BrowserRouter) di subfolder XAMPP.
-# File ini di-copy Vite dari public/ ke dist/ setiap build — ikut ter-deploy.
+# SPA fallback untuk React Router pada root domain.
+# File ini disalin Vite dari public/ saat build.
 RewriteEngine On
-RewriteBase /coding/Web-AI-Center/
 RewriteRule ^index\.html$ - [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /coding/Web-AI-Center/index.html [L]
+RewriteRule . /index.html [L]

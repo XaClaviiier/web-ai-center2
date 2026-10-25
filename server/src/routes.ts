@@ -1,12 +1,9 @@
 /**
- * Endpoint API (baca publik + tulis admin). Semua route memakai helper query
- * murni dari lib/query dan repository yang disuntikkan — tanpa akses DB langsung.
+ * Endpoint API CMS (dokumentasi, berita, kursus, tim, testimoni), progres,
+ * auth admin, dan upload. Semua route memakai repository yang disuntikkan.
  *
- * Route tulis (dokumentasi, berita, kursus — lalu profil & tim pada Prioritas 2,
- * kemudian konten inference, testimoni & slide hero) dijaga token hasil
- * POST /api/admin/login (konsul PROGRESS 2: login sederhana 1 akun); login itu
- * sendiri dibatasi rate-limit 5 gagal / 10 menit per IP → 429.
- * Semua field teks punya batas panjang di lib/tulis (Prioritas 2) → 400 eksplisit.
+ * Route tulis memakai token hasil POST /api/admin/login. Login dibatasi
+ * rate-limit 5 gagal / 10 menit per IP. Semua field teks punya batas panjang.
  *
  * Kontrak daftar: { items: T[] }; detail tidak ada → 404 { error }.
  */
@@ -20,24 +17,18 @@ import {
   slugDariJudul,
   validasiBerita,
   validasiDokumentasi,
-  validasiHero,
-  validasiInference,
   validasiKursus,
-  validasiLayanan,
-  validasiProfil,
   validasiProgress,
   validasiTestimoni,
   validasiTim,
 } from './lib/tulis';
 import {
-  daftarFileUnggahan,
-  hapusFileUnggahan,
+  createFilesystemImageStorage,
   namaFileAman,
-  resolveUploadDir,
-  simpanFileGambar,
   tipeKontenGambar,
   urlFileUnggahan,
   validasiFileGambar,
+  type ImageStorage,
 } from './lib/upload';
 import { findOrphanUploads } from './lib/orphanUpload';
 import type { Repositories } from './repositories/types';
@@ -59,15 +50,15 @@ export function registerRoutes(
   repos: Repositories,
   /** Password admin dari env ADMIN_PASSWORD — kunci verifikasi token tulis. */
   adminPassword: string,
-  /** Override direktori unggahan (khusus test; default dari UPLOAD_DIR/cwd). */
-  opsi?: { uploadDir?: string },
+  /** Override storage filesystem (khusus test); runtime utama memakai RustFS. */
+  opsi?: { uploadDir?: string; storage?: ImageStorage },
 ): AnyElysia {
   /** True bila header Authorization membawa token valid untuk password ini. */
   const terautentikasi = (request: Request): boolean => {
     const token = tokenDariHeader(request.headers.get('Authorization'));
     return token !== null && tokenAdminValid(token, adminPassword);
   };
-  const dirUnggahan = opsi?.uploadDir ?? resolveUploadDir();
+  const storage = opsi?.storage ?? createFilesystemImageStorage(opsi?.uploadDir);
 
   /** Path `:id` tim → integer positif; `null` bila tidak sah (→ 400). */
   const idDariParams = (mentah: string): number | null => {
@@ -141,70 +132,6 @@ export function registerRoutes(
       }),
     }))
 
-    // — Layanan —————————————————————————————————————————————————
-    .get('/api/layanan', async () => ({ items: await repos.layanan.list() }))
-    .get('/api/layanan/:slug', async ({ params, set }) => {
-      const item = await repos.layanan.findBySlug(params.slug);
-      if (item === null) {
-        set.status = 404;
-        return { error: 'Layanan tidak ditemukan' };
-      }
-      return item;
-    })
-
-    // — Tulis layanan (CRUD admin; kunci = slug hasil slugDariJudul(nama)) ——
-    .post('/api/layanan', async ({ body, request, set }) => {
-      if (!terautentikasi(request)) {
-        set.status = 401;
-        return { error: PESAN_BELUM_LOGIN };
-      }
-      const hasil = validasiLayanan(body);
-      if (!hasil.ok) {
-        set.status = 400;
-        return { error: hasil.error };
-      }
-      const slug = slugDariJudul(hasil.data.nama);
-      if (slug === '') {
-        set.status = 400;
-        return { error: 'Nama tidak menghasilkan slug — tambahkan huruf/angka' };
-      }
-      if ((await repos.layanan.findBySlug(slug)) !== null) {
-        set.status = 409;
-        return { error: 'Slug sudah dipakai — nama bentrok dengan layanan lain' };
-      }
-      set.status = 201;
-      return await repos.layanan.create(slug, hasil.data);
-    })
-    .put('/api/layanan/:slug', async ({ params, body, request, set }) => {
-      if (!terautentikasi(request)) {
-        set.status = 401;
-        return { error: PESAN_BELUM_LOGIN };
-      }
-      const hasil = validasiLayanan(body);
-      if (!hasil.ok) {
-        set.status = 400;
-        return { error: hasil.error };
-      }
-      // Slug TIDAK diubah saat edit — tautan & rujukan lama tetap hidup walau nama berubah.
-      const item = await repos.layanan.update(params.slug, hasil.data);
-      if (item === null) {
-        set.status = 404;
-        return { error: 'Layanan tidak ditemukan' };
-      }
-      return item;
-    })
-    .delete('/api/layanan/:slug', async ({ params, request, set }) => {
-      if (!terautentikasi(request)) {
-        set.status = 401;
-        return { error: PESAN_BELUM_LOGIN };
-      }
-      const terhapus = await repos.layanan.remove(params.slug);
-      if (!terhapus) {
-        set.status = 404;
-        return { error: 'Layanan tidak ditemukan' };
-      }
-      return { ok: true as const };
-    })
 
     // — Kursus (Pelatihan) —————————————————————————————————————
     .get('/api/kursus', async ({ query }) => ({
@@ -261,30 +188,9 @@ export function registerRoutes(
       return await repos.progress.simpan(hasil.data);
     })
 
-    // — Konten beranda ——————————————————————————————————————————
-    .get('/api/hero-slides', async () => ({ items: await repos.hero.list() }))
-    .get('/api/klien', async () => ({ items: await repos.klien.list() }))
+    // — Testimoni CMS ————————————————————————————————————————————
     .get('/api/testimoni', async () => ({ items: await repos.testimoni.list() }))
 
-    // — Profil (Tentang Kami + kontak footer) ————————————————————————
-    .get('/api/profil', async ({ set }) => {
-      const item = await repos.profil.get();
-      if (item === null) {
-        set.status = 404;
-        return { error: 'Profil belum diisi' };
-      }
-      return item;
-    })
-
-    // — Konten halaman Inference (baris tunggal id = 1) ————————————————
-    .get('/api/inference', async ({ set }) => {
-      const item = await repos.inference.get();
-      if (item === null) {
-        set.status = 404;
-        return { error: 'Konten inference belum diisi' };
-      }
-      return item;
-    })
 
     // — Admin: login sederhana (1 akun; password dari ADMIN_PASSWORD) ————
     .post('/api/admin/login', ({ body, request, set }) => {
@@ -469,44 +375,6 @@ export function registerRoutes(
       return { ok: true as const };
     })
 
-    // — Tulis profil (baris tunggal id = 1; Prioritas 2: CRUD admin) ——————
-    .put('/api/profil', async ({ body, request, set }) => {
-      if (!terautentikasi(request)) {
-        set.status = 401;
-        return { error: PESAN_BELUM_LOGIN };
-      }
-      const hasil = validasiProfil(body);
-      if (!hasil.ok) {
-        set.status = 400;
-        return { error: hasil.error };
-      }
-      // Kolom statistik tidak ikut body → dipertahankan oleh repository.
-      const profilBaru = await repos.profil.update(hasil.data);
-      if (profilBaru === null) {
-        set.status = 404;
-        return { error: 'Profil tidak ditemukan — jalankan seed dulu' };
-      }
-      return profilBaru;
-    })
-
-    // — Tulis konten inference (baris tunggal id = 1) ————————————————————
-    .put('/api/inference', async ({ body, request, set }) => {
-      if (!terautentikasi(request)) {
-        set.status = 401;
-        return { error: PESAN_BELUM_LOGIN };
-      }
-      const hasil = validasiInference(body);
-      if (!hasil.ok) {
-        set.status = 400;
-        return { error: hasil.error };
-      }
-      const kontenBaru = await repos.inference.update(hasil.data);
-      if (kontenBaru === null) {
-        set.status = 404;
-        return { error: 'Konten inference tidak ditemukan — jalankan seed dulu' };
-      }
-      return kontenBaru;
-    })
 
     // — Tulis tim (CRUD admin; kunci = id numerik; Prioritas 2) ————————————
     .post('/api/tim', async ({ body, request, set }) => {
@@ -519,11 +387,9 @@ export function registerRoutes(
         set.status = 400;
         return { error: hasil.error };
       }
-      // Item baru SELALU tampil paling atas: urutan klien diabaikan, semua baris
-      // lama digeser +1 (tidak ada yang dihapus), baris baru disimpan di urutan 0.
-      await repos.tim.naikkanSemuaUrutan();
+      // Item baru selalu paling atas; geser + insert berjalan atomik.
       set.status = 201;
-      return await repos.tim.create({ ...hasil.data, urutan: 0 });
+      return await repos.tim.createAtas({ ...hasil.data, urutan: 0 });
     })
     .put('/api/tim/:id', async ({ params, body, request, set }) => {
       if (!terautentikasi(request)) {
@@ -576,11 +442,9 @@ export function registerRoutes(
         set.status = 400;
         return { error: hasil.error };
       }
-      // Testimoni baru SELALU jadi #1: urutan klien diabaikan, semua baris lama
-      // digeser +1 (lama turun urutan, tidak ada yang dihapus), baris baru di 0.
-      await repos.testimoni.naikkanSemuaUrutan();
+      // Geser + insert berada dalam satu transaksi agar dua admin tidak kehilangan urutan.
       set.status = 201;
-      return await repos.testimoni.create({ ...hasil.data, urutan: 0 });
+      return await repos.testimoni.createAtas({ ...hasil.data, urutan: 0 });
     })
     .put('/api/testimoni/:id', async ({ params, body, request, set }) => {
       if (!terautentikasi(request)) {
@@ -622,59 +486,6 @@ export function registerRoutes(
       return { ok: true as const };
     })
 
-    // — Tulis slide hero (CRUD admin; kunci = id numerik) ——————————————————
-    .post('/api/hero-slides', async ({ body, request, set }) => {
-      if (!terautentikasi(request)) {
-        set.status = 401;
-        return { error: PESAN_BELUM_LOGIN };
-      }
-      const hasil = validasiHero(body);
-      if (!hasil.ok) {
-        set.status = 400;
-        return { error: hasil.error };
-      }
-      set.status = 201;
-      return await repos.hero.create(hasil.data);
-    })
-    .put('/api/hero-slides/:id', async ({ params, body, request, set }) => {
-      if (!terautentikasi(request)) {
-        set.status = 401;
-        return { error: PESAN_BELUM_LOGIN };
-      }
-      const id = idDariParams(params.id);
-      if (id === null) {
-        set.status = 400;
-        return { error: 'Id slide hero tidak valid — isi bilangan bulat positif' };
-      }
-      const hasil = validasiHero(body);
-      if (!hasil.ok) {
-        set.status = 400;
-        return { error: hasil.error };
-      }
-      const slide = await repos.hero.update(id, hasil.data);
-      if (slide === null) {
-        set.status = 404;
-        return { error: 'Slide hero tidak ditemukan' };
-      }
-      return slide;
-    })
-    .delete('/api/hero-slides/:id', async ({ params, request, set }) => {
-      if (!terautentikasi(request)) {
-        set.status = 401;
-        return { error: PESAN_BELUM_LOGIN };
-      }
-      const id = idDariParams(params.id);
-      if (id === null) {
-        set.status = 400;
-        return { error: 'Id slide hero tidak valid — isi bilangan bulat positif' };
-      }
-      const terhapus = await repos.hero.remove(id);
-      if (!terhapus) {
-        set.status = 404;
-        return { error: 'Slide hero tidak ditemukan' };
-      }
-      return { ok: true as const };
-    })
 
     // — Bersihkan file unggahan tidak terpakai (Prioritas 2; butuh Bearer) ——
     // Body `{ kering: true }` = mode uji: hanya melaporkan kandidat tanpa
@@ -686,12 +497,12 @@ export function registerRoutes(
         return { error: PESAN_BELUM_LOGIN };
       }
       const kering = (body as { kering?: unknown } | null)?.kering === true;
-      const daftar = await daftarFileUnggahan(dirUnggahan);
+      const daftar = await storage.list();
       const referensi = await repos.referensiGambar();
       const takTerpakai = findOrphanUploads(daftar, referensi);
       if (!kering) {
         for (const nama of takTerpakai) {
-          await hapusFileUnggahan(nama, dirUnggahan);
+          await storage.delete(nama);
         }
       }
       return { kering, items: takTerpakai };
@@ -709,7 +520,7 @@ export function registerRoutes(
         set.status = 400;
         return { error: valid.error };
       }
-      const nama = await simpanFileGambar(file as File, valid.ext, dirUnggahan);
+      const nama = await storage.save(file as File, valid.ext);
       set.status = 201;
       return { url: urlFileUnggahan(nama) };
     })
@@ -721,14 +532,16 @@ export function registerRoutes(
         set.status = 404;
         return { error: 'File tidak ditemukan' };
       }
-      const lokasi = `${dirUnggahan.replace(/\/+$/, '')}/${aman}`;
-      const berkas = Bun.file(lokasi);
-      if (!(await berkas.exists())) {
+      const gambar = await storage.get(aman);
+      if (gambar === null) {
         set.status = 404;
         return { error: 'File tidak ditemukan' };
       }
-      set.headers['Content-Type'] = tipeKontenGambar(aman.slice(aman.lastIndexOf('.') + 1));
-      set.headers['Cache-Control'] = 'public, max-age=31536000, immutable';
-      return berkas;
+      return new Response(gambar.body, {
+        headers: {
+          'Content-Type': tipeKontenGambar(aman.slice(aman.lastIndexOf('.') + 1)),
+          'Cache-Control': 'public, max-age=31536000, immutable',
+        },
+      });
     });
 }

@@ -66,9 +66,8 @@ function SectionBar({
 export default function Beranda() {
   const t = useT();
 
-  // Hero & layanan: konten STATIS dari src/data/ (diedit langsung di frontend,
-  // tanpa backend). Dokumentasi/testimoni/berita tetap dari backend bila
-  // VITE_API_BASE_URL diset; kalau tidak (atau gagal) memakai data di src/data/.
+  // Hero & layanan: konten statis dari src/data/.
+  // Dokumentasi/testimoni/berita memakai backend same-origin dengan fallback.
   const slidesHero = heroSlidesDummy;
   const daftarLayanan = layananDummy;
   // Urut tanggal terbaru dulu supaya slice(0, 3) benar-benar "3 terbaru"
@@ -76,9 +75,7 @@ export default function Beranda() {
   const highlightDokumentasi = [...useApiDaftar('/dokumentasi', dokumentasiDummy)].sort((a, b) =>
     b.tanggal.localeCompare(a.tanggal),
   );
-  // Klien dari GET /api/klien; fallback dummy FTB/CAW/Ubaya (lihat src/data/klien.ts).
-  // Dikomentari bersama section Our Client di bawah — aktifkan lagi bila dibutuhkan.
-  // const daftarKlien = useApiDaftar('/klien', klienDummy);
+  // Section Our Client nonaktif; klien bukan konten CMS.
   // Testimoni tampil TEPAT 3 (urutan paling atas dari backend; item baru via
   // admin otomatis jadi #1, yang lama turun — tersimpan semua, tidak ada yang
   // dihapus, hanya tidak tampil di beranda bila keluar dari 3 besar).
@@ -193,8 +190,7 @@ export default function Beranda() {
       </section>
 
       {/* Our Client dikomentari sesuai briefing rapat ("our client di-comment dulu, keep code").
-          Testimoni (slot berikutnya) menempati posisinya; aktifkan kembali dengan menghapus
-          tanda komentar. Data & endpoint GET /api/klien tetap ada. */}
+          Testimoni (slot berikutnya) menempati posisinya; aktifkan kembali section bila dibutuhkan.
       {/* <section aria-label={t('Klien Kami')} className="py-16">
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading kicker={t('Dipercaya')} title={t('Klien Kami')} sub={t('Mitra yang berkolaborasi dengan AI Center.')} />

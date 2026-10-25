@@ -4,25 +4,35 @@
  */
 import { createApp } from './app';
 import { DEFAULT_ADMIN_PASSWORD, parseAdminPassword, resolveConfig } from './config';
+import { createRustFsImageStorage } from './lib/objectStorage';
 import { createDb, resolveDbTarget } from './db/client';
 import { createRepositories } from './repositories/drizzle';
 
 const config = resolveConfig(process.env);
 const target = resolveDbTarget(config.databaseUrl);
 
-// Eksplisit: bila admin jalan dengan password fallback, operator tahu.
 if (parseAdminPassword(process.env.ADMIN_PASSWORD) === DEFAULT_ADMIN_PASSWORD) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('ADMIN_PASSWORD wajib diisi saat NODE_ENV=production');
+  }
   console.warn(
     '[admin] ADMIN_PASSWORD belum di-set di .env — memakai fallback "admin-dev". ' +
       'Ganti di server/.env sebelum dipakai di luar lokal.',
   );
 }
 
+const storage = await createRustFsImageStorage({
+  endpoint: config.rustfsEndpoint,
+  accessKey: config.rustfsAccessKey,
+  secretKey: config.rustfsSecretKey,
+  bucket: config.rustfsBucket,
+});
 const handle = await createDb(target);
 const app = createApp({
   repos: createRepositories(handle.db),
   corsOrigins: config.corsOrigins,
   adminPassword: config.adminPassword,
+  uploadStorage: storage,
 });
 
 try {

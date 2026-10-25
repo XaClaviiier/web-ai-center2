@@ -82,13 +82,8 @@ export interface DokumentasiRepository {
 
 export interface TimRepository {
   list(params: ListParams): Promise<AnggotaTim[]>;
-  /**
-   * Geser semua `urutan` baris lama +1 (tanpa menghapus apa pun) — dipanggil
-   * sebelum create supaya anggota baru bisa disimpan di urutan 0 (paling atas).
-   */
-  naikkanSemuaUrutan(): Promise<void>;
-  /** Buat anggota baru; balikan item tersimpan (id & urutan dari DB). */
-  create(data: TimInput): Promise<AnggotaTim>;
+  /** Geser urutan dan simpan anggota baru sebagai item paling atas atomik. */
+  createAtas(data: TimInput): Promise<AnggotaTim>;
   /** Perbarui anggota berdasarkan id; `null` bila id tidak ditemukan. */
   update(id: number, data: TimInput): Promise<AnggotaTim | null>;
   /** Hapus anggota berdasarkan id; `true` bila ada baris yang terhapus. */
@@ -122,14 +117,8 @@ export interface KlienRepository {
 
 export interface TestimoniRepository {
   list(): Promise<Testimoni[]>;
-  /**
-   * Geser semua `urutan` baris lama +1 (tanpa menghapus apa pun) — dipanggil
-   * sebelum create supaya testimoni baru jadi #1 (paling atas) dan yang lama
-   * otomatis turun urutan, tidak ada yang dihapus.
-   */
-  naikkanSemuaUrutan(): Promise<void>;
-  /** Buat testimoni baru; balikan item tersimpan (id & urutan dari DB). */
-  create(data: TestimoniInput): Promise<Testimoni>;
+  /** Geser urutan dan simpan testimoni baru sebagai item paling atas atomik. */
+  createAtas(data: TestimoniInput): Promise<Testimoni>;
   /** Perbarui testimoni berdasarkan id; `null` bila id tidak ditemukan. */
   update(id: number, data: TestimoniInput): Promise<Testimoni | null>;
   /** Hapus testimoni berdasarkan id; `true` bila ada baris yang terhapus. */

@@ -4,8 +4,8 @@
  * Perilaku:
  * - Render pertama langsung menampilkan `fallback` (tanpa skeleton/kedip), lalu
  *   data backend menggantikan bila berhasil dimuat.
- * - Integrasi mati (`VITE_API_BASE_URL` kosong, atau mode test) → selalu
- *   `fallback`, tidak ada request sama sekali.
+ * - Same-origin production memakai `/api`; override `VITE_API_BASE_URL` kosong
+ *   atau mode test → selalu `fallback`, tidak ada request sama sekali.
  * - Gagal memuat → `ambilJson`/`ambilDaftar` sudah mengembalikan `fallback`
  *   (fallback hanya dicatat via console.warn saat DEV), jadi halaman tidak pernah kosong.
  * - `path` berubah (navigasi antar detail) → state ikut di-reset ke `fallback`

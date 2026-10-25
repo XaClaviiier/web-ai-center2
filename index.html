@@ -22,13 +22,13 @@
     <script>
       (function () {
         var p = location.pathname;
-        var beranda = /(^|\/)beranda\/?$/.test(p) || /coding\/Web-AI-Center\/?$/.test(p);
+        var beranda = /(^|\/)beranda\/?$/.test(p) || p === '/';
         if (beranda) {
           var l = document.createElement('link');
           l.rel = 'preload';
           l.as = 'image';
-          l.href = '/coding/Web-AI-Center/hero-1-800.webp';
-          l.setAttribute('imagesrcset', '/coding/Web-AI-Center/hero-1-800.webp 800w, /coding/Web-AI-Center/hero-1-1600.webp 1600w');
+          l.href = '/hero-1-800.webp';
+          l.setAttribute('imagesrcset', '/hero-1-800.webp 800w, /hero-1-1600.webp 1600w');
           l.setAttribute('imagesizes', '100vw');
           document.head.appendChild(l);
         }

@@ -1,8 +1,5 @@
-// Basis URL deployment — agar build bisa disajikan dari subfolder XAMPP
-// (mis. /coding/Web-AI-Center/) maupun root. `import.meta.env.BASE_URL`
-// berisi '/' saat dev dan '/coding/Web-AI-Center/' saat build (vite.config.ts).
-// Data (src/data, respons API) menyimpan path logis root-absolut ('/tim/x.jpg');
-// helper ini dipanggil saat render untuk mengawali path dengan basis.
+// Basis URL deployment mengikuti `import.meta.env.BASE_URL`.
+// Data menyimpan path logis root-absolut; helper menambahkan basis build.
 
 /** Awalan basis saat ini, selalu diakhiri '/'. */
 export function basisUrl(): string {

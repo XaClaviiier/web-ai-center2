@@ -2,8 +2,8 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, type Plugin } from 'vite';
 
-// Basis deploy: disajikan dari subfolder XAMPP (/coding/Web-AI-Center/).
-const BASE = '/coding/Web-AI-Center/';
+// Basis deploy produksi: root domain.
+const BASE = '/';
 
 // Peta modul rute lazy → path rute yang memicunya (dipakai plugin di bawah).
 // Tiap rute WAJIB terdaftar di sini supaya chunk-nya di-modulepreload oleh

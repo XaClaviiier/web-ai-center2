@@ -15,8 +15,8 @@ function stubFetch(body: unknown, status = 200): ReturnType<typeof vi.fn> {
 }
 
 describe('resolveBaseUrl', () => {
-  it('undefined/kosong → ""; whitespace & slash akhir dibersihkan', () => {
-    expect(resolveBaseUrl(undefined)).toBe('');
+  it('undefined → /api; kosong → ""; whitespace & slash akhir dibersihkan', () => {
+    expect(resolveBaseUrl(undefined)).toBe('/api');
     expect(resolveBaseUrl('')).toBe('');
     expect(resolveBaseUrl('   ')).toBe('');
     expect(resolveBaseUrl('  http://localhost:3000/api/  ')).toBe('http://localhost:3000/api');

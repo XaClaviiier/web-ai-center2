@@ -16,6 +16,8 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+docker-compose.production.yml
+deploy/
 
 # test / coverage
 coverage/
@@ -34,3 +36,4 @@ lighthouse_report/
 .agents/
 skills-lock.json
 tsconfig.tsbuildinfo
+docs/

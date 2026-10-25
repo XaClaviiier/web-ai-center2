@@ -1,7 +1,7 @@
 /**
- * Tipe respons API — kontrak sama persis dengan interface data frontend
- * (src/data/*.ts). Bila frontend mengubah interface, ubah juga file ini
- * (terlindungi unit test di src/repositories/mappers.test.ts).
+ * Tipe respons API CMS dan progres.
+ * Tipe static-content di bawah tetap dipakai persistence legacy/seed,
+ * tetapi tidak punya endpoint publik atau admin.
  */
 
 /** ↔ src/data/berita.ts BeritaItem */

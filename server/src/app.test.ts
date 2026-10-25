@@ -88,7 +88,7 @@ const sampleProfil: Profil = {
   email: 'info@example.test',
   telepon: '+62312981000',
 };
-/** Fixture konten halaman inference (baris tunggal — GET/PUT /api/inference). */
+/** Fixture inference untuk fake repository legacy. */
 const sampleInference: KontenInference = {
   judulApaItu: 'Apa itu Inference Solution?',
   deskripsiApaItu: 'Deskripsi inference.',
@@ -101,15 +101,6 @@ const sampleInference: KontenInference = {
   contoh: [{ slug: 'algae-finder', judul: 'Algae Finder' }],
 };
 
-/** Body valid untuk PUT /api/inference (bentuk InputInference). */
-const BODY_INFERENCE: InferenceInput = {
-  judulApaItu: 'Apa itu Inference Solution?',
-  deskripsiApaItu: 'Deskripsi inference.',
-  kebutuhan: ['Kebutuhan 1', 'Kebutuhan 2'],
-  alur: [{ nomor: '01', judul: 'Konsultasi', deskripsi: 'Memetakan kebutuhan.' }],
-  contohIntro: 'Contoh penerapan:',
-  contoh: [{ slug: 'algae-finder', judul: 'Algae Finder' }],
-};
 
 const sampleKursus: Kursus = {
   kode: 'R01',
@@ -175,8 +166,7 @@ function createFakeRepos(): FakeHandle {
     },
     tim: {
       list: rec('tim.list', async (_params: ListParams): Promise<AnggotaTim[]> => [sampleTim]),
-      naikkanSemuaUrutan: rec('tim.naikkanSemuaUrutan', async (): Promise<void> => undefined),
-      create: rec('tim.create', async (data: TimInput): Promise<AnggotaTim> => ({
+      createAtas: rec('tim.createAtas', async (data: TimInput): Promise<AnggotaTim> => ({
         id: 9,
         nama: data.nama,
         peran: data.peran,
@@ -219,8 +209,7 @@ function createFakeRepos(): FakeHandle {
     klien: { list: rec('klien.list', async (): Promise<Klien[]> => [sampleKlien]) },
     testimoni: {
       list: rec('testimoni.list', async (): Promise<Testimoni[]> => [sampleTestimoni]),
-      naikkanSemuaUrutan: rec('testimoni.naikkanSemuaUrutan', async (): Promise<void> => undefined),
-      create: rec('testimoni.create', async (data: TestimoniInput): Promise<Testimoni> => ({
+      createAtas: rec('testimoni.createAtas', async (data: TestimoniInput): Promise<Testimoni> => ({
         ...sampleTestimoni,
         id: 99,
         ...data,
@@ -384,21 +373,6 @@ describe('GET /api/tim', () => {
   });
 });
 
-describe('endpoint konten beranda & layanan', () => {
-  test('layanan, hero-slides, klien, testimoni → { items }', async () => {
-    const { app } = createTestApp();
-    expect((await getJson(app, '/api/layanan')).body).toEqual({ items: [sampleLayanan] });
-    expect((await getJson(app, '/api/hero-slides')).body).toEqual({ items: [sampleHero] });
-    expect((await getJson(app, '/api/klien')).body).toEqual({ items: [sampleKlien] });
-    expect((await getJson(app, '/api/testimoni')).body).toEqual({ items: [sampleTestimoni] });
-  });
-
-  test('detail layanan ada/tidak ada → 200/404', async () => {
-    const { app } = createTestApp();
-    expect((await getJson(app, '/api/layanan/pelatihan')).status).toBe(200);
-    expect((await getJson(app, '/api/layanan/tidak-ada')).status).toBe(404);
-  });
-});
 
 describe('GET /api/kursus', () => {
   test('tanpa query → { items } + pagination nonaktif (semua kursus)', async () => {
@@ -551,41 +525,6 @@ describe('POST /api/progress (publik tanpa akun)', () => {
   });
 });
 
-describe('GET /api/profil', () => {
-  test('ada → 200 body profil', async () => {
-    const { app } = createTestApp();
-    const { status, body } = await getJson(app, '/api/profil');
-    expect(status).toBe(200);
-    expect(body).toEqual(sampleProfil);
-  });
-
-  test('edge: belum di-seed (null) → 404', async () => {
-    const handle = createFakeRepos();
-    handle.repos.profil = { get: async () => null, update: async () => null };
-    const { app } = createTestApp(handle);
-    const { status, body } = await getJson(app, '/api/profil');
-    expect(status).toBe(404);
-    expect(body).toEqual({ error: 'Profil belum diisi' });
-  });
-});
-
-describe('GET /api/inference', () => {
-  test('ada → 200 body konten inference', async () => {
-    const { app } = createTestApp();
-    const { status, body } = await getJson(app, '/api/inference');
-    expect(status).toBe(200);
-    expect(body).toEqual(sampleInference);
-  });
-
-  test('edge: belum di-seed (null) → 404', async () => {
-    const handle = createFakeRepos();
-    handle.repos.inference = { get: async () => null, update: async () => null };
-    const { app } = createTestApp(handle);
-    const { status, body } = await getJson(app, '/api/inference');
-    expect(status).toBe(404);
-    expect(body).toEqual({ error: 'Konten inference belum diisi' });
-  });
-});
 
 describe('error handling', () => {
   test('rute tidak dikenal → 404 JSON { error }', async () => {
@@ -609,7 +548,7 @@ describe('error handling', () => {
   test('body bukan JSON valid → 400 eksplisit, bukan 500 (salah ketik = klien)', async () => {
     const { app } = createTestApp();
     const res = await app.handle(
-      new Request('http://localhost/api/profil', {
+      new Request('http://localhost/api/berita/berita-1', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: '{rusak',
@@ -931,90 +870,7 @@ describe('PUT & DELETE /api/berita', () => {
   });
 });
 
-const BODY_LAYANAN = {
-  nama: 'Layanan Baru',
-  tagline: 'Tagline baru.',
-  deskripsi: 'Deskripsi layanan.',
-  fitur: ['Poin satu', 'Poin dua'],
-};
 
-describe('POST /api/layanan (mirror berita)', () => {
-  test('token valid + body valid → 201 + slug dari nama + repo.create dipanggil', async () => {
-    const { app, calls } = createTestApp();
-    const { status, body } = await kirimTulis(app, 'POST', '/api/layanan', BODY_LAYANAN);
-    expect(status).toBe(201);
-    expect((body as { slug: string }).slug).toBe('layanan-baru');
-
-    const create = calls.find((c) => c.method === 'layanan.create');
-    expect(create).toBeDefined();
-    expect(create?.args[0]).toBe('layanan-baru');
-    expect((create?.args[1] as LayananInput).fitur).toEqual(['Poin satu', 'Poin dua']);
-  });
-
-  test('slug bentrok dengan layanan ada → 409', async () => {
-    const { app } = createTestApp();
-    const { status, body } = await kirimTulis(app, 'POST', '/api/layanan', {
-      ...BODY_LAYANAN,
-      nama: 'pelatihan', // slugDariJudul → 'pelatihan' = sampleLayanan.slug
-    });
-    expect(status).toBe(409);
-    expect(body).toEqual({ error: 'Slug sudah dipakai — nama bentrok dengan layanan lain' });
-  });
-
-  test('fitur kosong → 400; tanpa token → 401', async () => {
-    const { app, calls } = createTestApp();
-    const kosong = await kirimTulis(app, 'POST', '/api/layanan', { ...BODY_LAYANAN, fitur: [] });
-    expect(kosong.status).toBe(400);
-    expect(kosong.body).toEqual({ error: 'Field "fitur" minimal 1 item' });
-    expect(calls.some((c) => c.method === 'layanan.create')).toBe(false);
-
-    const tanpaToken = await kirimTulis(app, 'POST', '/api/layanan', BODY_LAYANAN, null);
-    expect(tanpaToken.status).toBe(401);
-  });
-
-  test('nama tidak menghasilkan slug → 400', async () => {
-    const { app } = createTestApp();
-    const { status } = await kirimTulis(app, 'POST', '/api/layanan', { ...BODY_LAYANAN, nama: '!!!' });
-    expect(status).toBe(400);
-  });
-});
-
-describe('PUT & DELETE /api/layanan', () => {
-  test('PUT slug ada → 200 tanpa mengubah slug; tidak ada → 404; body invalid → 400', async () => {
-    const { app, calls } = createTestApp();
-    const ada = await kirimTulis(app, 'PUT', `/api/layanan/${sampleLayanan.slug}`, BODY_LAYANAN);
-    expect(ada.status).toBe(200);
-    expect((ada.body as { slug: string }).slug).toBe(sampleLayanan.slug);
-    expect(calls.find((c) => c.method === 'layanan.update')?.args[0]).toBe(sampleLayanan.slug);
-
-    const tidakAda = await kirimTulis(app, 'PUT', '/api/layanan/tidak-ada', BODY_LAYANAN);
-    expect(tidakAda.status).toBe(404);
-    expect(tidakAda.body).toEqual({ error: 'Layanan tidak ditemukan' });
-
-    const sebelumInvalid = calls.filter((c) => c.method === 'layanan.update').length;
-    const invalid = await kirimTulis(app, 'PUT', `/api/layanan/${sampleLayanan.slug}`, {
-      ...BODY_LAYANAN,
-      tagline: '',
-    });
-    expect(invalid.status).toBe(400);
-    // Body invalid ditolak SEBELUM repository disentuh.
-    expect(calls.filter((c) => c.method === 'layanan.update').length).toBe(sebelumInvalid);
-  });
-
-  test('DELETE ada → 200 { ok: true }; tidak ada → 404; tanpa token → 401', async () => {
-    const { app, calls } = createTestApp();
-    const ada = await kirimTulis(app, 'DELETE', `/api/layanan/${sampleLayanan.slug}`, null);
-    expect(ada.status).toBe(200);
-    expect(ada.body).toEqual({ ok: true });
-    expect(calls.some((c) => c.method === 'layanan.remove')).toBe(true);
-
-    const tidakAda = await kirimTulis(app, 'DELETE', '/api/layanan/hilang', null);
-    expect(tidakAda.status).toBe(404);
-
-    const tanpaToken = await kirimTulis(app, 'DELETE', `/api/layanan/${sampleLayanan.slug}`, null, null);
-    expect(tanpaToken.status).toBe(401);
-  });
-});
 
 const BODY_KURSUS = {
   kode: 'p02',
@@ -1164,102 +1020,6 @@ describe('POST /api/admin/upload + GET /uploads/:nama', () => {
   });
 });
 
-// — Prioritas 2: PUT /api/profil ————————————————————————————————————————
-
-const BODY_PROFIL = {
-  nama: 'AI Center Universitas Surabaya',
-  tagline: 'Pusat riset AI Ubaya.',
-  ringkasan: 'Ringkasan profil.',
-  alamat: 'Gedung Perpustakaan LT.4',
-  email: 'aicenter@unit.ubaya.ac.id',
-  telepon: '0895-6342-22240',
-  visi: 'Menjadi yang terdepan — Deskripsi visi.',
-  misi: 'Mendorong riset.\nMenghasilkan produk.',
-};
-
-describe('PUT /api/profil (Prioritas 2)', () => {
-  test('token valid + body valid → 200, repo.profil.update dipanggil dengan data bersih', async () => {
-    const { app, calls } = createTestApp();
-    const { status, body } = await kirimTulis(app, 'PUT', '/api/profil', {
-      ...BODY_PROFIL,
-      nama: '  AI Center  ',
-    });
-    expect(status).toBe(200);
-    expect((body as Profil).nama).toBe('AI Center');
-    const update = calls.find((c) => c.method === 'profil.update');
-    expect(update).toBeDefined();
-    expect(update?.args[0]).toEqual({ ...BODY_PROFIL, nama: 'AI Center' });
-  });
-
-  test('tanpa token → 401; field wajib kosong → 400 menyebut field', async () => {
-    const { app } = createTestApp();
-    expect((await kirimTulis(app, 'PUT', '/api/profil', BODY_PROFIL, null)).status).toBe(401);
-    const { status, body } = await kirimTulis(app, 'PUT', '/api/profil', {
-      ...BODY_PROFIL,
-      telepon: '',
-    });
-    expect(status).toBe(400);
-    expect(body).toEqual({ error: 'Field "telepon" wajib diisi' });
-  });
-
-  test('baris profil belum di-seed (update → null) → 404 eksplisit', async () => {
-    const handle = createFakeRepos();
-    handle.repos.profil.update = async () => null;
-    const { app } = createTestApp(handle);
-    const { status, body } = await kirimTulis(app, 'PUT', '/api/profil', BODY_PROFIL);
-    expect(status).toBe(404);
-    expect(body).toEqual({ error: 'Profil tidak ditemukan — jalankan seed dulu' });
-  });
-});
-
-// — Konten halaman inference: GET sudah di atas, ini PUT —————————————————
-
-describe('PUT /api/inference', () => {
-  test('token valid + body valid → 200, repo.inference.update dipanggil dengan data bersih', async () => {
-    const { app, calls } = createTestApp();
-    const { status, body } = await kirimTulis(app, 'PUT', '/api/inference', {
-      ...BODY_INFERENCE,
-      judulApaItu: '  Apa itu Inference Solution?  ',
-      kebutuhan: ['  Kebutuhan 1  ', 'Kebutuhan 2', ''],
-    });
-    expect(status).toBe(200);
-    expect((body as KontenInference).judulApaItu).toBe('Apa itu Inference Solution?');
-    const update = calls.find((c) => c.method === 'inference.update');
-    expect(update).toBeDefined();
-    // Item kosong dibuang (bacaDaftarTeks) — data masuk repository sudah bersih.
-    expect(update?.args[0]).toEqual({ ...BODY_INFERENCE, kebutuhan: ['Kebutuhan 1', 'Kebutuhan 2'] });
-  });
-
-  test('tanpa token → 401; field wajib kosong → 400 menyebut field', async () => {
-    const { app } = createTestApp();
-    expect((await kirimTulis(app, 'PUT', '/api/inference', BODY_INFERENCE, null)).status).toBe(401);
-    const { status, body } = await kirimTulis(app, 'PUT', '/api/inference', {
-      ...BODY_INFERENCE,
-      deskripsiApaItu: '',
-    });
-    expect(status).toBe(400);
-    expect(body).toEqual({ error: 'Field "deskripsiApaItu" wajib diisi' });
-  });
-
-  test('daftar kosong → 400 menyebut minimal item', async () => {
-    const { app } = createTestApp();
-    const { status, body } = await kirimTulis(app, 'PUT', '/api/inference', {
-      ...BODY_INFERENCE,
-      alur: [],
-    });
-    expect(status).toBe(400);
-    expect(body).toEqual({ error: 'Field "alur" minimal 1 item' });
-  });
-
-  test('baris belum di-seed (update → null) → 404 eksplisit', async () => {
-    const handle = createFakeRepos();
-    handle.repos.inference.update = async () => null;
-    const { app } = createTestApp(handle);
-    const { status, body } = await kirimTulis(app, 'PUT', '/api/inference', BODY_INFERENCE);
-    expect(status).toBe(404);
-    expect(body).toEqual({ error: 'Konten inference tidak ditemukan — jalankan seed dulu' });
-  });
-});
 
 // — Prioritas 2: CRUD /api/tim ————————————————————————————————————————
 
@@ -1278,14 +1038,9 @@ describe('CRUD /api/tim (Prioritas 2)', () => {
     expect(status).toBe(201);
     expect((body as AnggotaTim).id).toBe(9);
     expect((body as AnggotaTim).urutan).toBe(0);
-    expect(calls.find((c) => c.method === 'tim.naikkanSemuaUrutan')).toBeDefined();
+    expect(calls.find((c) => c.method === 'tim.createAtas')).toBeDefined();
     // Urutan dari body diabaikan saat tambah — selalu 0.
-    expect(calls.find((c) => c.method === 'tim.create')?.args[0]).toEqual({ ...BODY_TIM, urutan: 0 });
-    // Geser terjadi sebelum insert supaya baris lama tidak menimpa posisi baru.
-    const idxGeser = calls.findIndex((c) => c.method === 'tim.naikkanSemuaUrutan');
-    const idxBuat = calls.findIndex((c) => c.method === 'tim.create');
-    expect(idxGeser).toBeGreaterThanOrEqual(0);
-    expect(idxGeser).toBeLessThan(idxBuat);
+    expect(calls.find((c) => c.method === 'tim.createAtas')?.args[0]).toEqual({ ...BODY_TIM, urutan: 0 });
     expect((await kirimTulis(app, 'POST', '/api/tim', BODY_TIM, null)).status).toBe(401);
   });
 
@@ -1297,7 +1052,7 @@ describe('CRUD /api/tim (Prioritas 2)', () => {
     });
     expect(status).toBe(400);
     expect(body).toEqual({ error: 'Field "urutan" harus bilangan bulat 0-9999' });
-    expect(calls.some((c) => c.method === 'tim.create')).toBe(false);
+    expect(calls.some((c) => c.method === 'tim.createAtas')).toBe(false);
   });
 
   test('PUT id valid → 200; id tidak sah → 400; tidak ada → 404', async () => {
@@ -1324,25 +1079,10 @@ describe('CRUD /api/tim (Prioritas 2)', () => {
   });
 });
 
-// — Lengkapi CRUD admin: testimoni & slide hero ————————————————————————
+// — CRUD admin testimoni ————————————————————————————————————————————
 
 const BODY_TESTIMONI = { nama: 'Peserta', peran: 'Mahasiswa', kutipan: 'Materinya runtut.', urutan: 5 };
 
-const BODY_HERO = {
-  urutan: 3,
-  eyebrow: 'AI Center',
-  judul: 'Judul slide',
-  judulAksen: 'Aksen',
-  sub: 'Sub judul slide.',
-  ctaPrimer: { label: 'Mulai', to: '/pelatihan' },
-  ctaSekunder: { label: 'Kontak', to: 'https://example.test/kontak' },
-  badgeJudul: 'Badge',
-  badgeSub: 'Sub badge',
-  image: '/uploads/hero-baru.jpg',
-  srcSet: null,
-  sizes: null,
-  layout: 'image-left',
-};
 
 describe('CRUD /api/testimoni (lengkapi CRUD admin)', () => {
   test('POST valid → 201; urutan lama digeser +1 lalu testimoni baru jadi #1 (urutan 0)', async () => {
@@ -1351,9 +1091,9 @@ describe('CRUD /api/testimoni (lengkapi CRUD admin)', () => {
     expect(status).toBe(201);
     expect((body as Testimoni).id).toBe(99);
     expect((body as Testimoni).urutan).toBe(0);
-    expect(calls.find((c) => c.method === 'testimoni.naikkanSemuaUrutan')).toBeDefined();
+    expect(calls.find((c) => c.method === 'testimoni.createAtas')).toBeDefined();
     // Urutan dari body diabaikan saat tambah — selalu 0 (paling atas).
-    expect(calls.find((c) => c.method === 'testimoni.create')?.args[0]).toEqual({ ...BODY_TESTIMONI, urutan: 0 });
+    expect(calls.find((c) => c.method === 'testimoni.createAtas')?.args[0]).toEqual({ ...BODY_TESTIMONI, urutan: 0 });
     expect((await kirimTulis(app, 'POST', '/api/testimoni', BODY_TESTIMONI, null)).status).toBe(401);
   });
 
@@ -1365,7 +1105,7 @@ describe('CRUD /api/testimoni (lengkapi CRUD admin)', () => {
     });
     expect(status).toBe(400);
     expect(body).toEqual({ error: 'Field "kutipan" maksimal 1000 karakter' });
-    expect(calls.some((c) => c.method === 'testimoni.create')).toBe(false);
+    expect(calls.some((c) => c.method === 'testimoni.createAtas')).toBe(false);
   });
 
   test('PUT id valid → 200; id tidak sah → 400; tidak ada → 404; DELETE alur sama', async () => {
@@ -1383,58 +1123,6 @@ describe('CRUD /api/testimoni (lengkapi CRUD admin)', () => {
   });
 });
 
-describe('CRUD /api/hero-slides (lengkapi CRUD admin)', () => {
-  test('POST valid → 201 + repo.create menerima body penuh', async () => {
-    const { app, calls } = createTestApp();
-    const { status, body } = await kirimTulis(app, 'POST', '/api/hero-slides', BODY_HERO);
-    expect(status).toBe(201);
-    expect((body as HeroSlide).id).toBe(99);
-    expect(calls.find((c) => c.method === 'hero.create')?.args[0]).toEqual(BODY_HERO);
-    expect((await kirimTulis(app, 'POST', '/api/hero-slides', BODY_HERO, null)).status).toBe(401);
-  });
-
-  test('layout di luar enum → 400 eksplisit tanpa menyentuh repository', async () => {
-    const { app, calls } = createTestApp();
-    const { status, body } = await kirimTulis(app, 'POST', '/api/hero-slides', {
-      ...BODY_HERO,
-      layout: 'tengah',
-    });
-    expect(status).toBe(400);
-    expect(body).toEqual({
-      error: 'Field "layout" harus salah satu dari: default, image-left, teks-kanan',
-    });
-    expect(calls.some((c) => c.method === 'hero.create')).toBe(false);
-  });
-
-  test('CTA bukan objek → 400 yang menyebut nama fieldnya', async () => {
-    const { app } = createTestApp();
-    const { status, body } = await kirimTulis(app, 'POST', '/api/hero-slides', {
-      ...BODY_HERO,
-      ctaSekunder: 'masih diisi string lama',
-    });
-    expect(status).toBe(400);
-    expect(body).toEqual({ error: 'Field "ctaSekunder" harus objek { label, to }' });
-  });
-
-  test('PUT id valid → 200 (field null di-omitted); tidak ada → 404; DELETE alur sama', async () => {
-    const { app } = createTestApp();
-    const ok = await kirimTulis(app, 'PUT', '/api/hero-slides/10', {
-      ...BODY_HERO,
-      image: null,
-      srcSet: null,
-      sizes: null,
-      layout: null,
-    });
-    expect(ok.status).toBe(200);
-    const json = JSON.stringify(ok.body);
-    expect(json).not.toContain('image');
-    expect(json).not.toContain('layout');
-
-    expect((await kirimTulis(app, 'PUT', '/api/hero-slides/99', BODY_HERO)).status).toBe(404);
-    expect((await kirimTulis(app, 'DELETE', '/api/hero-slides/10', null)).status).toBe(200);
-    expect((await kirimTulis(app, 'DELETE', '/api/hero-slides/abc', null)).status).toBe(400);
-  });
-});
 
 // — Prioritas 2: batas panjang terekspos di route ————————————————————————
 

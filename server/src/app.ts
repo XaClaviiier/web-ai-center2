@@ -5,6 +5,7 @@
 import { Elysia } from 'elysia';
 import { registerRoutes, type AnyElysia } from './routes';
 import type { Repositories } from './repositories/types';
+import type { ImageStorage } from './lib/upload';
 
 export interface AppDeps {
   repos: Repositories;
@@ -12,9 +13,11 @@ export interface AppDeps {
   corsOrigins: string[];
   /** Password admin (env ADMIN_PASSWORD) — dipakai login & verifikasi token tulis. */
   adminPassword: string;
+  /** Storage gambar; default filesystem hanya untuk unit test lokal. */
+  uploadStorage?: ImageStorage;
 }
 
-export function createApp({ repos, corsOrigins, adminPassword }: AppDeps): AnyElysia {
+export function createApp({ repos, corsOrigins, adminPassword, uploadStorage }: AppDeps): AnyElysia {
   const allowedOrigins = new Set(corsOrigins);
 
   const app = new Elysia()
@@ -56,5 +59,5 @@ export function createApp({ repos, corsOrigins, adminPassword }: AppDeps): AnyEl
       return null;
     });
 
-  return registerRoutes(app, repos, adminPassword);
+  return registerRoutes(app, repos, adminPassword, { storage: uploadStorage });
 }

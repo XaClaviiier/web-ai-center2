@@ -38,7 +38,7 @@ describe('index.html (SEO & performa)', () => {
     // halaman lain tidak ikut agar tidak berebut bandwidth.
     expect(html).toContain("l.rel = 'preload'");
     expect(html).toContain("l.as = 'image'");
-    expect(html).toContain('hero-1-800.webp 800w, /coding/Web-AI-Center/hero-1-1600.webp 1600w');
+    expect(html).toContain('hero-1-800.webp 800w, /hero-1-1600.webp 1600w');
     // imagesizes HARUS sama dengan atribut img hero (100vw) agar pilihan varian
     // identik — kalau beda, browser mengunduh dua kali (malah merusak skor).
     expect(html).toContain('imagesizes\', \'100vw');

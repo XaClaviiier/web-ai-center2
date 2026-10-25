@@ -1,15 +1,14 @@
 /**
- * Unggah gambar admin (PROGRESS 2 lanjutan): gambar konten bukan lagi URL
- * teks, melainkan FILE yang diunggah ke server lalu disajikan statis.
+ * Unggah gambar admin: file divalidasi, disimpan oleh `ImageStorage`, lalu
+ * dikembalikan sebagai URL `/uploads/<nama-unik>.<ext>`.
  *
- * Alur: `POST /api/admin/upload` (multipart `gambar`) → validasi di sini →
- * simpan ke `UPLOAD_DIR` (default `<cwd>/uploads`) → balikan `{ url }`
- * berbentuk `/uploads/<nama-unik>.<ext>` untuk disimpan di kolom `gambar`.
- * `GET /uploads/:nama` menyajikan file-nya kembali.
+ * Runtime server memakai RustFS melalui S3-compatible adapter. Storage
+ * filesystem di bawah hanya menopang unit test dan app test lokal.
  *
- * Prioritas 2: `daftarFileUnggahan` + `hapusFileUnggahan` menopang pembersih
- * file tidak terpakai (POST /api/admin/uploads/bersihkan, lihat
- * lib/orphanUpload.ts).
+ * `GET /uploads/:nama` membaca object melalui storage yang sama.
+ *
+ * Prioritas 2: daftar dan hapus object menopang pembersih file tidak terpakai
+ * (POST /api/admin/uploads/bersihkan, lihat lib/orphanUpload.ts).
  */
 import { readdir, unlink } from 'node:fs/promises';
 
@@ -26,6 +25,35 @@ const EKSTENSI_MIME: Record<string, string> = {
 export interface GambarTervalidasi {
   /** Ekstensi aman hasil pemetaan MIME (tanpa titik). */
   ext: string;
+}
+
+export interface StoredImage {
+  body: Uint8Array;
+}
+
+export interface ImageStorage {
+  save(file: File, ext: string): Promise<string>;
+  get(nama: string): Promise<StoredImage | null>;
+  list(): Promise<string[]>;
+  delete(nama: string): Promise<void>;
+}
+
+/** Storage filesystem hanya untuk test lokal; runtime utama memakai RustFS. */
+export function createFilesystemImageStorage(dir: string = resolveUploadDir()): ImageStorage {
+  return {
+    save: (file, ext) => simpanFileGambar(file, ext, dir),
+    async get(nama) {
+      const aman = namaFileAman(nama);
+      if (aman === null) return null;
+      const file = Bun.file(`${dir.replace(/\/+$/, '')}/${aman}`);
+      if (!(await file.exists())) return null;
+      return {
+        body: new Uint8Array(await file.arrayBuffer()),
+      };
+    },
+    list: () => daftarFileUnggahan(dir),
+    delete: (nama) => hapusFileUnggahan(nama, dir),
+  };
 }
 
 /**

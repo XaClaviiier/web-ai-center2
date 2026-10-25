@@ -9,58 +9,76 @@ isi dengan milik Anda sendiri, dan **jangan pernah** menaruh kredensial asli di
 - Buat database (mis. `ai_center`) + user khusus dengan password kuat.
 - Catat URL koneksi: `postgres://USER:PASSWORD@HOST:5432/ai_center`
 
-## 2. Environment backend (folder `server/`)
+## 2. Environment backend
 
-Salin `.env.example` → `.env` lalu isi:
+Salin `.env.example` ke `.env`, lalu isi:
 
-| Variabel | Contoh (DUMMY) | Keterangan |
+| Variabel | Contoh DUMMY | Keterangan |
 | --- | --- | --- |
-| `PORT` | `3000` | Port HTTP backend. |
-| `DATABASE_URL` | `postgres://user:pass@host:5432/ai_center` | **WAJIB** di produksi. Tanpa ini backend memakai PGlite (dev). |
-| `CORS_ORIGIN` | `https://domain-anda.com` | Origin frontend yang diizinkan, dipisah koma. |
-| `ADMIN_PASSWORD` | `ganti-dengan-password-kuat` | Login dashboard `/admin`. Jangan pakai fallback `admin-dev`. |
+| `PORT` | `3000` | Port internal backend. |
+| `DATABASE_URL` | `postgres://user:pass@db:5432/ai_center` | Wajib produksi; tanpa ini backend memakai PGlite. |
+| `CORS_ORIGIN` | `https://ai-center.example.com` | Origin produksi. |
+| `ADMIN_PASSWORD` | `ganti-dengan-password-kuat` | Wajib produksi. |
+| `RUSTFS_ENDPOINT` | `http://rustfs:9000` | Endpoint S3 RustFS dari jaringan backend. |
+| `RUSTFS_ACCESS_KEY` | `dummy-access-key` | Access key RustFS. |
+| `RUSTFS_SECRET_KEY` | `dummy-secret-key` | Secret key RustFS. |
+| `RUSTFS_BUCKET` | `ai-center-images` | Bucket gambar. |
 
-Aturan: `.env` di-gitignore (tidak ikut ter-commit).
+Signing region SDK ditetapkan internal `us-east-1`. Jangan salin `.env`
+backend ke image frontend.
 
-## 3. Migrasi + seed (sekali di awal)
-
-```bash
-cd server
-bun run db:migrate   # terapkan 3 file migrasi skema
-bun run db:seed      # HATI-HATI: menghapus SEMUA isi tabel lama
-```
-
-`db:seed` hanya untuk **setup awal / reset total**. Setelah ada konten yang
-diubah lewat dashboard admin, **jangan** dijalankan lagi — konten admin ikut
-hilang.
-
-## 4. Jalankan backend
+## 3. Migrasi dan seed
 
 ```bash
 cd server
-bun install
-bun run start
+bun run db:migrate
+SEED_CONFIRM=RESET bun run db:seed
 ```
 
-- Folder `uploads/` (gambar hasil upload admin) harus **persisten** — jangan di
-  path yang dibersihkan otomatis.
-- Cek sehat: `GET /api/health` → `200 {"status":"ok","db":"ok"}`.
-  Bila `503 {"error":"Database tidak terjangkau"}` → `DATABASE_URL` /
-  jaringan DB bermasalah.
+`db:seed` menghapus lalu mengisi ulang tabel. Gunakan hanya saat setup awal atau
+reset development. Jangan jalankan pada database produksi berisi konten admin.
 
-## 5. Frontend
+## 4. Jalankan container
 
-- Set `VITE_API_BASE_URL` = root API termasuk `/api`
-  (mis. `https://api.domain.com/api`) di env build frontend.
-- `npm run build` → arsip `dist/` diserve oleh web server (nginx/hostpanel).
-- Tambahkan origin frontend (mis. `https://domain-anda.com`) ke `CORS_ORIGIN`
-  backend.
+Deployment root memakai:
 
-## 6. Smoke test setelah online
+- `deploy/backend.Dockerfile`;
+- `deploy/frontend.Dockerfile`;
+- `deploy/frontend.nginx.conf`;
+- `deploy/nginx.conf`;
+- `docker-compose.production.yml`.
 
-- [ ] `GET /api/health` → `200 {"status":"ok","db":"ok"}`
-- [ ] Halaman beranda menampilkan data asli (bukan salinan "(data dummy)")
-- [ ] Login `/admin` dengan password produksi → sukses
-- [ ] Login salah 5× berturut → `429` + header `Retry-After` (rate-limit aktif)
-- [ ] Tambah/hapus konten lewat admin → tampil di halaman publik
-- [ ] Upload gambar lewat admin → muncul di halaman publik
+```bash
+docker compose -f docker-compose.production.yml config
+docker compose -f docker-compose.production.yml up -d --build
+```
+
+Compose hanya mempublikasikan reverse proxy. Backend memakai jaringan internal,
+dan tidak mempublikasikan port `3000` ke host.
+
+Compose tidak menyediakan PostgreSQL, RustFS, atau TLS. Sediakan layanan tersebut
+terpisah, lalu pastikan endpoint dapat dijangkau container backend.
+
+Object gambar tersimpan di bucket RustFS. Persist volume RustFS dan jangan hapus
+bucket saat deploy ulang.
+
+## 5. URL aplikasi
+
+- frontend: `https://ai-center.example.com/`;
+- admin: `https://ai-center.example.com/admin`;
+- API: `https://ai-center.example.com/api/*`;
+- upload: `https://ai-center.example.com/uploads/*`.
+
+Proxy meneruskan prefix `/api` apa adanya. Proxy tidak menambah `/api` kedua.
+Rute selain `/api/*` dan `/uploads/*` memakai SPA fallback frontend.
+
+Tanpa `VITE_API_BASE_URL`, frontend memakai `/api`. Override hanya diperlukan
+untuk backend beda origin saat development.
+
+## 6. Smoke test
+
+- [ ] `GET /api/health` → `200` setelah skema database tersedia.
+- [ ] Akses langsung `/` dan `/admin`.
+- [ ] Login `/admin` dengan password produksi.
+- [ ] CRUD dokumentasi, berita, kursus, tim, dan testimoni.
+- [ ] Upload gambar lewat admin muncul dari `/uploads/...`.

@@ -21,6 +21,6 @@ describe('urlGambar', () => {
 
   it('/uploads/ ditempel ke origin backend', () => {
     const hasil = urlGambar('/uploads/123-ab.png');
-    expect(hasil).toBe(`${new URL(BASE_URL_API).origin}/uploads/123-ab.png`);
+    expect(hasil).toBe(`${new URL(BASE_URL_API, window.location.origin).origin}/uploads/123-ab.png`);
   });
 });

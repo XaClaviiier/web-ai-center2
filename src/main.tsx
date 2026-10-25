@@ -11,8 +11,7 @@ if (!rootEl) {
 
 createRoot(rootEl).render(
   <StrictMode>
-    {/* basename mengikuti base Vite: '/' saat dev, '/coding/Web-AI-Center'
-        saat build — agar BrowserRouter cocok di kedua mode. */}
+    {/* BrowserRouter mengikuti basis Vite; produksi memakai root domain. */}
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
       <App />
     </BrowserRouter>
