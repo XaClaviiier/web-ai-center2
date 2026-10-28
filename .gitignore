@@ -36,4 +36,4 @@ lighthouse_report/
 .agents/
 skills-lock.json
 tsconfig.tsbuildinfo
-docs/
+
