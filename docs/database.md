@@ -1,35 +1,4 @@
-# Database — AI Center UBAYA CMS
-
-Dilebur dari `docs/_arsip/00-detail-rencana-web.md` dan `docs/_arsip/01-kontrak-api.md`. Skema lama (`D:\aicenter\notes\ext-database.md`) hanya dipakai untuk detail yang sudah diverifikasi terhadap plan.
-
 ## 1. Ruang lingkup
-
-* Engine: PostgreSQL \[Lihat stack.md §3\]. Versi PostgreSQL: \[diisi: tanya infra\].  
-* Entitas: Berita, Dokumentasi (dengan tabel gambar), Testimoni, Tim.  
-* Tidak ada tabel pengguna; identitas dan role dari Keycloak \[Lihat §3.6\].  
-* Tidak dibawa ke skema baru: `kursus`, `progress_pembelajaran`, dan tabel legacy `layanan`, `hero_slides`, `klien`, `profil`, `inference` (kontennya hardcode di frontend; \[Lihat requirement.md §2 dan §3\]).
-
-## 2. Konvensi
-
-* Nama kolom: snake_case, memakai istilah plan (mis. `tanggal_publikasi`, `posisi`, `teks`, `bidang_riset`).  
-* Nama field JSON di API: camelCase bahasa Indonesia (mis. `tanggalPublikasi`, `dibuatPada`). Field opsional yang kosong tidak dikirim.  
-* `id`: `bigint generated always as identity`.  
-* `status`: `text` dengan `CHECK (status IN ('draft','posted'))`.  
-* Timestamp sistem: `timestamptz`; di API berformat ISO 8601 UTC.  
-* `tanggal_publikasi`: tipe `date`; di API dikirim dan diterima sebagai `DD-MM-YYYY`; format lain ditolak `400`. Tampilan di UI juga `DD-MM-YYYY`.
-
-## 3. Entitas
-
-Kolom bertanda *(diturunkan)* tidak disebut eksplisit di rencana awal, tetapi dibutuhkan oleh aturannya.
-
-### 3.1 Berita
-
-| Kolom | Keterangan |
-|---|---|
-| `id` | PK |
-| `slug` | unik; aturan pembuatan \[Lihat §3.3\] |
-| `judul` | wajib |
-| `isi` | wajib; teks biasa |
 | `tanggal_publikasi` | wajib; `date` |
 | `gambar` | wajib; nama objek (key) RustFS \[Lihat §5\] |
 | `status` | `draft` / `posted` |
