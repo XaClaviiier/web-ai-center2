@@ -18,6 +18,7 @@ Thumbs.db
 .idea/
 docker-compose.production.yml
 deploy/
+docs/backend/
 
 # test / coverage
 coverage/
