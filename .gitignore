@@ -19,6 +19,7 @@ Thumbs.db
 docker-compose.production.yml
 deploy/
 docs/backend/
+CLAUDE.md
 
 # test / coverage
 coverage/
