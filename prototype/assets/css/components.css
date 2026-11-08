@@ -30,6 +30,7 @@
 .badge--draft { background: var(--warna-kuning); color: var(--warna-navy); }
 .badge--posted { background: var(--warna-hijau); color: var(--warna-putih); }
 .badge--trash { background: var(--warna-oranye); color: var(--warna-navy); }
+.badge--simulasi { background: var(--warna-kuning); color: var(--warna-navy); }
 
 /* Form */
 .field { display: grid; gap: var(--jarak-2); }

@@ -34,12 +34,12 @@ Website dari sisi user akan memiliki navbar dan footer. Kemudian akan berisi:
 * Tim /tim: susunan anggota \+ pencarian.  
 * Tentang Kami /tentang-kami  
 * Fitur konten yang akan berisi dokumentasi dan berita (masing-masing punya routing page sendiri)  
-* Layanan: hanya dua rute tetap, /layanan/pelatihan dan /layanan/inference-solutions (tidak memakai /layanan/:slug). Isinya hardcode di frontend, tidak ada opsi menambah layanan, dan tidak ada endpoint backend untuk layanan.  
+* Layanan: hanya dua rute tetap, /layanan/pelatihan dan /layanan/inference-solutions (tidak memakai /layanan/:slug). Isinya hardcode di frontend, tidak ada opsi menambah layanan, dan tidak ada endpoint backend untuk layanan. Pengecualian: demo statis /layanan/inference-solutions/jejak-alumni \[Lihat §4.3\].  
 * List kursus /layanan/pelatihan: dibuatkan kartu untuk display pilihan pelatihan \[Ditunda: aktif setelah Pelatihan Reguler tidak lagi coming soon\]  
 * List layanan dalam 'Inference and Solutions': dibuatkan kartu untuk display layanan konsultasi. Menampilkan dua kategori layanan utama yang dapat menjadi titik awal bagi pengunjung untuk mengenali kebutuhan konsultasi perusahaan. Dua kategori tersebut adalah IT Service Management dan Data Science  
 * Detail kursus /layanan/pelatihan/:kode: fakta, hasil belajar, materi, instruktur. \[Ditunda: aktif setelah Pelatihan Reguler tidak lagi coming soon\]  
 * Toggle bahasa ID/EN dihilangkan, jadi sistem hanya menggunakan bahasa indo, peta lokasi footer, halaman 404\.  
-* List produk untuk menampilkan 3 contoh produk yang sudah digarap oleh tim AI center  
+* List portofolio untuk menampilkan 3 contoh penerapan AI, dengan status tiap entri ditampilkan apa adanya \[Lihat §4.3\]  
 * Fitur umum dalam web termasuk: portofolio, list berita, list dokumentasi, paket layanan: Pelatihan dan 'Inference and Solutions', list tim AI Center  
 * Kemudian tiap masuk ke dalam page lain selain beranda, akan menampilkan breadcrumb misalnya Beranda \> Pelatihan. Sehingga menampilkan lokasi yang seharusnya
 
@@ -68,6 +68,15 @@ Referensi page pelatihan adalah [https\://aici-umg.com/](https://aici-umg.com/) 
 ### 4.3 Page 'Inference and Solutions' \-\> Inference & Solution
 
 Alur story telling page 'Inference and Solutions' adalah: Hero (memuat carousel pertanyaan untuk menarik minat user untuk berkonsultasi dengan AI Center; arahnya agar user mengetahui urgensi mereka untuk konsultasi solution inference dengan AI Center), jenis solution inference di AI Center, alur solution inference, 3 mock up portofolio (hardcode), dan section kontak kami.
+
+Portofolio menampilkan tiga kartu hardcode: JejakAlumni, Rekomendasi Implan Gigi Otomatis, dan Algae Finder. Hanya JejakAlumni yang menjadi tautan karena dua kartu lain belum punya demo. Copy memakai istilah "contoh penerapan".
+
+**Demo JejakAlumni** adalah contoh penerapan untuk tracer study sekolah, berstatus "Prototipe · Data Simulasi". Demo ini hardcode di frontend: tanpa backend, database, data alumni sebenarnya, maupun inferensi AI langsung. Rute prototype `public/jejak-alumni.html`; rute produksi direncanakan /layanan/inference-solutions/jejak-alumni. Halaman memakai `noindex`.
+
+* Isi: filter angkatan (2025, 2024) dan jurusan, empat KPI, grafik penyerapan per jurusan, status alumni, tema jawaban terbuka, ringkasan untuk rapat kurikulum, dan penjelasan aplikasi. Tab Ringkasan berfungsi; Responden dan Mitra kerja nonaktif dengan teks "Belum tersedia dalam demo".
+* Definisi indikator: Terserap dunia kerja adalah responden yang memperoleh pekerjaan dalam 6 bulan setelah lulus, tidak termasuk wirausaha. Bekerja adalah status saat mengisi kuesioner. Kerja sesuai bidang adalah bagian dari responden berstatus bekerja. Masa tunggu adalah median bulan hingga pekerjaan pertama pada responden yang terserap.
+* Statistik tidak disebut hasil AI. Hanya tema dan ringkasan yang berlabel simulasi AI, dan keduanya berlaku per angkatan untuk seluruh jurusan, tidak mengikuti filter jurusan.
+* Pembanding hanya tampil bila data angkatan sebelumnya ada; angkatan 2024 tidak punya pembanding.
 
 ### 4.4 Page Dokumentasi
 

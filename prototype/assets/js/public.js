@@ -124,6 +124,22 @@ function kartuTim(t) {
     el('p.teks-sekunder', null, `Bidang penelitian: ${t.bidang_riset}`));
 }
 
+/** Hanya entri ber-href yang menjadi tautan; entri lain belum punya demo. */
+function kartuPortofolio(p) {
+  const isi = [
+    el('img.kartu__gambar', { src: gambar(p.gambar), alt: '', loading: 'lazy' }),
+    el('div.kartu__isi', null,
+      el('p.kartu-tim__jabatan', null, p.bidang),
+      el('h3', null, p.judul),
+      el('p.teks-sekunder', null, p.deskripsi),
+      p.status && el('p', null, el('span.badge.badge--simulasi', null, p.status)),
+      p.cta && el('span.tautan-panah', null, p.cta, ikon('panah', 18))),
+  ];
+  return p.href
+    ? el('article.kartu.kartu-album', null, el('a.kartu-album__tautan', { href: p.href }, isi))
+    : el('article.kartu.porto__statis', null, isi);
+}
+
 /* === Bagian bersama === */
 function bagianKontak(judul, sub, cta = {}) {
   const k = K.kontak;
@@ -308,12 +324,21 @@ const HALAMAN = {
       el('section.bagian.bagian--muda', { 'aria-labelledby': 'j-alur' }, el('div.wadah', null,
         el('h2', { id: 'j-alur' }, 'Tahapan penerapan model AI.'),
         el('ol.alur.alur--lima', null, n.alur.map((l, i) => el('li', null, el('span.alur__nomor', { 'aria-hidden': 'true' }, String(i + 1)), el('h3', null, l.judul), el('p.teks-sekunder', null, l.deskripsi)))))),
-      el('section.bagian.wadah', { 'aria-labelledby': 'j-porto' },
-        el('h2', { id: 'j-porto' }, 'Portofolio'),
-        el('div.grid-kartu.grid-kartu--tiga.porto', null, n.portofolio.map((p) => el('article.kartu', null,
-          el('img.kartu__gambar', { src: gambar(p.gambar), alt: '', loading: 'lazy' }),
-          el('div.kartu__isi', null, el('p.kartu-tim__jabatan', null, p.bidang), el('h3', null, p.judul), el('p.teks-sekunder', null, p.deskripsi)))))),
+      el('section.bagian.wadah', { id: 'portofolio', 'aria-labelledby': 'j-porto' },
+        el('div.porto__kepala', null,
+          el('p.tentang-label', null, 'Portofolio'),
+          el('h2', { id: 'j-porto' }, 'Jelajahi Portofolio Kami.'),
+          el('p.bagian__sub', null, 'Kenali contoh penerapan teknologi AI melalui karya dan demonstrasi aplikasi.')),
+        el('div.grid-kartu.grid-kartu--tiga.porto', null, n.portofolio.map(kartuPortofolio))),
       bagianKontak('Diskusikan kebutuhan AI Anda.', 'Ceritakan model, data, atau tantangan yang sedang Anda hadapi. Tim AI Center UBAYA dapat membantu membahas langkah berikutnya.', { wa: 'Diskusikan Kebutuhan AI' }));
+  },
+
+  'jejak-alumni'() {
+    setJudul('JejakAlumni (Prototipe)', K.jejak_alumni.disclaimer);
+    utama.append(
+      breadcrumb([{ label: 'Inference and Solutions', href: 'inference.html' }, { label: 'JejakAlumni' }]),
+      JejakAlumni.halaman(),
+      bagianKontak('Ingin membahas data lulusan di institusi Anda?', 'Ceritakan kebutuhan evaluasi lulusan Anda. Tim AI Center UBAYA dapat membantu membahas langkah berikutnya.', { wa: 'Diskusikan Kebutuhan AI' }));
   },
 
   berita() {
@@ -471,7 +496,7 @@ function aktifkanLembar() {
 
 /* === Mulai === */
 const namaHalaman = document.body.dataset.halaman;
-const menuAktif = ['pelatihan', 'inference'].includes(namaHalaman) ? 'layanan' : namaHalaman.replace('-detail', '');
+const menuAktif = ['pelatihan', 'inference', 'jejak-alumni'].includes(namaHalaman) ? 'layanan' : namaHalaman.replace('-detail', '');
 document.body.prepend(el('a.lewati', { href: '#utama' }, 'Lewati ke konten'), navbar(menuAktif));
 document.body.append(footer());
 HALAMAN[namaHalaman]();

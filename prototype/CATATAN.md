@@ -13,10 +13,10 @@ Tombol kuning **Simulasi** di pojok kanan bawah memicu keadaan loading, kosong, 
 
 | Lokasi | Isi | Saat implementasi |
 |---|---|---|
-| `public/` | 10 halaman publik | Acuan visual dan alur |
+| `public/` | 11 halaman publik | Acuan visual dan alur |
 | `admin/index.html` | Admin, rute hash | Acuan visual dan alur |
-| `assets/css/` | `tokens`, `base`, `components`, `kalender`, `public`, `admin` | Acuan token dan komponen |
-| `assets/js/` | `format`, `components`, `kalender`, `bola-neural`, `public`, `admin` | Acuan perilaku. `bola-neural.js` mandiri (hanya dimuat di `public/index.html`); angka waktu, ukuran, dan warna ada di `KONFIG` di bagian atasnya |
+| `assets/css/` | `tokens`, `base`, `components`, `kalender`, `public`, `jejak-alumni`, `admin` | Acuan token dan komponen |
+| `assets/js/` | `format`, `components`, `kalender`, `bola-neural`, `jejak-alumni`, `public`, `admin` | Acuan perilaku. `bola-neural.js` mandiri (hanya dimuat di `public/index.html`); angka waktu, ukuran, dan warna ada di `KONFIG` di bagian atasnya. `jejak-alumni.js` hanya dimuat di `public/jejak-alumni.html` |
 | `assets/mock-data.js` | Semua data dummy | Dibuang, kecuali isi `konten` (lihat T-06) |
 | `assets/fonts`, `assets/img` | Salinan dari `public/` | Foto contoh dibuang |
 | `simulasi/` | Tiruan API, panel, layar Keycloak | Dibuang |
@@ -29,7 +29,8 @@ Tombol kuning **Simulasi** di pojok kanan bawah memicu keadaan loading, kosong, 
 | §3, §4.1 Beranda: hero, layanan, 3 dokumentasi, testimoni, 3 berita, kontak | `public/index.html` | Selesai |
 | §4.1 Carousel testimoni otomatis 10 detik, 1 per slide | `public/index.html` | Selesai (dibuat sendiri, bukan Embla); autoplay hanya di perangkat ber-hover (T-33) |
 | §4.2 Pelatihan: hero, Reguler coming soon, Khusus dengan alur, Workshop | `public/pelatihan.html` | Selesai; empat langkah alur konsultasi dikonfirmasi pemilik |
-| §4.3 Inference: carousel pertanyaan, jenis, alur, 3 portofolio, kontak | `public/inference.html` | Sebagian: lima tahap alur dikonfirmasi pemilik; deskripsi dua jenis layanan masih data contoh |
+| §4.3 Inference: carousel pertanyaan, jenis, alur, 3 portofolio, kontak | `public/inference.html` | Sebagian: lima tahap alur dikonfirmasi pemilik; deskripsi dua jenis layanan masih data contoh; status dua kartu portofolio tanpa demo belum diverifikasi (T-38) |
+| §4.3 Demo JejakAlumni: filter, KPI, grafik, simulasi AI, penjelasan | `public/jejak-alumni.html` | Selesai dengan data simulasi (T-38) |
 | §4.4 Dokumentasi: cari judul, 9 per halaman, urut terbaru | `public/dokumentasi.html`, `dokumentasi-detail.html` | Selesai |
 | §4.5 Berita: cari judul, 9 per halaman, urut terbaru | `public/berita.html`, `berita-detail.html` | Selesai |
 | §3, §4.6 Tim dengan pencarian | `public/tim.html` | Sebagian: enam bidang riset ditetapkan pemilik untuk prototype, perlu verifikasi sebelum produksi |
@@ -60,7 +61,7 @@ Tombol kuning **Simulasi** di pojok kanan bawah memicu keadaan loading, kosong, 
 
 ## Temuan rancangan
 
-Keputusan produk di bawah ini sudah dipindahkan ke `docs/`: T-01, T-04, T-07 sampai T-12, T-15 (rencana), T-18 sampai T-26, T-28 sampai T-31, T-33 butir 1, T-34, T-35, dan T-37 (rencana). Baris-barisnya tetap dicatat di sini sebagai riwayat. T-03 ditandai sebagai konflik di `docs/security.md` dan `docs/stack.md`. Sisanya adalah catatan prototype atau menunggu keputusan.
+Keputusan produk di bawah ini sudah dipindahkan ke `docs/`: T-01, T-04, T-07 sampai T-12, T-15 (rencana), T-18 sampai T-26, T-28 sampai T-31, T-33 butir 1, T-34, T-35, T-37 (rencana), dan T-38. Baris-barisnya tetap dicatat di sini sebagai riwayat. T-03 ditandai sebagai konflik di `docs/security.md` dan `docs/stack.md`. Sisanya adalah catatan prototype atau menunggu keputusan.
 
 | ID | Dokumen | Temuan |
 |---|---|---|
@@ -101,6 +102,7 @@ Keputusan produk di bawah ini sudah dipindahkan ke `docs/`: T-01, T-04, T-07 sam
 | T-35 | `requirement.md` §5 | **Perlu didiskusikan sebelum backend karena berdampak ke API.** Konten Posted harus di-Retract sebelum diedit (dipertahankan, keputusan pemilik), sehingga memperbaiki satu typo membuat halaman 404 sementara, termasuk bagi tautan yang sudah dibagikan. |
 | T-36 | Kontak | Nomor WhatsApp resmi `0895634222240` dikonfirmasi pemilik; tautan `whatsapp_url` diperbaiki ke `62895634222240`. Komentar `src/data/kontak.ts:5` masih menyebut `6289563422240`, tetapi berada di luar prototype. |
 | T-37 | Form admin | Meninggalkan form yang isinya berubah memunculkan dialog "Tinggalkan halaman ini?" (sidebar, logo, Batal, tombol Back); Keluar menambahkan peringatan di dialognya; tutup tab dan refresh memakai dialog bawaan browser (keputusan pemilik). Perubahan dihitung dengan membandingkan nilai form terhadap nilai awal. Meninggalkan form tanpa perubahan, atau menekan Simpan pada form edit tanpa perubahan, menampilkan toast "Tidak ada perubahan yang disimpan." dan Simpan tidak memanggil API, sehingga `version` tidak naik. Simpan berhasil menampilkan "Tersimpan sebagai draft.", "Anggota tim ditambahkan.", atau "Perubahan tersimpan.". Di prototype pembatalan mengembalikan hash dan menambah satu entri riwayat; di produksi gunakan blocker router. Panel simulasi tetap merender ulang tanpa dialog. |
+| T-38 | `requirement.md` §4.3 | Portofolio kini JejakAlumni, Implan Gigi, dan Algae Finder (keputusan pemilik); Cacat Las keluar dari kartu. Implan Gigi dan Algae Finder belum punya demo sehingga bukan tautan, dan statusnya perlu diverifikasi sebelum produksi. Data JejakAlumni di `konten.jejak_alumni` agar ikut terbawa ke implementasi (T-06). Jumlah orang adalah sumber kebenaran, persentase dihitung saat render; jumlah per jurusan, median per jurusan, tema 2024, dan ringkasan 2024 adalah simulasi tambahan, bukan dari spesifikasi awal. Median per jurusan tidak bisa dibuktikan secara matematis. Halaman demo tidak memuat `api-simulasi.js` dan panel kuning karena tidak memakai API dan bisa rancu dengan label "Data Simulasi". Filter tidak disimpan di URL: refresh kembali ke 2025 dan Semua jurusan. `jejak-alumni-preview.webp` adalah tangkapan layar dasbor yang dipadatkan (tanpa tab, filter, dan panel AI), sehingga perlu diambil ulang bila dasbor berubah. |
 
 ## Pemeriksaan
 
@@ -108,5 +110,6 @@ Diuji otomatis di Chrome headless lewat `file://`, semua lolos:
 
 - **Pengujian umum (104 cek):** 10 halaman publik dan 10 rute admin pada 1440 px dan 390 px (tanpa galat konsol, tanpa scroll horizontal, gambar termuat), tautan lokal, pencarian, pagination, urutan tanggal, semua keadaan panel, validasi form dan tanggal, validasi file, Simpan nonaktif, teks berbahaya tampil sebagai teks, soft lock, 409, heartbeat, 401, 403, Post, Retract, trash, keluar.
 - **Revisi admin (60 cek):** 7 tabel pada 1440 px dan 390 px (halaman tidak bergulir ke samping, kolom Aksi terjangkau, `caption`, `th scope`), urutan, aksi per status, foto dan placeholder termasuk gambar gagal dimuat, kalender dengan jam palsu 01.30 WIB (hari ini tetap 06-11-2026 walaupun UTC masih tanggal 5), tanggal masa depan ditolak lewat klik dan ketikan, keyboard, nilai default dan nilai tersimpan.
+- **JejakAlumni:** lima lebar layar (1440, 1024, 768, 390, 360 px) tanpa scroll horizontal; 14 kombinasi filter cocok dengan data, status berjumlah 100%, tanpa nilai kosong; klik kartu, refresh, dan tautan kembali ke `inference.html#portofolio`; 11 halaman publik tanpa galat konsol.
 
 Belum diperiksa: pembaca layar, browser selain Chrome, perangkat sungguhan, dan isi peta Google (iframe ada, isinya tidak diverifikasi). Kontras dihitung manual untuk warna utama, bukan audit menyeluruh.

@@ -189,11 +189,76 @@ const MOCK = (() => {
         { judul: 'Integrasi & pengujian', deskripsi: 'API disambungkan ke aplikasi Anda lalu diuji pada data nyata.' },
         { judul: 'Operasional & purna implementasi', deskripsi: 'Monitoring, pembaruan model, dan dukungan teknis setelah layanan berjalan.' },
       ],
+      // Hanya entri ber-href yang punya demo; Implan Gigi dan Algae Finder belum punya.
       portofolio: [
+        { judul: 'JejakAlumni', bidang: 'Pendidikan', deskripsi: 'Jelajahi contoh analisis data alumni sekolah, mulai dari penyerapan kerja hingga contoh ringkasan masukan lulusan berbantuan AI.', gambar: 'jejak-alumni-preview.webp', href: 'jejak-alumni.html', status: 'Prototipe · Data Simulasi', cta: 'Coba Prototipe' },
         { judul: 'Rekomendasi Implan Gigi Otomatis', bidang: 'Kesehatan', deskripsi: 'Menganalisis citra CBCT 3D untuk merekomendasikan ukuran, posisi, dan sudut implan gigi secara otomatis.', gambar: 'implan-gigi.jpg' },
         { judul: 'Algae Finder', bidang: 'Lingkungan', deskripsi: 'Mendeteksi dan menghitung jenis mikroalga di perairan dari citra mikroskop.', gambar: 'algae-finder.jpg' },
-        { judul: 'Deteksi Cacat Las', bidang: 'Industri', deskripsi: 'Menilai kualitas hasil pengelasan langsung dari foto sambungan las.', gambar: 'cacat-las.jpg' },
       ],
+    },
+    // Seluruh angka dan teks berikut adalah simulasi, bukan data sekolah dan bukan hasil model AI.
+    // Sumber kebenaran: jumlah orang per jurusan; persentase dan total dihitung di assets/js/jejak-alumni.js.
+    // Median disimpan langsung karena tidak bisa dihitung dari median per jurusan.
+    jejak_alumni: {
+      status: 'Prototipe · Data Simulasi',
+      disclaimer: 'Seluruh data dan contoh hasil analisis dalam demo ini bersifat simulasi. Tidak ada pemrosesan AI secara langsung atau penggunaan data alumni sebenarnya.',
+      jurusan: ['TKJ', 'TKR', 'DKV', 'AKL', 'Kuliner', 'Busana'],
+      angkatan: {
+        2025: {
+          median_semua: 2.4,
+          per_jurusan: {
+            TKJ: { lulusan: 108, responden: 86, terserap: 65, bekerja: 60, kuliah: 14, wirausaha: 5, belum: 7, sesuai: 46, median: 1.8 },
+            TKR: { lulusan: 92, responden: 72, terserap: 49, bekerja: 44, kuliah: 11, wirausaha: 7, belum: 10, sesuai: 34, median: 2.1 },
+            DKV: { lulusan: 60, responden: 46, terserap: 28, bekerja: 25, kuliah: 9, wirausaha: 7, belum: 5, sesuai: 17, median: 2.6 },
+            AKL: { lulusan: 56, responden: 43, terserap: 25, bekerja: 24, kuliah: 10, wirausaha: 2, belum: 7, sesuai: 15, median: 2.7 },
+            Kuliner: { lulusan: 46, responden: 35, terserap: 19, bekerja: 16, kuliah: 5, wirausaha: 7, belum: 7, sesuai: 10, median: 3.0 },
+            Busana: { lulusan: 38, responden: 30, terserap: 14, bekerja: 12, kuliah: 4, wirausaha: 6, belum: 8, sesuai: 7, median: 3.4 },
+          },
+          tema: [
+            { jenis: 'positif', teks: 'Praktik di bengkel/lab dianggap paling berguna.', sebutan: 84 },
+            { jenis: 'positif', teks: 'Pembimbing PKL responsif.', sebutan: 51 },
+            { jenis: 'keluhan', teks: 'Informasi lowongan terlambat sampai.', sebutan: 63 },
+            { jenis: 'keluhan', teks: 'Sertifikasi kompetensi belum terbit saat lulus.', sebutan: 47 },
+          ],
+          ringkasan: 'Busana (47%) dan Kuliner (54%) menunjukkan penyerapan kerja lebih rendah dibandingkan TKJ (76%). Keluhan yang paling sering muncul di seluruh jurusan adalah informasi lowongan yang terlambat sampai (63 sebutan). Temuan ini dapat menjadi bahan diskusi, tetapi belum menunjukkan hubungan sebab-akibat.',
+        },
+        2024: {
+          median_semua: 2.9,
+          per_jurusan: {
+            TKJ: { lulusan: 98, responden: 70, terserap: 49, bekerja: 45, kuliah: 13, wirausaha: 4, belum: 8, sesuai: 33, median: 2.3 },
+            TKR: { lulusan: 86, responden: 61, terserap: 39, bekerja: 36, kuliah: 11, wirausaha: 5, belum: 9, sesuai: 25, median: 2.6 },
+            DKV: { lulusan: 62, responden: 44, terserap: 24, bekerja: 22, kuliah: 7, wirausaha: 6, belum: 9, sesuai: 14, median: 3.1 },
+            AKL: { lulusan: 56, responden: 40, terserap: 21, bekerja: 18, kuliah: 10, wirausaha: 2, belum: 10, sesuai: 12, median: 3.2 },
+            Kuliner: { lulusan: 40, responden: 28, terserap: 14, bekerja: 14, kuliah: 4, wirausaha: 3, belum: 7, sesuai: 7, median: 3.4 },
+            Busana: { lulusan: 36, responden: 25, terserap: 11, bekerja: 10, kuliah: 3, wirausaha: 4, belum: 8, sesuai: 5, median: 3.8 },
+          },
+          tema: [
+            { jenis: 'positif', teks: 'Praktik di bengkel/lab dianggap paling berguna.', sebutan: 66 },
+            { jenis: 'positif', teks: 'Pembimbing PKL responsif.', sebutan: 38 },
+            { jenis: 'keluhan', teks: 'Informasi lowongan terlambat sampai.', sebutan: 61 },
+            { jenis: 'keluhan', teks: 'Sertifikasi kompetensi belum terbit saat lulus.', sebutan: 52 },
+          ],
+          ringkasan: 'Busana (44%) dan Kuliner (50%) menunjukkan penyerapan kerja lebih rendah dibandingkan TKJ (70%). Keluhan yang paling sering muncul di seluruh jurusan adalah informasi lowongan yang terlambat sampai (61 sebutan). Temuan ini dapat menjadi bahan diskusi, tetapi belum menunjukkan hubungan sebab-akibat.',
+        },
+      },
+      definisi: [
+        { istilah: 'Terserap dunia kerja', arti: 'Responden yang memperoleh pekerjaan dalam 6 bulan setelah lulus, tidak termasuk wirausaha.' },
+        { istilah: 'Bekerja', arti: 'Responden yang berstatus bekerja saat mengisi kuesioner.' },
+        { istilah: 'Kerja sesuai bidang', arti: 'Bagian dari responden berstatus bekerja yang pekerjaannya sesuai bidang jurusan.' },
+        { istilah: 'Masa tunggu kerja', arti: 'Median bulan hingga pekerjaan pertama pada responden yang terserap dunia kerja.' },
+      ],
+      penjelasan: {
+        masalah: 'Tracer study sering dikerjakan menjelang akreditasi, sementara respons alumni terbatas dan jawaban terbuka membutuhkan waktu untuk ditinjau.',
+        langkah: [
+          'Kuesioner tracer study dikumpulkan dari alumni secara berkala.',
+          'Indikator lulusan disajikan berdasarkan angkatan dan jurusan.',
+          'Jawaban terbuka dapat dibantu pengelompokannya menjadi tema dan ringkasan evaluasi.',
+        ],
+        langkah_catatan: 'Ini gambaran konsep. Demo ini tidak menyebarkan kuesioner atau mengumpulkan jawaban.',
+        data: ['Data lulusan', 'Hasil kuesioner tracer', 'Data mitra industri'],
+        data_catatan: 'Demo hanya menampilkan data lulusan dan kuesioner simulasi. Data mitra industri belum ditampilkan.',
+        hasil: 'Informasi mengenai kondisi lulusan menjadi lebih mudah ditinjau untuk kebutuhan evaluasi, pelaporan, dan diskusi pengembangan pembelajaran.',
+      },
     },
     tentang: {
       hero_judul: 'Mendekatkan Inovasi AI dengan Kebutuhan Nyata.',

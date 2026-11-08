@@ -36,7 +36,13 @@ Pada fase prototype, pengantar Pelatihan menjelaskan tiga pilihan: Pelatihan Reg
 
 **Page Inference and Solutions**
 
-Pada fase prototype, pengantar menjelaskan inference sebagai penggunaan model AI untuk menghasilkan prediksi pada data baru, lalu menghubungkannya dengan kebutuhan aplikasi atau sistem. IT Service Management dan Data Science tetap menjadi dua area awal diskusi; deskripsinya menggunakan bahasa yang tidak menjanjikan hasil tertentu. Lima tahap penerapan model AI telah dikonfirmasi pemilik sebagai proses layanan dan dipertahankan. Penutup mengajak pengunjung mendiskusikan kebutuhan AI melalui kanal kontak yang sudah ada. Nama resmi layanan, portofolio, dan tujuan CTA tidak berubah.
+Pada fase prototype, pengantar menjelaskan inference sebagai penggunaan model AI untuk menghasilkan prediksi pada data baru, lalu menghubungkannya dengan kebutuhan aplikasi atau sistem. IT Service Management dan Data Science tetap menjadi dua area awal diskusi; deskripsinya menggunakan bahasa yang tidak menjanjikan hasil tertentu. Lima tahap penerapan model AI telah dikonfirmasi pemilik sebagai proses layanan dan dipertahankan. Penutup mengajak pengunjung mendiskusikan kebutuhan AI melalui kanal kontak yang sudah ada. Nama resmi layanan dan tujuan CTA tidak berubah.
+
+Bagian Portofolio memakai eyebrow “PORTOFOLIO”, judul “Jelajahi Portofolio Kami.”, dan grid kartu yang sudah ada: tiga kolom di desktop, mengikuti lebar di tablet, satu kolom di HP. Kartu JejakAlumni menaut penuh ke demo dan memuat badge “Prototipe · Data Simulasi” serta CTA “Coba Prototipe”. Kartu tanpa demo tidak memiliki tautan, CTA, atau efek angkat saat hover.
+
+**Page demo JejakAlumni**
+
+Halaman berarah dasbor analitik ringan: latar `#F1F7FC`, panel putih bergaris tipis, dan bayangan minimal. Desktop (≥64rem) memakai dasbor dan penjelasan 65:35; di bawahnya satu kolom dengan dasbor lebih dulu. Jumlah kolom KPI dan grafik mengikuti lebar bingkai dasbor lewat container query, bukan lebar layar. Grafik penyerapan memakai satu warna `#2547F4`; saat satu jurusan dipilih, keenam batang tetap tampil dan jurusan itu ditonjolkan. Status alumni memakai batang tersegmen tipis dan daftar berlabel: Bekerja `#2547F4`, Kuliah `#FF6B2C`, Wirausaha `#0C8C78`, Belum bekerja `#D4A900`. Dua warna terakhir adalah turunan khusus grafik karena `#0C7C6C` dan `#F3D502` tidak lolos validator palet kategori; dua warna dengan kontras di bawah 3:1 terhadap latar selalu disertai label teks. Nilai grafik selalu terlihat, tanpa animasi loading yang mengesankan inferensi langsung. Implementasi prototype memakai CSS dan JavaScript murni, tanpa dependensi baru.
 
 **Page Galeri Dokumentasi**
 

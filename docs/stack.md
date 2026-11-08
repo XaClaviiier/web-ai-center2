@@ -114,7 +114,7 @@ Hanya mengembalikan data berstatus posted.
 | GET | `/api/testimoni` | Daftar testimoni |
 | GET | `/api/tim` | Daftar tim; tanpa parameter `q`. Pencarian di prototype dilakukan di browser pada nama, jabatan, dan bidang riset \[terbuka: tetap di browser atau pindah ke server\] |
 
-Layanan (Pelatihan, Inference and Solutions) tidak punya endpoint; isinya hardcode di frontend.
+Layanan (Pelatihan, Inference and Solutions) tidak punya endpoint; isinya hardcode di frontend. Demo JejakAlumni juga tidak punya endpoint: direncanakan sebagai halaman Astro statis dengan island, memakai data simulasi lokal \[Lihat requirement.md §4.3\].
 
 ### 9.5 Endpoint admin
 

@@ -77,6 +77,10 @@
 @media (max-width: 47.99rem) { .grid-kartu--album { grid-template-columns: minmax(0, 1fr); } }
 .grid-kartu--tiga { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 62rem) { .grid-kartu--tiga { grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); } }
+.porto__kepala { display: grid; gap: var(--jarak-3); }
+.porto__statis:hover { box-shadow: none; transform: none; }
+.porto .tautan-panah { color: var(--warna-biru); }
+.porto .kartu-album__tautan:hover h3 { color: var(--warna-biru); }
 
 /* Hero beranda */
 .hero { position: relative; display: grid; align-items: center; margin: var(--jarak-3); border-radius: var(--radius-besar); overflow: hidden; color: var(--warna-putih); background: var(--warna-navy); }
