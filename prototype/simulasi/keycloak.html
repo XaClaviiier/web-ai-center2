@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulasi Keycloak</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="../assets/css/tokens.css">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="../assets/css/components.css">
+  <style>
+    body { min-height: 100dvh; display: grid; place-items: center; padding: var(--jarak-5); background: var(--warna-langit-muda); }
+    main { width: min(100%, 28rem); display: grid; gap: var(--jarak-4); padding: var(--jarak-6); background: var(--warna-putih); border: 2px dashed var(--warna-navy); border-radius: var(--radius-besar); }
+    h1 { font-size: var(--judul-3); }
+    .label-sim { font-family: var(--font-data); font-size: var(--teks-kecil); padding: var(--jarak-1) var(--jarak-3); background: var(--warna-kuning); border-radius: var(--radius-kecil); justify-self: start; }
+    ul { display: grid; gap: var(--jarak-3); }
+    .tombol { width: 100%; justify-content: flex-start; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="label-sim">Simulasi, bukan bagian aplikasi</p>
+    <h1>Pilih akun untuk tinjauan</h1>
+    <p class="teks-sekunder">Di produksi, langkah ini adalah halaman login Keycloak. Tidak ada password di simulasi ini.</p>
+    <ul>
+      <li><a class="tombol tombol--utama" href="../admin/index.html?akun=direktur">Dian Direktur (Direktur)</a></li>
+      <li><a class="tombol tombol--utama" href="../admin/index.html?akun=pegawai">Pandu Pegawai (Pegawai)</a></li>
+      <li><a class="tombol tombol--kedua" href="../admin/index.html?akun=tanpa-role">Tamu Tanpa Role (hasilnya 403)</a></li>
+    </ul>
+    <a href="../admin/index.html">Batal</a>
+  </main>
+</body>
+</html>
