@@ -328,7 +328,7 @@ const HALAMAN = {
         el('div.porto__kepala', null,
           el('p.tentang-label', null, 'Portofolio'),
           el('h2', { id: 'j-porto' }, 'Jelajahi Portofolio Kami.'),
-          el('p.bagian__sub', null, 'Kenali contoh penerapan teknologi AI melalui karya dan demonstrasi aplikasi.')),
+          el('p.bagian__sub', null, 'Kenali contoh penerapan teknologi AI melalui demonstrasi aplikasi.')),
         el('div.grid-kartu.grid-kartu--tiga.porto', null, n.portofolio.map(kartuPortofolio))),
       bagianKontak('Diskusikan kebutuhan AI Anda.', 'Ceritakan model, data, atau tantangan yang sedang Anda hadapi. Tim AI Center UBAYA dapat membantu membahas langkah berikutnya.', { wa: 'Diskusikan Kebutuhan AI' }));
   },
@@ -339,6 +339,15 @@ const HALAMAN = {
       breadcrumb([{ label: 'Inference and Solutions', href: 'inference.html' }, { label: 'JejakAlumni' }]),
       JejakAlumni.halaman(),
       bagianKontak('Ingin membahas data lulusan di institusi Anda?', 'Ceritakan kebutuhan evaluasi lulusan Anda. Tim AI Center UBAYA dapat membantu membahas langkah berikutnya.', { wa: 'Diskusikan Kebutuhan AI' }));
+  },
+
+  'perencanaan-implan-gigi'() {
+    const d = K.implan_gigi;
+    setJudul(`${d.judul} (Konseptual)`, d.disclaimer);
+    utama.append(
+      breadcrumb([{ label: 'Inference and Solutions', href: 'inference.html' }, { label: d.judul }]),
+      ...ImplanGigi.bagian(),
+      bagianKontak('Tertarik Mengembangkan Solusi AI Serupa?', 'Diskusikan peluang kolaborasi riset atau pengembangan solusi AI sesuai kebutuhan institusi Anda.', { wa: 'Diskusikan Kebutuhan AI' }));
   },
 
   berita() {
@@ -496,7 +505,7 @@ function aktifkanLembar() {
 
 /* === Mulai === */
 const namaHalaman = document.body.dataset.halaman;
-const menuAktif = ['pelatihan', 'inference', 'jejak-alumni'].includes(namaHalaman) ? 'layanan' : namaHalaman.replace('-detail', '');
+const menuAktif = ['pelatihan', 'inference', 'jejak-alumni', 'perencanaan-implan-gigi'].includes(namaHalaman) ? 'layanan' : namaHalaman.replace('-detail', '');
 document.body.prepend(el('a.lewati', { href: '#utama' }, 'Lewati ke konten'), navbar(menuAktif));
 document.body.append(footer());
 HALAMAN[namaHalaman]();

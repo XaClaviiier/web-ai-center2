@@ -34,7 +34,7 @@ Website dari sisi user akan memiliki navbar dan footer. Kemudian akan berisi:
 * Tim /tim: susunan anggota \+ pencarian.  
 * Tentang Kami /tentang-kami  
 * Fitur konten yang akan berisi dokumentasi dan berita (masing-masing punya routing page sendiri)  
-* Layanan: hanya dua rute tetap, /layanan/pelatihan dan /layanan/inference-solutions (tidak memakai /layanan/:slug). Isinya hardcode di frontend, tidak ada opsi menambah layanan, dan tidak ada endpoint backend untuk layanan. Pengecualian: demo statis /layanan/inference-solutions/jejak-alumni \[Lihat §4.3\].  
+* Layanan: hanya dua rute tetap, /layanan/pelatihan dan /layanan/inference-solutions (tidak memakai /layanan/:slug). Isinya hardcode di frontend, tidak ada opsi menambah layanan, dan tidak ada endpoint backend untuk layanan. Pengecualian: demo statis /layanan/inference-solutions/jejak-alumni dan /layanan/inference-solutions/perencanaan-implan-gigi \[Lihat §4.3\].  
 * List kursus /layanan/pelatihan: dibuatkan kartu untuk display pilihan pelatihan \[Ditunda: aktif setelah Pelatihan Reguler tidak lagi coming soon\]  
 * List layanan dalam 'Inference and Solutions': dibuatkan kartu untuk display layanan konsultasi. Menampilkan dua kategori layanan utama yang dapat menjadi titik awal bagi pengunjung untuk mengenali kebutuhan konsultasi perusahaan. Dua kategori tersebut adalah IT Service Management dan Data Science  
 * Detail kursus /layanan/pelatihan/:kode: fakta, hasil belajar, materi, instruktur. \[Ditunda: aktif setelah Pelatihan Reguler tidak lagi coming soon\]  
@@ -69,7 +69,7 @@ Referensi page pelatihan adalah [https\://aici-umg.com/](https://aici-umg.com/) 
 
 Alur story telling page 'Inference and Solutions' adalah: Hero (memuat carousel pertanyaan untuk menarik minat user untuk berkonsultasi dengan AI Center; arahnya agar user mengetahui urgensi mereka untuk konsultasi solution inference dengan AI Center), jenis solution inference di AI Center, alur solution inference, 3 mock up portofolio (hardcode), dan section kontak kami.
 
-Portofolio menampilkan tiga kartu hardcode: JejakAlumni, Rekomendasi Implan Gigi Otomatis, dan Algae Finder. Hanya JejakAlumni yang menjadi tautan karena dua kartu lain belum punya demo. Copy memakai istilah "contoh penerapan".
+Portofolio menampilkan tiga kartu hardcode: JejakAlumni, Perencanaan Implan Gigi Berbasis AI, dan Algae Finder. Algae Finder bukan tautan karena belum punya demo. Copy memakai istilah "contoh penerapan".
 
 **Demo JejakAlumni** adalah contoh penerapan untuk tracer study sekolah, berstatus "Prototipe · Data Simulasi". Demo ini hardcode di frontend: tanpa backend, database, data alumni sebenarnya, maupun inferensi AI langsung. Rute prototype `public/jejak-alumni.html`; rute produksi direncanakan /layanan/inference-solutions/jejak-alumni. Halaman memakai `noindex`.
 
@@ -77,6 +77,16 @@ Portofolio menampilkan tiga kartu hardcode: JejakAlumni, Rekomendasi Implan Gigi
 * Definisi indikator: Terserap dunia kerja adalah responden yang memperoleh pekerjaan dalam 6 bulan setelah lulus, tidak termasuk wirausaha. Bekerja adalah status saat mengisi kuesioner. Kerja sesuai bidang adalah bagian dari responden berstatus bekerja. Masa tunggu adalah median bulan hingga pekerjaan pertama pada responden yang terserap.
 * Statistik tidak disebut hasil AI. Hanya tema dan ringkasan yang berlabel simulasi AI, dan keduanya berlaku per angkatan untuk seluruh jurusan, tidak mengikuti filter jurusan.
 * Pembanding hanya tampil bila data angkatan sebelumnya ada; angkatan 2024 tidak punya pembanding.
+
+**Demo Perencanaan Implan Gigi Berbasis AI** adalah demo penelitian, berstatus "Demo Penelitian · Visualisasi Konseptual · Nonklinis". Demo ini hardcode di frontend: tanpa backend, unggah CBCT, data pasien, inferensi AI, maupun rekomendasi ukuran. Rute prototype `public/perencanaan-implan-gigi.html`; rute produksi direncanakan /layanan/inference-solutions/perencanaan-implan-gigi. Halaman memakai `noindex`.
+
+* Isi: konteks, empat tahap terpandu (Identifikasi Area Edentulous, Segmentasi Anatomi Rahang, Rekomendasi Dimensi Implan, Visualisasi 3D), cara kerja AI, hasil penelitian, batasan, dan kontak.
+* Semua gambar adalah ilustrasi konseptual buatan sendiri. Kontrol hanya mengganti tampilan yang sudah disiapkan; tidak ada proses atau loading tiruan.
+* Dimensi implan ditampilkan sebagai "Ilustratif / Tidak Ditentukan". Tidak ada angka ukuran implan untuk pasien tertentu.
+* Metrik ditampilkan sebagai hasil evaluasi yang dilaporkan dalam penelitian yang menjadi dasar demonstrasi ini, selalu bersama tugas yang diukur, dan terpisah dari ilustrasi. Klaim kesetaraan dengan dokter gigi, kesiapan klinis, atau keamanan ukuran tidak boleh dipakai.
+* Disclaimer nonklinis wajib terlihat sebelum area demo.
+* Untuk saat ini halaman tidak mencantumkan nama penulis, judul publikasi, maupun tahun terbit (keputusan pemilik). Asal dataset tidak disebut di halaman publik. Copy tidak boleh mengklaim AI Center UBAYA memiliki dataset, mengembangkan model, melakukan studi, atau bermitra secara institusional tanpa verifikasi, dan tidak boleh mengesankan demo memproses dataset penelitian atau data pasien. Bila publikasi atau lisensi data mewajibkan kredit publik, tambahkan bagian referensi penelitian.
+* \[Ditandai\] Tinjauan ahli kedokteran gigi untuk ilustrasi, terutama arah slice, posisi kanal mandibula, bentuk tulang alveolar, dan penempatan implan.
 
 ### 4.4 Page Dokumentasi
 

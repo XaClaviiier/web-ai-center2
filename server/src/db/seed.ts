@@ -54,7 +54,7 @@ export const SEED_DOKUMENTASI: DokumentasiSeed[] = [
       'Menganalisis citra CBCT 3D untuk merekomendasikan ukuran, posisi, dan sudut implan gigi secara otomatis.',
     tanggal: '2026-08-20',
     kategori: 'Kesehatan',
-    gambar: '/portofolio/implan-gigi.jpg',
+    gambar: '/portofolio/implan-gigi-konseptual.svg',
   },
   {
     slug: 'algae-finder',

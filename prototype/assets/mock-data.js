@@ -2,7 +2,7 @@
    Tanggal publikasi: string DD-MM-YYYY. `gambar`, `foto`, `key` = nama file di assets/img. */
 const MOCK = (() => {
   const audit = (i) => ({ created_at: `2026-10-${String((i % 27) + 1).padStart(2, '0')}T02:00:00Z`, created_by: 'sub-direktur', updated_by: 'sub-direktur' });
-  const fotoContoh = ['ruang-pelatihan.jpg', 'ruang-diskusi.jpg', 'ruang-demo.jpg', 'implan-gigi.jpg', 'algae-finder.jpg', 'cacat-las.jpg', 'gesture-translator.jpg', 'xray-pneumonia.jpg', 'kesegaran-ikan.jpg'];
+  const fotoContoh = ['ruang-pelatihan.jpg', 'ruang-diskusi.jpg', 'ruang-demo.jpg', 'algae-finder.jpg', 'cacat-las.jpg', 'gesture-translator.jpg', 'xray-pneumonia.jpg', 'kesegaran-ikan.jpg'];
   const catatanContoh = 'Teks ini adalah data contoh untuk meninjau tampilan prototype dan bukan berita sungguhan.';
 
   // [judul, tanggal, status, dihapus]
@@ -46,7 +46,7 @@ const MOCK = (() => {
     judul: 'AI Center Ubaya Siap Dukung Layanan Kesehatan di Jawa Timur',
     isi: 'Pengembangan AI Center dibahas dalam audiensi Rektor Ubaya, Benny Lianto, dengan Gubernur Jawa Timur, Khofifah Indar Parawansa, di Gedung Negara Grahadi, Surabaya, Jumat (22/5/2026). Gubernur Khofifah menyambut positif langkah Ubaya mengembangkan teknologi AI untuk mendukung sektor kesehatan dan peningkatan kualitas sumber daya manusia.\n\nRektor Benny Lianto menyebut AI Center diproyeksikan menjadi pusat riset unggulan di Jawa Timur yang menghasilkan inovasi berbasis AI yang aplikatif, antara lain teknologi implan gigi dan aplikasi AI untuk membantu diagnosis penyakit.\n\nPengembangan AI kesehatan di Ubaya didukung ekosistem yang lengkap, mulai dari Fakultas Kedokteran, rumah sakit milik kampus, hingga kolaborasi dengan institusi kesehatan lain termasuk RSUD Dr. Soetomo. Artikel ini disadur dari siaran pers Dinas Komunikasi dan Informatika Provinsi Jawa Timur (23 Mei 2026).',
     tanggal_publikasi: '22-05-2026',
-    gambar: 'implan-gigi.jpg',
+    gambar: 'ruang-diskusi.jpg',
     status: 'posted',
     version: 1,
     deleted_at: null,
@@ -54,7 +54,7 @@ const MOCK = (() => {
   });
 
   const karya = [
-    ['Rekomendasi Implan Gigi Otomatis', '20-08-2026', 'implan-gigi.jpg'],
+    ['Rekomendasi Implan Gigi Otomatis', '20-08-2026', 'implan-gigi-konseptual.svg'],
     ['Algae Finder', '28-07-2026', 'algae-finder.jpg'],
     ['Translator Bahasa Isyarat', '02-07-2026', 'gesture-translator.jpg'],
     ['Deteksi Cacat Las', '28-05-2026', 'cacat-las.jpg'],
@@ -189,10 +189,10 @@ const MOCK = (() => {
         { judul: 'Integrasi & pengujian', deskripsi: 'API disambungkan ke aplikasi Anda lalu diuji pada data nyata.' },
         { judul: 'Operasional & purna implementasi', deskripsi: 'Monitoring, pembaruan model, dan dukungan teknis setelah layanan berjalan.' },
       ],
-      // Hanya entri ber-href yang punya demo; Implan Gigi dan Algae Finder belum punya.
+      // Hanya entri ber-href yang punya demo; Algae Finder belum punya.
       portofolio: [
         { judul: 'JejakAlumni', bidang: 'Pendidikan', deskripsi: 'Jelajahi contoh analisis data alumni sekolah, mulai dari penyerapan kerja hingga contoh ringkasan masukan lulusan berbantuan AI.', gambar: 'jejak-alumni-preview.webp', href: 'jejak-alumni.html', status: 'Prototipe · Data Simulasi', cta: 'Coba Prototipe' },
-        { judul: 'Rekomendasi Implan Gigi Otomatis', bidang: 'Kesehatan', deskripsi: 'Menganalisis citra CBCT 3D untuk merekomendasikan ukuran, posisi, dan sudut implan gigi secara otomatis.', gambar: 'implan-gigi.jpg' },
+        { judul: 'Perencanaan Implan Gigi Berbasis AI', bidang: 'Riset AI Medis', deskripsi: 'Jelajahi bagaimana pendekatan AI digunakan untuk mengidentifikasi area kehilangan gigi, memetakan struktur rahang, dan mendukung visualisasi perencanaan implan.', gambar: 'implan-gigi-konseptual.svg', href: 'perencanaan-implan-gigi.html', status: 'Demo Penelitian · Visualisasi Konseptual · Nonklinis', cta: 'Jelajahi Demo' },
         { judul: 'Algae Finder', bidang: 'Lingkungan', deskripsi: 'Mendeteksi dan menghitung jenis mikroalga di perairan dari citra mikroskop.', gambar: 'algae-finder.jpg' },
       ],
     },
@@ -259,6 +259,165 @@ const MOCK = (() => {
         data_catatan: 'Demo hanya menampilkan data lulusan dan kuesioner simulasi. Data mitra industri belum ditampilkan.',
         hasil: 'Informasi mengenai kondisi lulusan menjadi lebih mudah ditinjau untuk kebutuhan evaluasi, pelaporan, dan diskusi pengembangan pembelajaran.',
       },
+    },
+    // Metrik berasal dari abstrak penelitian, bukan hasil demo. Ilustrasi konseptual, tidak ada inferensi.
+    // Jangan menambah angka ukuran implan: abstrak tidak memberi nilai untuk pasien tertentu.
+    implan_gigi: {
+      judul: 'Perencanaan Implan Gigi Berbasis AI',
+      deskripsi: 'Demonstrasi interaktif yang memperkenalkan tahapan penelitian AI berbasis citra CBCT, mulai dari identifikasi area edentulous, segmentasi anatomi rahang, hingga rekomendasi dimensi dan visualisasi 3D.',
+      label: ['Demo Penelitian', 'Visualisasi Konseptual', 'Nonklinis'],
+      disclaimer: 'Demo ini merupakan visualisasi konseptual berdasarkan alur penelitian. Tidak digunakan untuk diagnosis, penentuan tindakan klinis, atau perencanaan implan pada pasien nyata.',
+      catatan_demo: 'Tidak ada citra pasien, pemrosesan CBCT, atau inferensi AI yang dijalankan dalam demonstrasi ini.',
+      konteks: [
+        { judul: 'Kondisi tulang berbeda', teks: 'Implan gigi menggantikan akar gigi yang hilang dan menjadi dasar gigi tiruan. Perencanaannya perlu menilai anatomi rahang dengan teliti karena kondisi tulang berbeda pada tiap orang.' },
+        { judul: 'Peran CBCT', teks: 'Dokter gigi memakai Cone Beam Computed Tomography (CBCT) untuk melihat anatomi tulang rahang dan merencanakan dimensi implan.' },
+        { judul: 'Hubungan AB dan MC', teks: 'Tulang alveolar (Alveolar Bone, AB) menopang gigi dan berkaitan dengan penempatan implan. Hubungan implan dengan kanal mandibula (Mandibular Canal, MC) perlu diperhatikan dengan cermat.' },
+        { judul: 'Bagian yang dibantu AI', teks: 'Penelitian yang menjadi dasar demonstrasi ini mengkaji empat langkah pada implan molar rahang bawah: identifikasi area edentulous, segmentasi anatomi, rekomendasi dimensi implan, dan rekonstruksi 3D.' },
+      ],
+      tahap: [
+        {
+          singkat: 'Area Edentulous',
+          judul: 'Identifikasi Area Edentulous',
+          inti: 'Area edentulous adalah bagian rahang tempat gigi sudah tidak ada. Menemukan area ini menjadi langkah awal sebelum membahas perencanaan implan.',
+          ilustrasi: 'Ilustrasi konseptual lengkung rahang bawah dari atas, dengan satu area molar tanpa gigi.',
+          keterangan: 'Lima posisi slice melintasi lengkung rahang. Penanda pada posisi 3 menunjukkan area edentulous.',
+          ditunjukkan: 'Lengkung rahang bawah dari atas, satu area molar tanpa gigi, dan lima posisi slice yang sudah diberi penanda.',
+          peran_ai: 'Penelitian memakai model klasifikasi berbasis transfer learning untuk mengenali slice yang memuat area edentulous pada rahang bawah.',
+          hasil: [{ label: 'F1-score MobileNetV2', nilai: '99,97%' }],
+          hasil_catatan: 'MobileNetV2 memperoleh F1-score 99,97% pada evaluasi klasifikasi slice edentulous yang dilaporkan dalam penelitian. Angka ini tidak berlaku untuk keseluruhan alur perencanaan implan.',
+          batasan: 'Penanda area pada ilustrasi ini telah disiapkan sebelumnya dan bukan keluaran model yang dijalankan secara langsung.',
+          legenda: [
+            { kelas: 'gigi', teks: 'Gigi' },
+            { kelas: 'target', teks: 'Area edentulous' },
+            { kelas: 'bergigi', teks: 'Penanda slice bergigi' },
+            { kelas: 'edentulous', teks: 'Penanda slice edentulous' },
+          ],
+          kontrol: [
+            { tipe: 'toggle', kunci: 'area', label: 'Tampilkan Area Edentulous' },
+            { tipe: 'toggle', kunci: 'penanda', label: 'Tampilkan Penanda Klasifikasi' },
+          ],
+        },
+        {
+          singkat: 'Segmentasi Anatomi',
+          judul: 'Segmentasi Anatomi Rahang',
+          inti: 'Segmentasi berarti menandai area setiap struktur pada citra. Di sini ada dua struktur: tulang alveolar (AB) yang menopang gigi, dan kanal mandibula (MC) yang hubungannya dengan implan perlu diperhatikan.',
+          ilustrasi: 'Ilustrasi konseptual penampang rahang pada satu posisi sepanjang lengkung rahang.',
+          ditunjukkan: 'Penampang konseptual di lima posisi sepanjang lengkung rahang. Peta kecil menunjukkan posisi yang sedang dilihat.',
+          peran_ai: 'DIR-YOLO (Dental Implant Recommender-YOLO) dikembangkan untuk segmentasi AB dan MC pada slice yang mengikuti lengkung rahang, bukan hanya tampilan koronal atau aksial biasa.',
+          hasil: [
+            { label: 'DSC AB', nilai: '97,65%' },
+            { label: 'DSC MC', nilai: '86,59%' },
+            { label: 'mDSC', nilai: '92,12%' },
+          ],
+          hasil_catatan: 'Hasil evaluasi yang dilaporkan dalam penelitian, bukan keluaran demo ini. Dice Similarity Coefficient (DSC) mengukur kemiripan area hasil segmentasi dengan area acuan.',
+          batasan: 'Overlay anatomi ini merupakan ilustrasi konseptual, bukan hasil segmentasi dari citra CBCT pasien.',
+          teknis: {
+            judul: 'DIR-YOLO',
+            pengantar: 'Berbasis modifikasi arsitektur YOLOv8n:',
+            butir: ['Blok C2f diganti dengan C3Ghost.', 'Ghost Convolution mengurangi parameter model dan meningkatkan efisiensi komputasi.', 'Segmentation head dikurangi dari tiga skala menjadi dua skala, rendah dan tinggi.', 'Arsitektur disesuaikan dengan karakteristik AB dan MC.'],
+          },
+          legenda: [
+            { kelas: 'tulang', teks: 'Tulang rahang' },
+            { kelas: 'gigi', teks: 'Gigi' },
+            { kelas: 'ab', teks: 'Alveolar Bone (AB), arsir' },
+            { kelas: 'mc', teks: 'Mandibular Canal (MC), lingkaran' },
+          ],
+          kontrol: [
+            { tipe: 'toggle', kunci: 'ab', label: 'Tampilkan Alveolar Bone' },
+            { tipe: 'toggle', kunci: 'mc', label: 'Tampilkan Mandibular Canal' },
+            { tipe: 'pilihan', kunci: 'slice', label: 'Posisi Slice', awal: '3', opsi: [
+              { nilai: '1', label: '1', keterangan: 'Posisi 1 dari 5: slice bergigi di area premolar.' },
+              { nilai: '2', label: '2', keterangan: 'Posisi 2 dari 5: slice bergigi di area premolar.' },
+              { nilai: '3', label: '3', keterangan: 'Posisi 3 dari 5: area edentulous, tidak ada gigi di atas tulang.' },
+              { nilai: '4', label: '4', keterangan: 'Posisi 4 dari 5: slice bergigi di area molar.' },
+              { nilai: '5', label: '5', keterangan: 'Posisi 5 dari 5: slice bergigi di area molar.' },
+            ] },
+          ],
+        },
+        {
+          singkat: 'Dimensi Implan',
+          judul: 'Rekomendasi Dimensi Implan',
+          inti: 'Diameter dan tinggi implan perlu disesuaikan dengan kondisi tulang. Penelitian tersebut mengkaji rekomendasi dimensi implan untuk molar rahang bawah berdasarkan informasi anatomi.',
+          ilustrasi: 'Ilustrasi konseptual penampang rahang dengan implan skematis dan panah ukuran, tanpa nilai dan tanpa skala.',
+          keterangan: 'Gambar tidak berskala. Jarak antarbagian tidak menunjukkan posisi yang aman.',
+          ditunjukkan: 'Penampang skematis dengan implan, tulang, kanal, dan panah yang menjelaskan arti diameter dan tinggi implan.',
+          peran_ai: 'Penelitian mengembangkan pendekatan rekomendasi dimensi implan secara otomatis. Rekomendasi berupa angka membutuhkan masukan anatomi nyata yang tervalidasi dan keluaran model, sehingga demo ini tidak menampilkan angka ukuran.',
+          nilai: [
+            { label: 'Diameter Implan', nilai: 'Ilustratif / Tidak Ditentukan' },
+            { label: 'Tinggi Implan', nilai: 'Ilustratif / Tidak Ditentukan' },
+          ],
+          hasil: [
+            { label: 'MAE diameter', nilai: '0,17 mm' },
+            { label: 'MAE tinggi implan', nilai: '0,10 mm' },
+          ],
+          hasil_catatan: 'Evaluasi pada 30 pasien dalam penelitian yang dilaporkan, bukan ukuran dari demo ini. Mean Absolute Error (MAE) adalah rata-rata selisih absolut.',
+          batasan: 'Ilustrasi ini menjelaskan konsep rekomendasi dimensi implan dan tidak menghasilkan ukuran yang dapat digunakan untuk tindakan klinis.',
+          legenda: [
+            { kelas: 'tulang', teks: 'Tulang rahang' },
+            { kelas: 'ab', teks: 'Alveolar Bone (AB), arsir' },
+            { kelas: 'mc', teks: 'Mandibular Canal (MC), lingkaran' },
+            { kelas: 'implan', teks: 'Implan skematis' },
+          ],
+          kontrol: [
+            { tipe: 'toggle', kunci: 'ukur', label: 'Tampilkan Pengukuran' },
+            { tipe: 'toggle', kunci: 'anatomi', label: 'Tampilkan Struktur Anatomi' },
+          ],
+        },
+        {
+          singkat: 'Visualisasi 3D',
+          judul: 'Visualisasi 3D Konseptual',
+          inti: 'Penelitian juga merekonstruksi struktur anatomi hasil segmentasi agar penempatan implan dapat dilihat bersama dalam tiga dimensi.',
+          ilustrasi: 'Simulasi visualisasi 3D konseptual rahang bawah, alveolar bone, kanal mandibula, dan implan skematis.',
+          ditunjukkan: 'Simulasi visualisasi 3D konseptual dengan tiga sudut pandang yang sudah disiapkan. Struktur di dalam rahang digambar seolah tembus pandang.',
+          peran_ai: 'Rekonstruksi dan visualisasi 3D diintegrasikan ke dalam aplikasi penelitian untuk perencanaan implan berbasis CBCT.',
+          batasan: 'Visualisasi ini bersifat konseptual dan tidak merepresentasikan rekonstruksi 3D pasien atau keluaran aktual dari model penelitian.',
+          legenda: [
+            { kelas: 'tulang', teks: 'Rahang dan gigi' },
+            { kelas: 'ab', teks: 'Alveolar Bone (AB)' },
+            { kelas: 'mc', teks: 'Mandibular Canal (MC)' },
+            { kelas: 'implan', teks: 'Implan skematis' },
+          ],
+          kontrol: [
+            { tipe: 'toggle', kunci: 'rahang', label: 'Tampilkan Rahang' },
+            { tipe: 'toggle', kunci: 'ab', label: 'Tampilkan Alveolar Bone' },
+            { tipe: 'toggle', kunci: 'mc', label: 'Tampilkan Mandibular Canal' },
+            { tipe: 'toggle', kunci: 'implan', label: 'Tampilkan Implan' },
+            { tipe: 'pilihan', kunci: 'sudut', label: 'Sudut pandang', awal: 'perspektif', opsi: [
+              { nilai: 'perspektif', label: 'Perspektif', keterangan: 'Sudut pandang perspektif, dari depan atas.' },
+              { nilai: 'samping', label: 'Samping', keterangan: 'Sudut pandang samping, dari sisi area edentulous.' },
+              { nilai: 'depan', label: 'Depan', keterangan: 'Sudut pandang depan.' },
+            ] },
+          ],
+        },
+      ],
+      cara_kerja: [
+        { judul: 'Transfer learning', teks: 'Model yang sudah dilatih untuk tugas lain disesuaikan untuk tugas baru. Penelitian tersebut memakai pendekatan tersebut pada klasifikasi slice edentulous.' },
+        { judul: 'MobileNetV2', teks: 'Arsitektur yang memperoleh kinerja tertinggi pada evaluasi klasifikasi slice edentulous dalam penelitian tersebut.' },
+        { judul: 'DIR-YOLO', teks: 'Model segmentasi AB dan MC hasil modifikasi YOLOv8n. Ghost Convolution dan C3Ghost dipakai untuk mengurangi parameter model, dan segmentation head memakai dua skala.' },
+        { judul: 'Segmentasi anatomi', teks: 'Proses menandai area AB dan MC pada slice yang mengikuti lengkung rahang, sehingga kedua struktur dapat ditinjau secara terpisah.' },
+        { judul: 'Rekomendasi dimensi implan', teks: 'Pendekatan otomatis dalam penelitian untuk merekomendasikan diameter dan tinggi implan. Demo ini hanya menjelaskan konsepnya dan tidak menghasilkan ukuran.' },
+      ],
+      hasil: [
+        { judul: 'Klasifikasi area edentulous', nilai: '99,97%', metrik: 'F1-score MobileNetV2', rincian: 'Berlaku untuk klasifikasi slice edentulous.' },
+        { judul: 'Segmentasi anatomi', nilai: '92,12%', metrik: 'mDSC DIR-YOLO', rincian: 'AB 97,65% dan MC 86,59%.' },
+        { judul: 'Evaluasi diameter', nilai: '0,17 mm', metrik: 'Mean Absolute Error', rincian: 'Evaluasi pada 30 pasien.' },
+        { judul: 'Evaluasi tinggi implan', nilai: '0,10 mm', metrik: 'Mean Absolute Error', rincian: 'Evaluasi pada 30 pasien.' },
+      ],
+      hasil_pengantar: 'Metrik yang ditampilkan merupakan hasil evaluasi yang dilaporkan dalam penelitian yang menjadi dasar demonstrasi ini, bukan hasil pengujian langsung aplikasi demo.',
+      hasil_batasan: [
+        'Angka ini tidak menunjukkan kesiapan klinis untuk penggunaan umum dan bukan akurasi diagnostik.',
+        'Hasil evaluasi 30 pasien tidak dapat digeneralisasi ke semua populasi.',
+      ],
+      statistik: [
+        "Cohen's Weighted Kappa: signifikansi p < 0,001. Nilai koefisien kesepakatan tidak tersedia pada ringkasan ini, sehingga tingkat kesepakatan belum dapat disimpulkan.",
+        'Kruskal–Wallis: signifikansi asimptotik 0,658 untuk diameter dan 0,982 untuk tinggi implan. Hasil ini berarti tidak ditemukan perbedaan signifikan, bukan bukti kesetaraan klinis.',
+      ],
+      batasan: [
+        'Seluruh gambar adalah ilustrasi konseptual buatan khusus untuk demo ini.',
+        'Tidak ada dataset penelitian, citra CBCT, atau data pasien dalam demo ini.',
+        'Tidak ada inferensi AI yang berjalan. Kontrol hanya mengganti tampilan yang sudah disiapkan.',
+        'Demo ini bukan alat bantu keputusan klinis dan tidak menghasilkan rencana implan.',
+      ],
     },
     tentang: {
       hero_judul: 'Mendekatkan Inovasi AI dengan Kebutuhan Nyata.',

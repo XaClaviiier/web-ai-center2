@@ -80,6 +80,7 @@
 .porto__kepala { display: grid; gap: var(--jarak-3); }
 .porto__statis:hover { box-shadow: none; transform: none; }
 .porto .tautan-panah { color: var(--warna-biru); }
+.porto .badge { white-space: normal; border-radius: var(--radius-sedang); }
 .porto .kartu-album__tautan:hover h3 { color: var(--warna-biru); }
 
 /* Hero beranda */
