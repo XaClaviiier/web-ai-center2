@@ -90,14 +90,14 @@ function avatar(nama, key) {
 
 /* === Layar tanpa kerangka === */
 function layar({ judul, teks, aksi, galat }) {
-  document.title = `${judul} | Admin AI Center UBAYA`;
+  document.title = `${judul} | Admin UBAYA AI Center`;
   aplikasi.replaceChildren(el('main.layar', null, el('div.layar__kartu', null,
-    el('img.layar__logo', { src: '../assets/img/AI-Center_Logo.png', alt: 'AI Center UBAYA', height: 44 }),
+    el('img.layar__logo', { src: '../assets/img/AI-Center_Logo.png', alt: 'UBAYA AI Center', height: 44 }),
     el('h1', { class: galat ? 'layar__judul layar__judul--galat' : 'layar__judul' }, judul),
     el('p.teks-sekunder', null, teks),
     aksi)));
 }
-const layarMasuk = () => layar({ judul: 'Masuk ke admin', teks: 'Masuk memakai akun AI Center UBAYA Anda untuk mengelola konten website.', aksi: tautanTombol('Masuk', 'utama', URL_LOGIN) });
+const layarMasuk = () => layar({ judul: 'Masuk ke admin', teks: 'Masuk memakai akun UBAYA AI Center Anda untuk mengelola konten website.', aksi: tautanTombol('Masuk', 'utama', URL_LOGIN) });
 const layar401 = () => { hentikanForm(); layar({ judul: 'Sesi Anda sudah berakhir', teks: 'Silakan masuk kembali untuk melanjutkan.', aksi: tautanTombol('Masuk kembali', 'utama', URL_LOGIN) }); };
 const layar403 = () => layar({ judul: 'Anda tidak punya akses', teks: 'Akun ini belum memiliki role untuk mengelola konten. Hubungi pengelola akun Anda.', galat: true, aksi: tombol('Keluar', 'kedua', { onclick: keluar }, 'keluar') });
 
@@ -121,7 +121,7 @@ function kerangka(aktif, isi) {
     // Hash dipakai router, jadi skip link memindahkan fokus tanpa mengubah hash.
     el('a.lewati', { href: '#isi', onclick: (e) => { e.preventDefault(); document.getElementById('isi').focus(); } }, 'Lewati ke konten'),
     el('header.atas', null,
-      el('a.atas__logo', { href: '#/berita', 'aria-label': 'Admin AI Center UBAYA' }, el('img', { src: '../assets/img/AI-Center_Logo.png', alt: '', height: 36 })),
+      el('a.atas__logo', { href: '#/berita', 'aria-label': 'Admin UBAYA AI Center' }, el('img', { src: '../assets/img/AI-Center_Logo.png', alt: '', height: 36 })),
       el('div.atas__akun', null,
         el('span.atas__nama', null, el('strong', null, akun.nama), el('span.teks-sekunder', null, akun.role)),
         tombol('Keluar', 'kedua', { class: 'tombol tombol--kedua tombol--kecil', onclick: keluar }, 'keluar'))),
@@ -132,7 +132,7 @@ function kerangka(aktif, isi) {
 function halamanDaftar(sumber, trash) {
   const e = ENTITAS[sumber];
   const wadah = el('div', { id: 'daftar' });
-  document.title = `${e.label}${trash ? ' (Trash)' : ''} | Admin AI Center UBAYA`;
+  document.title = `${e.label}${trash ? ' (Trash)' : ''} | Admin UBAYA AI Center`;
   kerangka(sumber, [
     el('div.kepala', null,
       el('h1', { tabindex: '-1' }, trash ? `Trash ${e.label}` : e.label),
@@ -400,7 +400,7 @@ async function halamanForm(sumber, id) {
   const e = ENTITAS[sumber];
   const baru = id === null;
   const judulHalaman = baru ? `Tambah ${e.nama}` : `Edit ${e.nama}`;
-  document.title = `${judulHalaman} | Admin AI Center UBAYA`;
+  document.title = `${judulHalaman} | Admin UBAYA AI Center`;
   const kembali = `#/${sumber}`;
   kerangka(sumber, kerangkaBaris(6));
   const isi = aplikasi.querySelector('#isi');

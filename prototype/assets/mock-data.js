@@ -31,7 +31,7 @@ const MOCK = (() => {
     id: i + 2,
     slug: judul.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     judul,
-    isi: `${judul} menjadi salah satu kegiatan yang disiapkan AI Center UBAYA untuk membantu peserta memahami manfaat kecerdasan artifisial dalam pekerjaan sehari-hari.\n\nPeserta mempelajari konsep dasar, mencoba latihan singkat, lalu berdiskusi bersama tim tentang penerapan yang paling sesuai dengan kebutuhan mereka.\n\n${catatanContoh}`,
+    isi: `${judul} menjadi salah satu kegiatan yang disiapkan UBAYA AI Center untuk membantu peserta memahami manfaat kecerdasan artifisial dalam pekerjaan sehari-hari.\n\nPeserta mempelajari konsep dasar, mencoba latihan singkat, lalu berdiskusi bersama tim tentang penerapan yang paling sesuai dengan kebutuhan mereka.\n\n${catatanContoh}`,
     tanggal_publikasi,
     gambar: fotoContoh[i % fotoContoh.length],
     status,
@@ -43,7 +43,7 @@ const MOCK = (() => {
   berita.unshift({
     id: 1,
     slug: 'ai-center-dukung-layanan-kesehatan-jatim',
-    judul: 'AI Center Ubaya Siap Dukung Layanan Kesehatan di Jawa Timur',
+    judul: 'UBAYA AI Center Siap Dukung Layanan Kesehatan di Jawa Timur',
     isi: 'Pengembangan AI Center dibahas dalam audiensi Rektor Ubaya, Benny Lianto, dengan Gubernur Jawa Timur, Khofifah Indar Parawansa, di Gedung Negara Grahadi, Surabaya, Jumat (22/5/2026). Gubernur Khofifah menyambut positif langkah Ubaya mengembangkan teknologi AI untuk mendukung sektor kesehatan dan peningkatan kualitas sumber daya manusia.\n\nRektor Benny Lianto menyebut AI Center diproyeksikan menjadi pusat riset unggulan di Jawa Timur yang menghasilkan inovasi berbasis AI yang aplikatif, antara lain teknologi implan gigi dan aplikasi AI untuk membantu diagnosis penyakit.\n\nPengembangan AI kesehatan di Ubaya didukung ekosistem yang lengkap, mulai dari Fakultas Kedokteran, rumah sakit milik kampus, hingga kolaborasi dengan institusi kesehatan lain termasuk RSUD Dr. Soetomo. Artikel ini disadur dari siaran pers Dinas Komunikasi dan Informatika Provinsi Jawa Timur (23 Mei 2026).',
     tanggal_publikasi: '22-05-2026',
     gambar: 'ruang-diskusi.jpg',
@@ -136,7 +136,7 @@ const MOCK = (() => {
       email: 'aicenter@unit.ubaya.ac.id',
       whatsapp: '0895-6342-22240',
       whatsapp_url: 'https://wa.me/62895634222240?text=' + encodeURIComponent('Halo Ubaya AI Center, saya ingin berdiskusi mengenai layanan/kerja sama AI.'),
-      email_url: 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent('aicenter@unit.ubaya.ac.id') + '&su=' + encodeURIComponent('Kolaborasi dengan AI Center Ubaya'),
+      email_url: 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent('aicenter@unit.ubaya.ac.id') + '&su=' + encodeURIComponent('Kolaborasi dengan UBAYA AI Center'),
       instagram: '@aicenter_ubaya',
       instagram_url: 'https://instagram.com/aicenter_ubaya',
       alamat: ['Gedung Fakultas Teknik · TA 1.2', 'Jalan Raya Kalirungkut, Tenggilis, Surabaya'],
@@ -157,7 +157,7 @@ const MOCK = (() => {
       hero_judul: 'Pelatihan AI untuk kebutuhan belajar dan kerja.',
       hero_sub: 'Kenali Pelatihan Reguler yang sedang disiapkan, Pelatihan Khusus sesuai kebutuhan kelompok, serta Workshop atau Seminar untuk Bisnis.',
       reguler: 'Program pelatihan reguler sedang kami siapkan.',
-      khusus_sub: 'Ceritakan tujuan belajar dan kebutuhan peserta. AI Center UBAYA dapat membahas format pelatihan untuk sekolah, kampus, komunitas, atau organisasi.',
+      khusus_sub: 'Ceritakan tujuan belajar dan kebutuhan peserta. UBAYA AI Center dapat membahas format pelatihan untuk sekolah, kampus, komunitas, atau organisasi.',
       // Empat langkah berikut dikonfirmasi sebagai proses layanan oleh pemilik.
       alur_konsultasi: [
         { judul: 'Ceritakan kebutuhan', deskripsi: 'Hubungi kami dan sampaikan tujuan serta peserta pelatihan.' },
@@ -169,7 +169,7 @@ const MOCK = (() => {
     },
     inference: {
       hero_judul: 'Bawa model AI ke penggunaan nyata.',
-      hero_sub: 'Inference adalah proses menggunakan model AI untuk menghasilkan prediksi pada data baru. AI Center UBAYA membantu membahas bagaimana hasil tersebut dapat digunakan oleh aplikasi atau sistem sesuai kebutuhan Anda.',
+      hero_sub: 'Inference adalah proses menggunakan model AI untuk menghasilkan prediksi pada data baru. UBAYA AI Center membantu membahas bagaimana hasil tersebut dapat digunakan oleh aplikasi atau sistem sesuai kebutuhan Anda.',
       pertanyaan: [
         'Model riset atau prototipe sudah jadi, tetapi belum bisa dipakai tim lain?',
         'Butuh fitur AI di aplikasi atau website tanpa membangun infrastruktur ML sendiri?',
@@ -189,18 +189,17 @@ const MOCK = (() => {
         { judul: 'Integrasi & pengujian', deskripsi: 'API disambungkan ke aplikasi Anda lalu diuji pada data nyata.' },
         { judul: 'Operasional & purna implementasi', deskripsi: 'Monitoring, pembaruan model, dan dukungan teknis setelah layanan berjalan.' },
       ],
-      // Hanya entri ber-href yang punya demo; Algae Finder belum punya.
       portofolio: [
-        { judul: 'JejakAlumni', bidang: 'Pendidikan', deskripsi: 'Jelajahi contoh analisis data alumni sekolah, mulai dari penyerapan kerja hingga contoh ringkasan masukan lulusan berbantuan AI.', gambar: 'jejak-alumni-preview.webp', href: 'jejak-alumni.html', status: 'Prototipe · Data Simulasi', cta: 'Coba Prototipe' },
+        { judul: 'JejakAlumni', bidang: 'Pendidikan', deskripsi: 'Jelajahi contoh analisis data alumni sekolah, mulai dari penyerapan kerja hingga contoh ringkasan masukan lulusan berbantuan AI.', gambar: 'jejak-alumni-preview.webp', href: 'jejak-alumni.html', status: 'Demo Konsep · Data Simulasi', cta: 'Jelajahi Demo' },
         { judul: 'Perencanaan Implan Gigi Berbasis AI', bidang: 'Riset AI Medis', deskripsi: 'Jelajahi bagaimana pendekatan AI digunakan untuk mengidentifikasi area kehilangan gigi, memetakan struktur rahang, dan mendukung visualisasi perencanaan implan.', gambar: 'implan-gigi-konseptual.svg', href: 'perencanaan-implan-gigi.html', status: 'Demo Penelitian · Visualisasi Konseptual · Nonklinis', cta: 'Jelajahi Demo' },
-        { judul: 'Algae Finder', bidang: 'Lingkungan', deskripsi: 'Mendeteksi dan menghitung jenis mikroalga di perairan dari citra mikroskop.', gambar: 'algae-finder.jpg' },
+        { judul: 'DocNext', bidang: 'AI untuk Bisnis', deskripsi: 'Jelajahi bagaimana pendekatan AI dapat membantu mengekstraksi informasi dari dokumen bisnis, mencocokkan data transaksi, dan mengidentifikasi ketidaksesuaian yang memerlukan pemeriksaan lebih lanjut.', gambar: 'document-intelligence-konseptual.svg', href: 'document-intelligence.html', status: 'Demo Konsep · Dokumen Sintetis', cta: 'Jelajahi Demo' },
       ],
     },
     // Seluruh angka dan teks berikut adalah simulasi, bukan data sekolah dan bukan hasil model AI.
     // Sumber kebenaran: jumlah orang per jurusan; persentase dan total dihitung di assets/js/jejak-alumni.js.
     // Median disimpan langsung karena tidak bisa dihitung dari median per jurusan.
     jejak_alumni: {
-      status: 'Prototipe · Data Simulasi',
+      status: 'Demo Konsep · Data Simulasi',
       disclaimer: 'Seluruh data dan contoh hasil analisis dalam demo ini bersifat simulasi. Tidak ada pemrosesan AI secara langsung atau penggunaan data alumni sebenarnya.',
       jurusan: ['TKJ', 'TKR', 'DKV', 'AKL', 'Kuliner', 'Busana'],
       angkatan: {
@@ -259,6 +258,105 @@ const MOCK = (() => {
         data_catatan: 'Demo hanya menampilkan data lulusan dan kuesioner simulasi. Data mitra industri belum ditampilkan.',
         hasil: 'Informasi mengenai kondisi lulusan menjadi lebih mudah ditinjau untuk kebutuhan evaluasi, pelaporan, dan diskusi pengembangan pembelajaran.',
       },
+    },
+    // Dokumen dan pihak sepenuhnya sintetis. Ekstraksi dan keterkaitan deskripsi disiapkan, tidak ada model AI.
+    // Perbandingan angka dihitung sungguhan di assets/js/document-intelligence.js.
+    document_intelligence: {
+      judul: 'DocNext',
+      subjudul: 'Document Intelligence untuk Pemeriksaan Dokumen Pengadaan',
+      tagline: 'Dari Dokumen Menjadi Informasi yang Dapat Ditindaklanjuti.',
+      deskripsi: 'Demonstrasi interaktif ini memperlihatkan contoh alur pemeriksaan Purchase Order, dokumen penerimaan barang, dan invoice menggunakan dokumen sintetis dan hasil analisis simulasi.',
+      status: 'Demo Konsep · Dokumen Sintetis',
+      disclaimer: 'Demo ini merupakan contoh konsep dengan dokumen sintetis dan hasil analisis simulasi. Tidak ada pemrosesan AI secara langsung, integrasi ERP, atau penggunaan dokumen perusahaan sebenarnya.',
+      catatan_ekstraksi: 'Contoh hasil ekstraksi informasi yang telah disiapkan untuk demonstrasi. Tidak ada model AI yang dijalankan secara langsung.',
+      masalah: [
+        { judul: 'Satu transaksi, beberapa dokumen', teks: 'Satu pembelian dapat melibatkan Purchase Order, dokumen penerimaan barang, dan invoice yang dibuat oleh pihak berbeda.' },
+        { judul: 'Format dan istilah berbeda', teks: 'Tata letak, istilah, dan cara menuliskan barang dapat berbeda antardokumen, walaupun membahas transaksi yang sama.' },
+        { judul: 'Pemeriksaan manual', teks: 'Tim perlu membuka beberapa berkas, mencari informasi penting, membandingkannya, lalu menelusuri perbedaan yang ditemukan.' },
+      ],
+      label_dokumen: {
+        po: { refPo: 'No. PO', pemasok: 'Kepada', kode: 'Kode Barang', deskripsi: 'Uraian', qty: 'Jml Pesan', harga: 'Harga Satuan', subtotal: 'Jumlah' },
+        penerimaan: { refPo: 'Ref. Pesanan', pemasok: 'Diterima dari', kode: 'Kode Internal', deskripsi: 'Nama Barang', qty: 'Jumlah Diterima' },
+        invoice: { refPo: 'Order Ref', pemasok: 'Diterbitkan oleh', kode: 'Item Code', deskripsi: 'Description', qty: 'Qty', harga: 'Unit Price', subtotal: 'Subtotal (sebelum pajak)' },
+      },
+      pembeli: 'PT Mitra Contoh Manufaktur',
+      lokasi: 'Gudang Contoh A',
+      skenario: [
+        {
+          label: 'Dokumen Sesuai',
+          harapan: 'sesuai',
+          penjelasan: 'Informasi utama pada Purchase Order, dokumen penerimaan, dan invoice sesuai berdasarkan aturan pemeriksaan yang disimulasikan.',
+          catatan: 'Status ini bukan persetujuan pembayaran. Keputusan tetap mengikuti prosedur perusahaan.',
+          po: { nomor: 'SIM-PO-0101', tanggal: '05-10-2026', pemasok: 'CV Pemasok Contoh Satu', kode: 'SIM-FO-220', deskripsi: 'FILTER OLI MESIN FO-220', qty: 100, satuan: 'unit', harga: 125000, subtotal: 12500000 },
+          penerimaan: { nomor: 'SIM-GR-0101', tanggal: '12-10-2026', refPo: 'SIM-PO-0101', pemasok: 'CV Pemasok Contoh Satu', kode: 'SIM-FO-220', deskripsi: 'FILTER OLI MESIN FO-220', qty: 100, satuan: 'unit' },
+          invoice: { nomor: 'SIM-INV-0101', tanggal: '14-10-2026', refPo: 'SIM-PO-0101', pemasok: 'CV Pemasok Contoh Satu', kode: 'SIM-FO-220', deskripsi: 'FILTER OLI MESIN FO-220', qty: 100, satuan: 'unit', harga: 125000, subtotal: 12500000 },
+          temuan: [],
+        },
+        {
+          label: 'Selisih Kuantitas',
+          harapan: 'ditinjau',
+          penjelasan: 'Invoice mencantumkan 100 unit, sementara dokumen penerimaan mencatat 96 unit. Selisih ini memerlukan pemeriksaan lebih lanjut.',
+          catatan: 'Selisih belum tentu berarti kesalahan. Invoice tidak ditolak otomatis.',
+          po: { nomor: 'SIM-PO-0102', tanggal: '06-10-2026', pemasok: 'CV Pemasok Contoh Dua', kode: 'SIM-GL-104', deskripsi: 'SARUNG TANGAN KERJA GL-104', qty: 100, satuan: 'unit', harga: 125000, subtotal: 12500000 },
+          penerimaan: { nomor: 'SIM-GR-0102', tanggal: '13-10-2026', refPo: 'SIM-PO-0102', pemasok: 'CV Pemasok Contoh Dua', kode: 'SIM-GL-104', deskripsi: 'SARUNG TANGAN KERJA GL-104', qty: 96, satuan: 'unit' },
+          invoice: { nomor: 'SIM-INV-0102', tanggal: '15-10-2026', refPo: 'SIM-PO-0102', pemasok: 'CV Pemasok Contoh Dua', kode: 'SIM-GL-104', deskripsi: 'SARUNG TANGAN KERJA GL-104', qty: 100, satuan: 'unit', harga: 125000, subtotal: 12500000 },
+          temuan: [{
+            judul: 'Selisih kuantitas antara invoice dan penerimaan',
+            field: 'qty',
+            dokumen: ['penerimaan', 'invoice'],
+            mengapa: 'Jumlah yang ditagihkan lebih besar daripada jumlah yang tercatat diterima, sehingga perlu ditinjau sebelum transaksi diproses lebih lanjut.',
+            periksa: ['Apakah pengiriman dilakukan bertahap?', 'Apakah ada dokumen penerimaan yang belum tercatat?', 'Apakah pesanan berubah setelah Purchase Order terbit?', 'Apakah ada perbedaan administrasi antardokumen?'],
+          }],
+        },
+        {
+          label: 'Deskripsi Barang Berbeda',
+          harapan: 'verifikasi',
+          penjelasan: 'Deskripsi barang memiliki kemiripan, tetapi kesesuaian identitas produk tetap perlu diperiksa berdasarkan SKU atau referensi barang yang berlaku.',
+          catatan: 'Kemiripan deskripsi bukan bukti bahwa kedua barang identik.',
+          keterkaitan: 'Kemungkinan deskripsi terkait — memerlukan verifikasi.',
+          po: { nomor: 'SIM-PO-0103', tanggal: '07-10-2026', pemasok: 'CV Pemasok Contoh Tiga', kode: 'SIM-BR-6205', deskripsi: 'BEARING 6205-2RS', qty: 50, satuan: 'unit', harga: 85000, subtotal: 4250000 },
+          penerimaan: { nomor: 'SIM-GR-0103', tanggal: '14-10-2026', refPo: 'SIM-PO-0103', pemasok: 'CV Pemasok Contoh Tiga', kode: 'SIM-BR-6205', deskripsi: 'BEARING 6205-2RS', qty: 50, satuan: 'unit' },
+          invoice: { nomor: 'SIM-INV-0103', tanggal: '16-10-2026', refPo: 'SIM-PO-0103', pemasok: 'CV Pemasok Contoh Tiga', kode: 'VND-88213', deskripsi: 'BALL BEARING 6205 2RS', qty: 50, satuan: 'unit', harga: 85000, subtotal: 4250000 },
+          temuan: [{
+            judul: 'Identitas barang pada invoice belum pasti',
+            field: 'deskripsi',
+            dokumen: ['po', 'invoice'],
+            mengapa: 'Kode dan deskripsi pada invoice berbeda dari Purchase Order. Interpretasi makna dapat menunjukkan kemungkinan keterkaitan, tetapi tidak dapat memastikan identitas barang.',
+            periksa: ['Apakah kode pemasok terhubung dengan kode barang internal?', 'Apakah spesifikasi barang yang diterima sesuai pesanan?'],
+          }],
+        },
+      ],
+      lapisan: {
+        pengantar: ['AI berpotensi membantu mengenali struktur dokumen, mengekstraksi informasi penting, dan memahami variasi penulisan antar dokumen.', 'Informasi tersebut kemudian dapat diperiksa menggunakan aturan bisnis untuk menemukan perbedaan jumlah, harga, atau identitas barang yang perlu ditinjau karyawan.'],
+        kelompok: [
+          { judul: 'Peran AI', label: 'Disimulasikan dalam demo', butir: ['Mengenali tata letak dan jenis dokumen.', 'Mengekstraksi informasi seperti kode, jumlah, dan harga.', 'Memetakan label berbeda, misalnya No. PO, Ref. Pesanan, dan Order Ref.', 'Menunjukkan kemungkinan keterkaitan deskripsi barang.'] },
+          { judul: 'Aturan bisnis', label: 'Dihitung di browser', butir: ['Membandingkan kuantitas dan harga.', 'Menghitung selisih dan subtotal.', 'Memeriksa referensi Purchase Order.', 'Menandai hal yang tidak memenuhi aturan.'] },
+          { judul: 'Peninjau', label: 'Tetap oleh manusia', butir: ['Memverifikasi kecocokan yang belum pasti.', 'Menilai konteks selisih operasional.', 'Mengikuti prosedur persetujuan.', 'Memutuskan apakah invoice dapat diproses.'] },
+        ],
+      },
+      penerapan: {
+        teks: 'Selain dokumen pengadaan, pendekatan Document Intelligence dapat dikembangkan untuk mendukung pengolahan kontrak, formulir, laporan, dan dokumen operasional lainnya sesuai kebutuhan perusahaan.',
+        contoh: ['Kontrak', 'Formulir', 'Laporan', 'Dokumen operasional'],
+        catatan: 'Demo ini hanya memperagakan dokumen pengadaan. Jenis dokumen lain memerlukan penyesuaian domain, ekstraksi khusus, konfigurasi aturan, integrasi, dan evaluasi teknis.',
+      },
+      deployment: {
+        teks: 'Solusi AI dapat dirancang untuk berjalan pada server internal (on-premises) atau lingkungan private cloud, sehingga perusahaan memiliki kendali lebih besar atas pemrosesan dan pengelolaan data sensitif. Kelayakan implementasi disesuaikan dengan kebutuhan model, infrastruktur, integrasi, serta kebijakan keamanan perusahaan.',
+        alur: ['Dokumen Internal', 'Pemrosesan AI Lokal', 'Hasil Pemeriksaan', 'Reviewer Perusahaan'],
+        alur_label: 'Contoh arsitektur potensial, bukan arsitektur demo ini.',
+        opsi: [
+          { judul: 'On-premises', teks: 'Model dan komponen pemrosesan AI dapat dirancang untuk berjalan pada server internal perusahaan, bergantung pada kebutuhan dan kelayakan teknis.' },
+          { judul: 'Private cloud', teks: 'Solusi dapat dirancang untuk lingkungan cloud privat dengan pengaturan jaringan, akses, dan pengelolaan data sesuai kebutuhan organisasi.' },
+        ],
+        prasyarat: ['Model, OCR, dan layanan pencocokan makna yang dapat dijalankan secara lokal.', 'Tidak ada panggilan inferensi eksternal yang wajib, termasuk pembaruan atau telemetri yang perlu diperiksa.', 'Perangkat keras yang sesuai.', 'Pembatasan jaringan, kontrol akses, dan audit trail.', 'Kebijakan log dan retensi, karena log dapat memuat isi dokumen.', 'Lisensi perangkat lunak dan model yang sesuai.', 'Tinjauan keamanan dan asesmen teknis.'],
+        catatan: 'Pemasangan lokal mengurangi kebutuhan mengirim dokumen ke layanan eksternal, tetapi tidak dengan sendirinya menjamin kerahasiaan data.',
+      },
+      batasan: [
+        'Semua dokumen, perusahaan, nomor, dan nilai transaksi bersifat sintetis.',
+        'Hasil ekstraksi dan keterkaitan deskripsi telah disiapkan. Tidak ada OCR atau model AI yang berjalan.',
+        'Aturan perbandingan dalam demo disederhanakan: satu dokumen penerimaan, satu baris barang, dan tanpa toleransi selisih. Pajak tidak dihitung.',
+        'Tidak ada unggah dokumen, integrasi ERP, proses persetujuan, atau pengumpulan data pengunjung.',
+        'Demo ini bukan Proof of Concept yang tervalidasi. Proof of Concept memerlukan model yang berjalan, dataset, kriteria evaluasi, dan hasil terukur.',
+      ],
     },
     // Metrik berasal dari abstrak penelitian, bukan hasil demo. Ilustrasi konseptual, tidak ada inferensi.
     // Jangan menambah angka ukuran implan: abstrak tidak memberi nilai untuk pasien tertentu.
@@ -421,7 +519,7 @@ const MOCK = (() => {
     },
     tentang: {
       hero_judul: 'Mendekatkan Inovasi AI dengan Kebutuhan Nyata.',
-      deskripsi: 'Melalui riset, kolaborasi, dan keahlian teknologi, AI Center UBAYA menghadirkan pengembangan solusi serta pembelajaran AI yang relevan bagi dunia akademik, industri, dan masyarakat.',
+      deskripsi: 'Melalui riset, kolaborasi, dan keahlian teknologi, UBAYA AI Center menghadirkan pengembangan solusi serta pembelajaran AI yang relevan bagi dunia akademik, industri, dan masyarakat.',
       visi_pengantar: 'Visi dan misi menjadi pijakan kami dalam mengembangkan pengetahuan, membangun kolaborasi, dan menghadirkan manfaat AI yang lebih luas.',
       fasilitas_pengantar: 'Kenali fasilitas yang mendukung kegiatan pembelajaran, diskusi, dan eksplorasi teknologi AI.',
       visi_judul: 'Menjadi AI Solution Factory terdepan',

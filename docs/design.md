@@ -1,4 +1,4 @@
-# Design — AI Center UBAYA CMS
+# Design — UBAYA AI Center CMS
 
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Alur konten halaman: \[Lihat requirement.md §4 dan §5\].
 
@@ -13,6 +13,8 @@ Hero Beranda berupa bidang navy dengan "bola neural" (canvas 2D): titik berbentu
 Tidak ada tombol jeda untuk animasi hero, dan carousel (testimoni Beranda, pertanyaan Inference) juga tanpa tombol jeda. Ini penyimpangan disengaja dari WCAG 2.2.2 (Pause, Stop, Hide) atas keputusan pemilik. Untuk membatasinya, autoplay carousel hanya aktif di perangkat ber-hover dan berhenti saat disorot atau difokus; keringanan lain hanya `prefers-reduced-motion`.
 
 ## 2. Referensi visual per halaman
+
+Tidak semua situs referensi dapat dibaca penuh: dari empat yang dicoba, satu hanya terbaca struktur menunya, satu hanya teks judul, satu hanya palet tanpa perilaku animasi, dan satu gagal diakses. Hero dan pergantian section Beranda karena itu merupakan tafsiran sendiri, bukan salinan referensi.
 
 **Landing Page (Home)**
 
@@ -38,7 +40,11 @@ Pada fase prototype, pengantar Pelatihan menjelaskan tiga pilihan: Pelatihan Reg
 
 Pada fase prototype, pengantar menjelaskan inference sebagai penggunaan model AI untuk menghasilkan prediksi pada data baru, lalu menghubungkannya dengan kebutuhan aplikasi atau sistem. IT Service Management dan Data Science tetap menjadi dua area awal diskusi; deskripsinya menggunakan bahasa yang tidak menjanjikan hasil tertentu. Lima tahap penerapan model AI telah dikonfirmasi pemilik sebagai proses layanan dan dipertahankan. Penutup mengajak pengunjung mendiskusikan kebutuhan AI melalui kanal kontak yang sudah ada. Nama resmi layanan dan tujuan CTA tidak berubah.
 
-Bagian Portofolio memakai eyebrow “PORTOFOLIO”, judul “Jelajahi Portofolio Kami.”, dan grid kartu yang sudah ada: tiga kolom di desktop, mengikuti lebar di tablet, satu kolom di HP. Kartu JejakAlumni menaut penuh ke demo dan memuat badge “Prototipe · Data Simulasi” serta CTA “Coba Prototipe”. Kartu tanpa demo tidak memiliki tautan, CTA, atau efek angkat saat hover.
+Bagian Portofolio memakai eyebrow “PORTOFOLIO”, judul “Jelajahi Portofolio Kami.”, dan grid kartu yang sudah ada: tiga kolom di desktop, mengikuti lebar di tablet, satu kolom di HP. Setiap kartu menaut penuh ke demonya dan memuat badge status serta CTA “Jelajahi Demo”. Status JejakAlumni adalah “Demo Konsep · Data Simulasi”.
+
+**Page demo DocNext**
+
+Bagian editorial mengikuti pola situs, sedangkan ruang kerja dokumen memakai gaya aplikasi yang lebih fungsional: latar `#F1F7FC`, panel putih bergaris tipis, dan angka rata. Pada ≥64rem, dokumen dan analisis memakai rasio 60:40; di bawahnya satu kolom dengan urutan skenario, dokumen, hasil ekstraksi, perbandingan, dan temuan. Tiga dokumen sintetis tidak diperkecil berdampingan, melainkan dipilih satu per satu, dan tiap jenis dokumen memiliki tata letak sendiri. Sorotan sumber memakai outline dan penanda “▸”, bukan warna saja. Status selalu memakai ikon dan teks: ✓ Sesuai (`#0C7C6C`), ! Perlu Ditinjau (`#FF6B2C`), ? Perlu Verifikasi (`#F3D502`). Tidak ada progres OCR atau animasi yang mengesankan pemrosesan.
 
 **Page demo Perencanaan Implan Gigi**
 
@@ -58,9 +64,9 @@ Daftar tetap menampilkan maksimal **9 album per halaman**, sesuai `requirement.m
 
 **Page Berita**
 
-Halaman Berita memakai arah **Minimal Editorial News**, dengan [AI Singapore News](https://aisingapore.org/news/) sebagai acuan struktur pengantar dan keterbacaan daftar artikel. Warna, huruf, komponen, navbar, dan footer tetap mengikuti identitas AI Center UBAYA; tata letak situs referensi tidak disalin.
+Halaman Berita memakai arah **Minimal Editorial News**, dengan [AI Singapore News](https://aisingapore.org/news/) sebagai acuan struktur pengantar dan keterbacaan daftar artikel. Warna, huruf, komponen, navbar, dan footer tetap mengikuti identitas UBAYA AI Center; tata letak situs referensi tidak disalin.
 
-Pada fase prototype, halaman dibuka dengan pengantar “Kabar Terbaru dari AI Center UBAYA.” lalu langsung menampilkan daftar berita. Kartu berisi gambar, tanggal, judul, ringkasan dari paragraf pertama, dan satu tautan ke detail; tidak ada tag kategori atau bagian berita unggulan. Grid memakai dua kolom pada layar lebar dan satu kolom pada HP, dengan lebar kartu dibatasi ketika hanya ada satu hasil. Pencarian judul minimal dua karakter dan pagination sembilan berita per halaman tetap mengikuti `requirement.md` §4.5; pagination hanya tampil bila diperlukan.
+Pada fase prototype, halaman dibuka dengan pengantar “Kabar Terbaru dari UBAYA AI Center.” lalu langsung menampilkan daftar berita. Kartu berisi gambar, tanggal, judul, ringkasan dari paragraf pertama, dan satu tautan ke detail; tidak ada tag kategori atau bagian berita unggulan. Grid memakai dua kolom pada layar lebar dan satu kolom pada HP, dengan lebar kartu dibatasi ketika hanya ada satu hasil. Pencarian judul minimal dua karakter dan pagination sembilan berita per halaman tetap mengikuti `requirement.md` §4.5; pagination hanya tampil bila diperlukan.
 
 Gambar dan isi berita yang dipublikasikan harus sesuai peristiwa atau jelas berfungsi sebagai ilustrasi. Data berita contoh dalam `prototype/assets/mock-data.js` tetap dipakai selama fase prototyping dan tidak dianggap artikel terverifikasi untuk produksi. Interaksi kartu memakai umpan balik hover ringan pada perangkat yang mendukung hover, fokus keyboard yang terlihat, serta penghormatan pada `prefers-reduced-motion`; tidak ada dependensi animasi baru. Halaman detail tetap memakai struktur yang ada: judul, tanggal, gambar, isi, dan tautan kembali. Penyempurnaan detail dan metadata produksi mengikuti `stack.md` §3 dan ditinjau terpisah.
 
@@ -70,13 +76,13 @@ Page ini menggunakan referensi display dari [https\://mohfarid99.github.io/ubaya
 
 Pada fase prototype, halaman Tim memakai arah **Editorial Team Showcase**: pengantar singkat, pencarian nama/peran/bidang, enam profil sesuai urutan organisasi, lalu CTA kontak. Kartu menampilkan foto, nama dan gelar, peran, serta bidang riset dalam grid tiga kolom di desktop, dua di tablet, dan satu di HP. Bidang riset pada data prototype ditetapkan pemilik tetapi masih perlu verifikasi sebagai keahlian pribadi sebelum produksi.
 
-Penutup mengajak pengunjung berdiskusi melalui satu tombol “Hubungi via WhatsApp” ke kanal resmi AI Center UBAYA yang sudah dipakai halaman layanan. CTA ditempatkan setelah seluruh profil, bukan di tengah direktori. Umpan balik tombol memakai pola yang ada; pencarian memperbarui hasil saat mengetik tanpa animasi grid atau dependensi baru.
+Penutup mengajak pengunjung berdiskusi melalui satu tombol “Hubungi via WhatsApp” ke kanal resmi UBAYA AI Center yang sudah dipakai halaman layanan. CTA ditempatkan setelah seluruh profil, bukan di tengah direktori. Umpan balik tombol memakai pola yang ada; pencarian memperbarui hasil saat mengetik tanpa animasi grid atau dependensi baru.
 
 **Page about**
 
 Page ini menggunakan referensi pada [https\://chalk.ai/about](https://chalk.ai/about)
 
-Pada fase prototype, halaman Tentang Kami memakai arah **Warm Editorial Storytelling** dengan alur ringkas: pengantar AI Center UBAYA, visi dan misi, fasilitas, lalu pilihan layanan. Hero memakai judul “Mendekatkan Inovasi AI dengan Kebutuhan Nyata.” Visi resmi dan lima poin misi dipertahankan maknanya. Fasilitas menampilkan foto ruang pelatihan dan ruang diskusi; foto ruang demo diganti placeholder “Foto Ruangan Coming Soon”. Bagian penutup berjudul “Langkah Berikutnya Dimulai di Sini.” Dua kartu Pelatihan dan Inference and Solutions menjadi CTA utama; masing-masing memuat deskripsi singkat dan langsung menuju halaman layanan terkait. Tombol umum “Lihat Layanan Kami” dihapus karena mengulang pilihan yang sudah tersedia.
+Pada fase prototype, halaman Tentang Kami memakai arah **Warm Editorial Storytelling** dengan alur ringkas: pengantar UBAYA AI Center, visi dan misi, fasilitas, lalu pilihan layanan. Hero memakai judul “Mendekatkan Inovasi AI dengan Kebutuhan Nyata.” Visi resmi dan lima poin misi dipertahankan maknanya. Fasilitas menampilkan foto ruang pelatihan dan ruang diskusi; foto ruang demo diganti placeholder “Foto Ruangan Coming Soon”. Bagian penutup berjudul “Langkah Berikutnya Dimulai di Sini.” Dua kartu Pelatihan dan Inference and Solutions menjadi CTA utama; masing-masing memuat deskripsi singkat dan langsung menuju halaman layanan terkait. Tombol umum “Lihat Layanan Kami” dihapus karena mengulang pilihan yang sudah tersedia.
 
 Komposisi menggunakan hierarki tipografi dan susunan fasilitas yang lebih editorial; kolom ditumpuk pada layar kecil agar urutan baca tetap jelas. Kartu layanan tampil dua kolom pada layar lebar dan bertumpuk pada layar kecil, dengan keadaan hover dan fokus yang jelas. Motion khusus halaman dibatasi pada masuknya teks hero, reveal bagian sekali saat terlihat, serta hover foto dan panah kartu layanan pada perangkat yang mendukung hover. `prefers-reduced-motion` dihormati, dan konten tetap terlihat tanpa efek scroll. Implementasi prototype menggunakan CSS dan JavaScript yang sudah ada, tanpa dependensi animasi tambahan.
 
@@ -111,7 +117,9 @@ Komposisi menggunakan hierarki tipografi dan susunan fasilitas yang lebih editor
 * Titik pecah layar untuk desktop, tablet, HP: sesuaikan dengan kebutuhan desain.  
 * Web responsive desktop display to mobile: regular resizing.  
 * Teks panjang: dipotong lalu tambahkan keterangan 'lihat detail'.  
-* Intinya dibuat lebih responsive untuk menjangkau banyak website
+* Intinya dibuat lebih responsive untuk menjangkau banyak website  
+* Gutter samping hero (Beranda, Pelatihan, Inference) dibuat lebih lega daripada `.wadah` biasa. Di bawah ±1240 px teks hero tampak sedikit lebih menjorok ke dalam dibanding breadcrumb dan section di bawahnya; pemilik menerima perbedaan ini.  
+* Tautan kontak di footer (WhatsApp, email, Instagram) tampil tanpa garis bawah, dengan ikon, dan garis bawah muncul saat hover atau fokus. Kata "WhatsApp" dan "Instagram" tetap ada untuk pembaca layar agar nama tautan tidak hilang.
 
 ## 5. Bentuk dan Layer
 

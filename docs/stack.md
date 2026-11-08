@@ -1,4 +1,4 @@
-# Stack — AI Center UBAYA CMS
+# Stack — UBAYA AI Center CMS
 
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`).
 
@@ -114,7 +114,7 @@ Hanya mengembalikan data berstatus posted.
 | GET | `/api/testimoni` | Daftar testimoni |
 | GET | `/api/tim` | Daftar tim; tanpa parameter `q`. Pencarian di prototype dilakukan di browser pada nama, jabatan, dan bidang riset \[terbuka: tetap di browser atau pindah ke server\] |
 
-Layanan (Pelatihan, Inference and Solutions) tidak punya endpoint; isinya hardcode di frontend. Demo JejakAlumni dan Perencanaan Implan Gigi juga tidak punya endpoint: direncanakan sebagai halaman Astro statis dengan island, memakai data lokal \[Lihat requirement.md §4.3\].
+Layanan (Pelatihan, Inference and Solutions) tidak punya endpoint; isinya hardcode di frontend. Demo JejakAlumni, Perencanaan Implan Gigi, dan DocNext juga tidak punya endpoint: direncanakan sebagai halaman Astro statis dengan island, memakai data lokal \[Lihat requirement.md §4.3\].
 
 ### 9.5 Endpoint admin
 
@@ -183,3 +183,36 @@ Nama final \[diisi\] untuk daftar yang sudah disebut di rencana:
 * Autentikasi, session, CSRF: \[Lihat security.md §1–§3\]  
 * Rate limit dan `429`: \[Lihat security.md §6\]  
 * Cache konten: \[Lihat database.md §7\]
+
+## 10. Prototype
+
+Prototype adalah acuan visual dan alur, bukan basis kode implementasi \[Lihat §1 dan §4\].
+
+**Cara membuka:** tanpa server, lewat `file://`. Publik: `prototype/public/index.html`. Admin: `prototype/admin/index.html`, lalu tombol Masuk. Tombol Simulasi di pojok kanan bawah memicu keadaan loading, kosong, error, 429, 401, 409, heartbeat gagal, dan item dikunci. Peta di footer butuh internet.
+
+**Struktur `prototype/`:**
+
+| Lokasi | Isi | Saat implementasi |
+|---|---|---|
+| `public/` | Halaman publik | Acuan visual dan alur |
+| `admin/index.html` | Admin, rute hash | Acuan visual dan alur |
+| `assets/css/` | Token, komponen, dan gaya per halaman | Acuan token dan komponen |
+| `assets/js/` | Perilaku halaman, komponen bersama, animasi hero, kalender, dan demo portofolio | Acuan perilaku |
+| `assets/mock-data.js` | Semua data dummy | Dibuang, kecuali isi `konten` (konten hardcode tetap dipakai) |
+| `assets/fonts`, `assets/img` | Salinan dari `public/` | Foto contoh dibuang |
+| `simulasi/` | Tiruan API, panel, layar Keycloak, dan `buat-ilustrasi-implan.cjs` (penulis HTML dan SVG demo implan, tidak dimuat halaman; ubah ilustrasi di sana lalu jalankan ulang) | Dibuang |
+
+**Yang disimulasikan:**
+
+* Login: `simulasi/keycloak.html` menggantikan redirect Keycloak. Tidak ada cookie, session, atau CSRF sungguhan.
+* API: jeda 300 ms dan galat tiruan.
+* Penyimpanan: hanya di memori. Refresh mengembalikan data awal, dan perubahan di admin tidak terlihat di publik.
+* Lock: kunci pengguna lain berasal dari data awal, bukan Redis. Heartbeat berjalan tiap 60 detik tetapi hanya memanggil tiruan.
+* Konflik 409, 429, dan 401: dipicu dari panel, tanpa menghitung request.
+* Slug: dibuat dari judul hanya untuk simulasi. Aturannya masih `[terbuka]` \[Lihat database.md §3.3\].
+* Upload: gambar tidak dikirim ke mana pun. Validasi isi file dan batas 2 MB berjalan di browser.
+* Validasi server (mis. batas judul 70 karakter) ditiru di `simulasi/api-simulasi.js`.
+
+**Tidak disimulasikan:** penghapusan otomatis trash setelah 30 hari, pembersihan file yatim, cache, dan ETag.
+
+**Batas `file://`:** prototype memakai `?slug=` pada halaman detail, sedangkan rute akhir adalah `/berita/:slug` dan `/dokumentasi/:slug` \[Lihat §3\]. Halaman 404 hanya tampil di sisi client; status HTTP 404 tidak bisa ditiru.

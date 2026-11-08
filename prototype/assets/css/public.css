@@ -78,10 +78,27 @@
 .grid-kartu--tiga { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 62rem) { .grid-kartu--tiga { grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); } }
 .porto__kepala { display: grid; gap: var(--jarak-3); }
-.porto__statis:hover { box-shadow: none; transform: none; }
+.porto__subjudul { font-weight: 600; line-height: 1.35; }
 .porto .tautan-panah { color: var(--warna-biru); }
 .porto .badge { white-space: normal; border-radius: var(--radius-sedang); }
 .porto .kartu-album__tautan:hover h3 { color: var(--warna-biru); }
+.porto .badge { vertical-align: top; }
+@media (max-width: 47.99rem) { .grid-kartu--tiga.porto { grid-template-columns: minmax(0, 1fr); } }
+/* Tiga kartu sejajar sampai 48rem, satu kolom di bawahnya. Subgrid menyelaraskan tiap baris (gambar, bidang, judul, deskripsi, status, CTA) antarkartu. Semua kartu harus punya jumlah baris sama, jadi subjudul hanya dipakai bila semua kartu memilikinya (ubah span di sini). */
+@media (min-width: 48rem) {
+  .grid-kartu--tiga.porto { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--jarak-4); row-gap: 0; }
+  .porto .kartu-album { display: grid; grid-row: span 6; grid-template-rows: subgrid; row-gap: 0; }
+  .porto .kartu-album__tautan { display: grid; grid-row: 1 / -1; grid-template-rows: subgrid; row-gap: 0; }
+  .porto .kartu__isi { display: grid; grid-row: 2 / -1; grid-template-rows: subgrid; row-gap: var(--jarak-3); align-content: start; padding: var(--jarak-4); }
+  .porto .kartu__isi > * { align-self: start; justify-self: start; min-width: 0; }
+  .porto .kartu__isi .tautan-panah { align-self: end; padding-top: 0; margin-top: 0; }
+}
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+  .porto .kartu__isi { padding: var(--jarak-3); row-gap: var(--jarak-2); }
+  .porto .kartu__isi h3 { font-size: 1.125rem; }
+  .porto .kartu__isi .teks-sekunder { font-size: var(--teks-kecil); line-height: 1.5; }
+  .porto .badge { font-size: .75rem; }
+}
 
 /* Hero beranda */
 .hero { position: relative; display: grid; align-items: center; margin: var(--jarak-3); border-radius: var(--radius-besar); overflow: hidden; color: var(--warna-putih); background: var(--warna-navy); }

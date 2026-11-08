@@ -1,4 +1,4 @@
-# Database — AI Center UBAYA CMS
+# Database — UBAYA AI Center CMS
 
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Skema lama (`D:\aicenter\notes\ext-database.md`, di luar repo) hanya dipakai untuk detail yang sudah diverifikasi terhadap plan.
 

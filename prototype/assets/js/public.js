@@ -2,7 +2,7 @@
 const K = MOCK.konten;
 const utama = document.getElementById('utama');
 const gambar = (nama) => `../assets/img/${nama}`;
-const judulSitus = 'AI Center UBAYA';
+const judulSitus = 'UBAYA AI Center';
 const parameter = new URLSearchParams(location.search);
 
 function setJudul(judul, deskripsi) {
@@ -39,7 +39,7 @@ function navbar(aktif) {
   const burger = el('button.nav__burger', { type: 'button', 'aria-label': 'Buka menu', 'aria-expanded': 'false', 'aria-controls': 'menu-utama', onclick: alihkanMenu }, ikon('menu', 24));
   return el('header.nav', { onkeydown: (e) => { if (e.key === 'Escape' && menu.classList.contains('terbuka')) { alihkanMenu(); burger.focus(); } } },
     el('div.wadah.nav__dalam', null,
-      el('a.nav__logo', { href: 'index.html', 'aria-label': 'AI Center UBAYA, ke Beranda' }, el('img', { src: gambar('AI-Center_Logo.png'), alt: '', height: 40 })),
+      el('a.nav__logo', { href: 'index.html', 'aria-label': 'UBAYA AI Center, ke Beranda' }, el('img', { src: gambar('AI-Center_Logo.png'), alt: '', height: 40 })),
       burger,
       el('nav', { 'aria-label': 'Utama' }, menu)));
 }
@@ -50,7 +50,7 @@ function footer() {
   return el('footer.footer', null,
     el('div.wadah.footer__grid', null,
       el('div.footer__profil', null,
-        el('img', { src: gambar('AI-Center_Logo.png'), alt: 'AI Center UBAYA', height: 44, class: 'footer__logo' }),
+        el('img', { src: gambar('AI-Center_Logo.png'), alt: 'UBAYA AI Center', height: 44, class: 'footer__logo' }),
         el('p', null, k.deskripsi_footer)),
       el('div', null, el('h2', null, 'Jelajahi'), el('ul', null,
         tautan('Pelatihan', 'pelatihan.html'), tautan('Inference and Solutions', 'inference.html'), tautan('Berita', 'berita.html'),
@@ -62,7 +62,7 @@ function footer() {
         k.alamat.map((b) => el('li', null, b)))),
       el('div.footer__peta', null,
         el('h2', null, 'Peta lokasi'),
-        el('iframe', { src: k.peta_embed, title: 'Peta lokasi AI Center UBAYA', loading: 'lazy', referrerpolicy: 'no-referrer-when-downgrade' }),
+        el('iframe', { src: k.peta_embed, title: 'Peta lokasi UBAYA AI Center', loading: 'lazy', referrerpolicy: 'no-referrer-when-downgrade' }),
         el('a', { href: k.peta_url, target: '_blank', rel: 'noopener' }, 'Buka di Google Maps'))),
     el('div.wadah.footer__bawah', null, el('small', null, `© 2026 AI Center Universitas Surabaya`)));
 }
@@ -124,20 +124,16 @@ function kartuTim(t) {
     el('p.teks-sekunder', null, `Bidang penelitian: ${t.bidang_riset}`));
 }
 
-/** Hanya entri ber-href yang menjadi tautan; entri lain belum punya demo. */
 function kartuPortofolio(p) {
-  const isi = [
+  return el('article.kartu.kartu-album', null, el('a.kartu-album__tautan', { href: p.href },
     el('img.kartu__gambar', { src: gambar(p.gambar), alt: '', loading: 'lazy' }),
     el('div.kartu__isi', null,
       el('p.kartu-tim__jabatan', null, p.bidang),
       el('h3', null, p.judul),
+      p.subjudul && el('p.porto__subjudul', null, p.subjudul),
       el('p.teks-sekunder', null, p.deskripsi),
-      p.status && el('p', null, el('span.badge.badge--simulasi', null, p.status)),
-      p.cta && el('span.tautan-panah', null, p.cta, ikon('panah', 18))),
-  ];
-  return p.href
-    ? el('article.kartu.kartu-album', null, el('a.kartu-album__tautan', { href: p.href }, isi))
-    : el('article.kartu.porto__statis', null, isi);
+      el('p', null, el('span.badge.badge--simulasi', null, p.status)),
+      el('span.tautan-panah', null, p.cta, ikon('panah', 18)))));
 }
 
 /* === Bagian bersama === */
@@ -330,15 +326,15 @@ const HALAMAN = {
           el('h2', { id: 'j-porto' }, 'Jelajahi Portofolio Kami.'),
           el('p.bagian__sub', null, 'Kenali contoh penerapan teknologi AI melalui demonstrasi aplikasi.')),
         el('div.grid-kartu.grid-kartu--tiga.porto', null, n.portofolio.map(kartuPortofolio))),
-      bagianKontak('Diskusikan kebutuhan AI Anda.', 'Ceritakan model, data, atau tantangan yang sedang Anda hadapi. Tim AI Center UBAYA dapat membantu membahas langkah berikutnya.', { wa: 'Diskusikan Kebutuhan AI' }));
+      bagianKontak('Diskusikan kebutuhan AI Anda.', 'Ceritakan model, data, atau tantangan yang sedang Anda hadapi. Tim UBAYA AI Center dapat membantu membahas langkah berikutnya.', { wa: 'Diskusikan Kebutuhan AI' }));
   },
 
   'jejak-alumni'() {
-    setJudul('JejakAlumni (Prototipe)', K.jejak_alumni.disclaimer);
+    setJudul('JejakAlumni (Demo Konsep)', K.jejak_alumni.disclaimer);
     utama.append(
       breadcrumb([{ label: 'Inference and Solutions', href: 'inference.html' }, { label: 'JejakAlumni' }]),
       JejakAlumni.halaman(),
-      bagianKontak('Ingin membahas data lulusan di institusi Anda?', 'Ceritakan kebutuhan evaluasi lulusan Anda. Tim AI Center UBAYA dapat membantu membahas langkah berikutnya.', { wa: 'Diskusikan Kebutuhan AI' }));
+      bagianKontak('Ingin membahas data lulusan di institusi Anda?', 'Ceritakan kebutuhan evaluasi lulusan Anda. Tim UBAYA AI Center dapat membantu membahas langkah berikutnya.', { wa: 'Diskusikan Kebutuhan AI' }));
   },
 
   'perencanaan-implan-gigi'() {
@@ -350,12 +346,21 @@ const HALAMAN = {
       bagianKontak('Tertarik Mengembangkan Solusi AI Serupa?', 'Diskusikan peluang kolaborasi riset atau pengembangan solusi AI sesuai kebutuhan institusi Anda.', { wa: 'Diskusikan Kebutuhan AI' }));
   },
 
+  'document-intelligence'() {
+    const d = K.document_intelligence;
+    setJudul(`${d.judul} (Demo Konsep)`, d.disclaimer);
+    utama.append(
+      breadcrumb([{ label: 'Inference and Solutions', href: 'inference.html' }, { label: d.judul }]),
+      ...DocNext.bagian(),
+      bagianKontak('Punya Proses Bisnis yang Ingin Dibantu AI?', 'Diskusikan kebutuhan pengolahan dokumen, integrasi sistem, atau implementasi AI di lingkungan internal perusahaan bersama UBAYA AI Center.', { wa: 'Diskusikan Kebutuhan AI' }));
+  },
+
   berita() {
-    halamanDaftar({ judul: 'Berita', judulTampil: 'Kabar Terbaru dari AI Center UBAYA.', sub: 'Ikuti kegiatan, kolaborasi, dan perkembangan AI Center UBAYA melalui cerita dan informasi terbaru kami.', ambil: api.daftarBerita, kartu: kartuBerita, namaJamak: 'berita', kolomGrid: '.grid-kartu--berita' });
+    halamanDaftar({ judul: 'Berita', judulTampil: 'Kabar Terbaru dari UBAYA AI Center.', sub: 'Ikuti kegiatan, kolaborasi, dan perkembangan UBAYA AI Center melalui cerita dan informasi terbaru kami.', ambil: api.daftarBerita, kartu: kartuBerita, namaJamak: 'berita', kolomGrid: '.grid-kartu--berita' });
   },
 
   dokumentasi() {
-    halamanDaftar({ judul: 'Galeri Dokumentasi', sub: 'Melihat lebih dekat kegiatan, kolaborasi, dan momen bersama AI Center UBAYA.', ambil: api.daftarDokumentasi, kartu: kartuAlbum, namaJamak: 'album', kolomGrid: '.grid-kartu--album' });
+    halamanDaftar({ judul: 'Galeri Dokumentasi', sub: 'Melihat lebih dekat kegiatan, kolaborasi, dan momen bersama UBAYA AI Center.', ambil: api.daftarDokumentasi, kartu: kartuAlbum, namaJamak: 'album', kolomGrid: '.grid-kartu--album' });
   },
 
   'berita-detail'() {
@@ -396,7 +401,7 @@ const HALAMAN = {
 
   tim() {
     const judul = 'Tim';
-    const sub = 'Kenali tim yang berkontribusi dalam riset, pengembangan, dan pembelajaran AI di AI Center UBAYA.';
+    const sub = 'Kenali tim yang berkontribusi dalam riset, pengembangan, dan pembelajaran AI di UBAYA AI Center.';
     setJudul(judul, sub);
     const wadah = el('div');
     const petunjuk = el('p.field__bantuan', { id: 'petunjuk-cari', role: 'status' });
@@ -427,7 +432,7 @@ const HALAMAN = {
       el('section.kontak.kontak--tim', { 'aria-labelledby': 'judul-kontak-tim' }, el('div.wadah.kontak__dalam', null,
         el('div', null,
           el('h2', { id: 'judul-kontak-tim' }, 'Mari Diskusikan Kebutuhan Anda.'),
-          el('p', null, 'Punya pertanyaan, ide kolaborasi, atau ingin mengetahui bagaimana AI dapat membantu? Hubungi AI Center UBAYA untuk memulai percakapan.')),
+          el('p', null, 'Punya pertanyaan, ide kolaborasi, atau ingin mengetahui bagaimana AI dapat membantu? Hubungi UBAYA AI Center untuk memulai percakapan.')),
         tautanTombol('Hubungi via WhatsApp', 'terang', K.kontak.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan'))));
     muat();
   },
@@ -505,7 +510,7 @@ function aktifkanLembar() {
 
 /* === Mulai === */
 const namaHalaman = document.body.dataset.halaman;
-const menuAktif = ['pelatihan', 'inference', 'jejak-alumni', 'perencanaan-implan-gigi'].includes(namaHalaman) ? 'layanan' : namaHalaman.replace('-detail', '');
+const menuAktif = ['pelatihan', 'inference', 'jejak-alumni', 'perencanaan-implan-gigi', 'document-intelligence'].includes(namaHalaman) ? 'layanan' : namaHalaman.replace('-detail', '');
 document.body.prepend(el('a.lewati', { href: '#utama' }, 'Lewati ke konten'), navbar(menuAktif));
 document.body.append(footer());
 HALAMAN[namaHalaman]();

@@ -1,4 +1,4 @@
-# Requirement — AI Center UBAYA CMS
+# Requirement — UBAYA AI Center CMS
 
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). File planning lain: `stack.md`, `design.md`, `database.md`, `security.md`.
 
@@ -6,9 +6,9 @@ Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak
 
 **Website ini buat apa?** Website ini memiliki 2 sisi. Sisi utama (publik) untuk menampilkan konten kepada calon customer sekaligus menjadi wadah untuk mempromosikan atau branding, perusahaan kami yaitu AI Center Universitas Surabaya (UBAYA), dimana kami memiliki fokus penyediaan layanan berbasis AI ('Pelatihan AI' dan 'Inference and Solutions'). Sisi kedua (internal) digunakan oleh tim internal perusahaan untuk input/edit data perubahan konten yang ditampilkan di sisi utama (publik). Fokus website: pengelolaan konten publlik
 
-**Siapa pemilik dan siapa pemakai?** Pemiliknya adalah AI Center UBAYA. Penggunanya adalah Tim/staff AI Center UBAYA (yang bisa mengedit konten), user publik (hanya read only)
+**Siapa pemilik dan siapa pemakai?** Pemiliknya adalah UBAYA AI Center. Penggunanya adalah Tim/staff UBAYA AI Center (yang bisa mengedit konten), user publik (hanya read only)
 
-**Masalah apa yang diselesaikan?** Content Management System untuk keperluan AI Center UBAYA, konten yang akan di tampilkan di dalam website mencakup: detail layanan pelatihan, detail layanan solution inference, detail berita (memiliki object image), detail dokumentasi (memiliki object image), display susunan tim/staff (memiliki object image), section portofolio (berupa hardcode beberapa sampel produk sistem yg dibuat), dan terdapat kontak section (button mengarah ke WA ataupun email). Bahasa dibuat soft selling: menjelaskan manfaat, bukan menekan. Kalimat singkat, ramah, dan mudah dipahami. Tampilan menyesuaikan arah desain, tetap informatif tanpa membuat user kewalahan/overwhelm ketika mengakses website.
+**Masalah apa yang diselesaikan?** Content Management System untuk keperluan UBAYA AI Center, konten yang akan di tampilkan di dalam website mencakup: detail layanan pelatihan, detail layanan solution inference, detail berita (memiliki object image), detail dokumentasi (memiliki object image), display susunan tim/staff (memiliki object image), section portofolio (berupa hardcode beberapa sampel produk sistem yg dibuat), dan terdapat kontak section (button mengarah ke WA ataupun email). Bahasa dibuat soft selling: menjelaskan manfaat, bukan menekan. Kalimat singkat, ramah, dan mudah dipahami. Tampilan menyesuaikan arah desain, tetap informatif tanpa membuat user kewalahan/overwhelm ketika mengakses website.
 
 **Apa yang bukan produk / jasa yang ditawarkan ai center?** AI Center menawarkan adalah Layanan 'Pelatihan' dan AI 'Inference and Solutions'). Website ini bukan e-commerce, bukan LMS, bukan media sosial atau forum, bukan marketplace, bukan aplikasi SaaS, dan bukan sistem transaksi atau data pribadi skala besar.
 
@@ -34,7 +34,7 @@ Website dari sisi user akan memiliki navbar dan footer. Kemudian akan berisi:
 * Tim /tim: susunan anggota \+ pencarian.  
 * Tentang Kami /tentang-kami  
 * Fitur konten yang akan berisi dokumentasi dan berita (masing-masing punya routing page sendiri)  
-* Layanan: hanya dua rute tetap, /layanan/pelatihan dan /layanan/inference-solutions (tidak memakai /layanan/:slug). Isinya hardcode di frontend, tidak ada opsi menambah layanan, dan tidak ada endpoint backend untuk layanan. Pengecualian: demo statis /layanan/inference-solutions/jejak-alumni dan /layanan/inference-solutions/perencanaan-implan-gigi \[Lihat §4.3\].  
+* Layanan: hanya dua rute tetap, /layanan/pelatihan dan /layanan/inference-solutions (tidak memakai /layanan/:slug). Isinya hardcode di frontend, tidak ada opsi menambah layanan, dan tidak ada endpoint backend untuk layanan. Pengecualian: demo statis /layanan/inference-solutions/jejak-alumni, /layanan/inference-solutions/perencanaan-implan-gigi, dan /layanan/inference-solutions/document-intelligence \[Lihat §4.3\].  
 * List kursus /layanan/pelatihan: dibuatkan kartu untuk display pilihan pelatihan \[Ditunda: aktif setelah Pelatihan Reguler tidak lagi coming soon\]  
 * List layanan dalam 'Inference and Solutions': dibuatkan kartu untuk display layanan konsultasi. Menampilkan dua kategori layanan utama yang dapat menjadi titik awal bagi pengunjung untuk mengenali kebutuhan konsultasi perusahaan. Dua kategori tersebut adalah IT Service Management dan Data Science  
 * Detail kursus /layanan/pelatihan/:kode: fakta, hasil belajar, materi, instruktur. \[Ditunda: aktif setelah Pelatihan Reguler tidak lagi coming soon\]  
@@ -69,14 +69,15 @@ Referensi page pelatihan adalah [https\://aici-umg.com/](https://aici-umg.com/) 
 
 Alur story telling page 'Inference and Solutions' adalah: Hero (memuat carousel pertanyaan untuk menarik minat user untuk berkonsultasi dengan AI Center; arahnya agar user mengetahui urgensi mereka untuk konsultasi solution inference dengan AI Center), jenis solution inference di AI Center, alur solution inference, 3 mock up portofolio (hardcode), dan section kontak kami.
 
-Portofolio menampilkan tiga kartu hardcode: JejakAlumni, Perencanaan Implan Gigi Berbasis AI, dan Algae Finder. Algae Finder bukan tautan karena belum punya demo. Copy memakai istilah "contoh penerapan".
+Portofolio menampilkan tiga kartu hardcode: JejakAlumni, Perencanaan Implan Gigi Berbasis AI, dan DocNext. DocNext menggantikan kartu Algae Finder; album dokumentasi Algae Finder tetap ada. Setiap kartu membuka demo masing-masing. Copy memakai istilah "contoh penerapan". Ketiga demo adalah demonstrasi interaktif, bukan Proof of Concept yang tervalidasi.
 
-**Demo JejakAlumni** adalah contoh penerapan untuk tracer study sekolah, berstatus "Prototipe · Data Simulasi". Demo ini hardcode di frontend: tanpa backend, database, data alumni sebenarnya, maupun inferensi AI langsung. Rute prototype `public/jejak-alumni.html`; rute produksi direncanakan /layanan/inference-solutions/jejak-alumni. Halaman memakai `noindex`.
+**Demo JejakAlumni** adalah contoh penerapan untuk tracer study sekolah, berstatus "Demo Konsep · Data Simulasi". Demo ini hardcode di frontend: tanpa backend, database, data alumni sebenarnya, maupun inferensi AI langsung. Rute prototype `public/jejak-alumni.html`; rute produksi direncanakan /layanan/inference-solutions/jejak-alumni. Halaman memakai `noindex`.
 
 * Isi: filter angkatan (2025, 2024) dan jurusan, empat KPI, grafik penyerapan per jurusan, status alumni, tema jawaban terbuka, ringkasan untuk rapat kurikulum, dan penjelasan aplikasi. Tab Ringkasan berfungsi; Responden dan Mitra kerja nonaktif dengan teks "Belum tersedia dalam demo".
 * Definisi indikator: Terserap dunia kerja adalah responden yang memperoleh pekerjaan dalam 6 bulan setelah lulus, tidak termasuk wirausaha. Bekerja adalah status saat mengisi kuesioner. Kerja sesuai bidang adalah bagian dari responden berstatus bekerja. Masa tunggu adalah median bulan hingga pekerjaan pertama pada responden yang terserap.
 * Statistik tidak disebut hasil AI. Hanya tema dan ringkasan yang berlabel simulasi AI, dan keduanya berlaku per angkatan untuk seluruh jurusan, tidak mengikuti filter jurusan.
 * Pembanding hanya tampil bila data angkatan sebelumnya ada; angkatan 2024 tidak punya pembanding.
+* Data simulasi: jumlah orang per jurusan adalah sumber kebenaran, sedangkan persentase dan total dihitung saat tampil agar tidak saling bertentangan. Jumlah per jurusan, median per jurusan, tema 2024, dan ringkasan 2024 adalah tambahan simulasi, bukan data sekolah. Median per jurusan tidak dapat dibuktikan secara matematis. Filter tidak disimpan di URL.
 
 **Demo Perencanaan Implan Gigi Berbasis AI** adalah demo penelitian, berstatus "Demo Penelitian · Visualisasi Konseptual · Nonklinis". Demo ini hardcode di frontend: tanpa backend, unggah CBCT, data pasien, inferensi AI, maupun rekomendasi ukuran. Rute prototype `public/perencanaan-implan-gigi.html`; rute produksi direncanakan /layanan/inference-solutions/perencanaan-implan-gigi. Halaman memakai `noindex`.
 
@@ -85,8 +86,21 @@ Portofolio menampilkan tiga kartu hardcode: JejakAlumni, Perencanaan Implan Gigi
 * Dimensi implan ditampilkan sebagai "Ilustratif / Tidak Ditentukan". Tidak ada angka ukuran implan untuk pasien tertentu.
 * Metrik ditampilkan sebagai hasil evaluasi yang dilaporkan dalam penelitian yang menjadi dasar demonstrasi ini, selalu bersama tugas yang diukur, dan terpisah dari ilustrasi. Klaim kesetaraan dengan dokter gigi, kesiapan klinis, atau keamanan ukuran tidak boleh dipakai.
 * Disclaimer nonklinis wajib terlihat sebelum area demo.
-* Untuk saat ini halaman tidak mencantumkan nama penulis, judul publikasi, maupun tahun terbit (keputusan pemilik). Asal dataset tidak disebut di halaman publik. Copy tidak boleh mengklaim AI Center UBAYA memiliki dataset, mengembangkan model, melakukan studi, atau bermitra secara institusional tanpa verifikasi, dan tidak boleh mengesankan demo memproses dataset penelitian atau data pasien. Bila publikasi atau lisensi data mewajibkan kredit publik, tambahkan bagian referensi penelitian.
+* Untuk saat ini halaman tidak mencantumkan nama penulis, judul publikasi, maupun tahun terbit (keputusan pemilik). Asal dataset tidak disebut di halaman publik. Copy tidak boleh mengklaim UBAYA AI Center memiliki dataset, mengembangkan model, melakukan studi, atau bermitra secara institusional tanpa verifikasi, dan tidak boleh mengesankan demo memproses dataset penelitian atau data pasien. Bila publikasi atau lisensi data mewajibkan kredit publik, tambahkan bagian referensi penelitian.
+* Penampang melintang yang bergerak sepanjang lengkung rahang pada Tahap 1 dan 2 adalah penalaran perancang, bukan fakta dari abstrak penelitian.
 * \[Ditandai\] Tinjauan ahli kedokteran gigi untuk ilustrasi, terutama arah slice, posisi kanal mandibula, bentuk tulang alveolar, dan penempatan implan.
+
+**Demo DocNext** (Document Intelligence untuk Pemeriksaan Dokumen Pengadaan) ditujukan bagi calon klien korporat, berstatus "Demo Konsep · Dokumen Sintetis". Demo ini hardcode di frontend: tanpa backend, OCR, inferensi AI, integrasi ERP, unggah dokumen, login, maupun pengumpulan data pengunjung. Rute prototype `public/document-intelligence.html`; rute produksi direncanakan /layanan/inference-solutions/document-intelligence. Halaman memakai `noindex`.
+
+* Isi: masalah bisnis, ruang kerja dokumen, peran AI dan aturan bisnis, penerapan lain, opsi deployment, batasan, dan kontak.
+* Ada tiga skenario sintetis: Dokumen Sesuai (Sesuai), Selisih Kuantitas (Perlu Ditinjau), dan Deskripsi Barang Berbeda (Perlu Verifikasi). Tiap skenario memuat Purchase Order, dokumen penerimaan, dan invoice.
+* Memilih hasil ekstraksi menyorot sumbernya pada dokumen. Tiap temuan menyebut dokumen, field, nilai, alasan, dan hal yang perlu diperiksa peninjau.
+* Hasil ekstraksi dan keterkaitan deskripsi disiapkan sebelumnya dan berlabel "Simulasi AI". Perbandingan angka dan referensi dihitung di browser dan berlabel "Aturan Bisnis". Keputusan tetap di tangan peninjau.
+* Tidak boleh ada klaim penipuan, persetujuan pembayaran otomatis, persentase keyakinan, akurasi, penghematan, atau ROI. Kemiripan deskripsi bukan bukti barang identik.
+* Opsi on-premises dan private cloud disebut sebagai potensi yang "dapat dirancang", bergantung pada asesmen teknis. Tidak boleh ada jaminan keamanan absolut atau klaim bahwa demo publik memakai inferensi lokal.
+* Penerapan pada kontrak, formulir, laporan, dan dokumen operasional disebut sebagai arah pengembangan, bukan kemampuan demo.
+* Nilai transaksi, nama barang, dan nama pihak adalah buatan perancang. Pada Skenario 3 kode barang di invoice sengaja berbeda dari Purchase Order agar keraguan identitas barang nyata.
+* Nama "DocNext" adalah judul demo. Dokumen, antarmuka, dan copy dibuat sendiri, tanpa menyalin atau mengesankan afiliasi dengan vendor lain. Pengecekan web awal bukan clearance merek. \[terbuka\]
 
 ### 4.4 Page Dokumentasi
 
@@ -194,6 +208,16 @@ Penegakan akses saat login: \[Lihat security.md §1\].
   * Melewati batas mengembalikan 429 \+ Retry-After, dan UI menampilkan pesan yang wajar.  
   * Dua user admin dari IP yang sama tidak saling memengaruhi limit.  
   * Login gagal berulang pada satu akun dikunci oleh Keycloak; endpoint login backend dibatasi per IP.
+
+**Catatan status prototype** (hal yang belum atau baru sebagian; cara membuka dan simulasi: \[Lihat stack.md §10\]):
+
+* List dan detail kursus belum dibuat \[Ditunda\].
+* HTML awal berisi title, OG, dan JSON-LD tidak bisa dibuat di HTML statis; dikerjakan Go \[Lihat stack.md §3, RP-12\].
+* Tentang Kami: isi diambil dari data situs lama, dan dokumen ini belum merincinya.
+* Inference: lima tahap alur sudah dikonfirmasi pemilik, tetapi deskripsi dua jenis layanan (IT Service Management dan Data Science) masih data contoh \[terbuka\].
+* Pelatihan Khusus: empat langkah alur sudah dikonfirmasi pemilik. Belum ada sumber tertulis untuk alur konsultasi.
+* Tim: enam bidang riset ditetapkan pemilik untuk prototype dan perlu diverifikasi sebagai keahlian pribadi sebelum produksi \[terbuka\].
+* Handle Instagram di footer belum terverifikasi \[terbuka\].
 
 Dokumen kontrak API: \[Lihat stack.md §9\] memuat endpoint, skema JSON, format error, contoh mock, dan environment variable.
 

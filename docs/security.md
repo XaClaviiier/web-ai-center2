@@ -1,4 +1,4 @@
-# Security — AI Center UBAYA CMS
+# Security — UBAYA AI Center CMS
 
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Peran pengguna: \[Lihat requirement.md §6\]. Audit `created_by` / `updated_by`: \[Lihat database.md §3.6\].
 
@@ -47,4 +47,5 @@ Cache konten (TTL dan invalidasi): \[Lihat database.md §7\].
 * Konten teks (judul, `isi`): disimpan sebagai teks biasa. Format paragraf dan potongan kartu: \[Lihat database.md §3.1\]. Backend melakukan trim, membatasi panjang, dan membuang karakter kontrol. Pencegahan XSS dilakukan saat ditampilkan: frontend merender konten sebagai teks (bukan HTML mentah), dan tidak boleh memakai `innerHTML` atau `set:html` untuk konten ini.  
 * Upload file ke RustFS: tipe file dicek dari isi file (bukan hanya ekstensi), ukuran dibatasi, dan nama file diganti dengan nama acak agar tidak terjadi path traversal atau tabrakan nama.  
 * Aset medis publik, termasuk tangkapan layar aplikasi riset: wajib diperiksa manual agar tidak memuat nama, identitas pasien, atau citra medis nyata tanpa izin. Pemeriksaan otomatis tidak dapat membaca teks di dalam gambar.  
+* Dokumen pada demo portofolio: wajib sintetis, tanpa rekening, data pribadi, atau catatan bisnis nyata. Tidak ada unggah atau pengiriman dokumen ke layanan eksternal. Pertimbangan keamanan untuk penerapan nyata (akses, retensi, audit, jaringan, hosting model) disampaikan sebagai pertimbangan, bukan fitur demo, dan tanpa klaim sertifikasi atau keamanan absolut.  
 * Respons error: tidak menampilkan detail internal (stack trace, query, struktur database) ke client; detailnya hanya dicatat di log. \[RP-06\]
