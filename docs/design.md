@@ -1,16 +1,20 @@
 # Design — AI Center UBAYA CMS
 
-Dilebur dari `docs/_arsip/00-detail-rencana-web.md`. Alur konten halaman: \[Lihat requirement.md §4 dan §5\].
+Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Alur konten halaman: \[Lihat requirement.md §4 dan §5\].
 
 ## 1. Navbar dan animasi global
 
 Navigation Bar menggunakan referensi dari tautan: [https\://symboolic.com/en](https://symboolic.com/en)
 
-Animasi untuk interaksi button, card, pada page secara global: Fase prototype: CSS/JS murni. Fase stack: GSAP dan motion.dev \[Lihat stack.md §2\].
+Animasi untuk interaksi button, card, pada page secara global: Fase prototype: CSS/JS murni. Fase stack: GSAP dan motion.dev \[Lihat stack.md §2\]. Pengecualian: animasi bola neural pada hero Beranda memakai canvas 2D dengan loop `requestAnimationFrame` sendiri (bukan GSAP/motion.dev); acuannya `prototype/assets/js/bola-neural.js`.
 
 ## 2. Referensi visual per halaman
 
 **Landing Page (Home)**
+
+Copy Beranda memakai arah **Warm Editorial Storytelling**. Hero memperkenalkan manfaat pengembangan keterampilan dan penerapan AI bagi individu, institusi, serta bisnis. Kartu Pelatihan menekankan manfaat belajar bagi individu dan kelompok; kartu Inference and Solutions menekankan penerapan model dalam sistem atau proses kerja organisasi, termasuk integrasi dan pendampingan teknis. Kedua kartu tidak harus memberi penekanan yang sama pada setiap audiens.
+
+CTA utama hero “Diskusikan Kebutuhan AI” membuka WhatsApp resmi, sedangkan “Lihat Layanan” menuju bagian layanan. Kartu layanan memakai “Lihat Pelatihan” dan “Lihat Solusi AI”; bagian Galeri Dokumentasi menaut ke daftar album. Judul testimoni “Cerita dari mereka yang belajar dan bekerja bersama kami” dipertahankan. Penutup menampung pertanyaan belajar maupun penerapan AI melalui kanal WhatsApp dan email yang sudah ada. Penyuntingan copy mempertahankan alur section, cakupan layanan, dan pola visual Beranda.
 
 Pada page home, perpindahan dari satu section story telling ke section berikutnya menggunakan referensi animasi pada referensi [https\://brand.vettvangur.is/](https://brand.vettvangur.is/)
 
@@ -24,21 +28,41 @@ Tampilan preview berita di home page akan menggunakan referensi [https\://www\.a
 
 **Page Pelatihan:** referensi ada di dalam alur halaman \[Lihat requirement.md §4.2\].
 
-**Page Dokumentasi**
+Pada fase prototype, pengantar Pelatihan menjelaskan tiga pilihan: Pelatihan Reguler yang sedang disiapkan, Pelatihan Khusus untuk kebutuhan kelompok, serta Workshop atau Seminar untuk Bisnis. Tombol “Konsultasi Gratis” tetap menuju bagian Pelatihan Khusus sesuai `requirement.md` §4.2; CTA pada bagian Khusus dan Bisnis membuka kanal WhatsApp resmi dengan label sesuai topik. Empat langkah Pelatihan Khusus telah dikonfirmasi pemilik sebagai proses layanan, sehingga penanda data contoh pada alur dihapus. Perubahan ini menyunting bahasa dan hierarki informasi, bukan menambah jenis layanan atau jalur pendaftaran.
 
-Page ini menggunakan referensi dari [https\://www\.altoira.com/insights](https://www.altoira.com/insights).
+**Page Inference and Solutions**
+
+Pada fase prototype, pengantar menjelaskan inference sebagai penggunaan model AI untuk menghasilkan prediksi pada data baru, lalu menghubungkannya dengan kebutuhan aplikasi atau sistem. IT Service Management dan Data Science tetap menjadi dua area awal diskusi; deskripsinya menggunakan bahasa yang tidak menjanjikan hasil tertentu. Lima tahap penerapan model AI telah dikonfirmasi pemilik sebagai proses layanan dan dipertahankan. Penutup mengajak pengunjung mendiskusikan kebutuhan AI melalui kanal kontak yang sudah ada. Nama resmi layanan, portofolio, dan tujuan CTA tidak berubah.
+
+**Page Galeri Dokumentasi**
+
+Pada fase prototype, halaman **Galeri Dokumentasi** memakai arah **Clean Editorial Gallery**: pengantar singkat, pencarian album, grid foto, dan pagination yang sudah ada. Setiap kartu hanya memuat sampul, tanggal publikasi dan badge jumlah foto pada satu baris metadata, lalu judul album. Jumlah foto diambil dari koleksi gambar album; gambar pertama menjadi sampul. Seluruh kartu menaut ke detail album, tanpa deskripsi atau tag kategori.
+
+Daftar tetap menampilkan maksimal **9 album per halaman**, sesuai `requirement.md` §4.4. Grid memakai tiga kolom pada desktop, dua pada tablet, dan satu pada HP; jumlah album lebih sedikit tidak diisi kartu tambahan. Foto memakai rasio tampilan konsisten, dengan hover ringan pada perangkat yang mendukung hover, fokus keyboard yang terlihat, dan `prefers-reduced-motion` yang dihormati. Data album dan gambar contoh tetap dipakai selama prototyping; konten produksi harus memakai dokumentasi kegiatan yang telah diverifikasi. Halaman detail serta rute teknis yang ada tidak berubah.
 
 **Page Berita**
 
-Page ini menggunakan referensi display dari [https\://www\.altoira.com/insights](https://www.altoira.com/insights) .
+Halaman Berita memakai arah **Minimal Editorial News**, dengan [AI Singapore News](https://aisingapore.org/news/) sebagai acuan struktur pengantar dan keterbacaan daftar artikel. Warna, huruf, komponen, navbar, dan footer tetap mengikuti identitas AI Center UBAYA; tata letak situs referensi tidak disalin.
+
+Pada fase prototype, halaman dibuka dengan pengantar “Kabar Terbaru dari AI Center UBAYA.” lalu langsung menampilkan daftar berita. Kartu berisi gambar, tanggal, judul, ringkasan dari paragraf pertama, dan satu tautan ke detail; tidak ada tag kategori atau bagian berita unggulan. Grid memakai dua kolom pada layar lebar dan satu kolom pada HP, dengan lebar kartu dibatasi ketika hanya ada satu hasil. Pencarian judul minimal dua karakter dan pagination sembilan berita per halaman tetap mengikuti `requirement.md` §4.5; pagination hanya tampil bila diperlukan.
+
+Gambar dan isi berita yang dipublikasikan harus sesuai peristiwa atau jelas berfungsi sebagai ilustrasi. Data berita contoh dalam `prototype/assets/mock-data.js` tetap dipakai selama fase prototyping dan tidak dianggap artikel terverifikasi untuk produksi. Interaksi kartu memakai umpan balik hover ringan pada perangkat yang mendukung hover, fokus keyboard yang terlihat, serta penghormatan pada `prefers-reduced-motion`; tidak ada dependensi animasi baru. Halaman detail tetap memakai struktur yang ada: judul, tanggal, gambar, isi, dan tautan kembali. Penyempurnaan detail dan metadata produksi mengikuti `stack.md` §3 dan ditinjau terpisah.
 
 **Page tim**
 
 Page ini menggunakan referensi display dari [https\://mohfarid99.github.io/ubaya-ai-center/tentang-ai-center.html\#tim](https://mohfarid99.github.io/ubaya-ai-center/tentang-ai-center.html#tim) .
 
+Pada fase prototype, halaman Tim memakai arah **Editorial Team Showcase**: pengantar singkat, pencarian nama/peran/bidang, enam profil sesuai urutan organisasi, lalu CTA kontak. Kartu menampilkan foto, nama dan gelar, peran, serta bidang riset dalam grid tiga kolom di desktop, dua di tablet, dan satu di HP. Bidang riset pada data prototype ditetapkan pemilik tetapi masih perlu verifikasi sebagai keahlian pribadi sebelum produksi.
+
+Penutup mengajak pengunjung berdiskusi melalui satu tombol “Hubungi via WhatsApp” ke kanal resmi AI Center UBAYA yang sudah dipakai halaman layanan. CTA ditempatkan setelah seluruh profil, bukan di tengah direktori. Umpan balik tombol memakai pola yang ada; pencarian memperbarui hasil saat mengetik tanpa animasi grid atau dependensi baru.
+
 **Page about**
 
 Page ini menggunakan referensi pada [https\://chalk.ai/about](https://chalk.ai/about)
+
+Pada fase prototype, halaman Tentang Kami memakai arah **Warm Editorial Storytelling** dengan alur ringkas: pengantar AI Center UBAYA, visi dan misi, fasilitas, lalu pilihan layanan. Hero memakai judul “Mendekatkan Inovasi AI dengan Kebutuhan Nyata.” Visi resmi dan lima poin misi dipertahankan maknanya. Fasilitas menampilkan foto ruang pelatihan dan ruang diskusi; foto ruang demo diganti placeholder “Foto Ruangan Coming Soon”. Bagian penutup berjudul “Langkah Berikutnya Dimulai di Sini.” Dua kartu Pelatihan dan Inference and Solutions menjadi CTA utama; masing-masing memuat deskripsi singkat dan langsung menuju halaman layanan terkait. Tombol umum “Lihat Layanan Kami” dihapus karena mengulang pilihan yang sudah tersedia.
+
+Komposisi menggunakan hierarki tipografi dan susunan fasilitas yang lebih editorial; kolom ditumpuk pada layar kecil agar urutan baca tetap jelas. Kartu layanan tampil dua kolom pada layar lebar dan bertumpuk pada layar kecil, dengan keadaan hover dan fokus yang jelas. Motion khusus halaman dibatasi pada masuknya teks hero, reveal bagian sekali saat terlihat, serta hover foto dan panah kartu layanan pada perangkat yang mendukung hover. `prefers-reduced-motion` dihormati, dan konten tetap terlihat tanpa efek scroll. Implementasi prototype menggunakan CSS dan JavaScript yang sudah ada, tanpa dependensi animasi tambahan.
 
 ## 3. Warna, Huruf
 
