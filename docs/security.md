@@ -1,6 +1,6 @@
 # Security — AI Center UBAYA CMS
 
-Dilebur dari `docs/_arsip/00-detail-rencana-web.md`. Peran pengguna: \[Lihat requirement.md §6\]. Audit `created_by` / `updated_by`: \[Lihat database.md §3.6\].
+Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Peran pengguna: \[Lihat requirement.md §6\]. Audit `created_by` / `updated_by`: \[Lihat database.md §3.6\].
 
 ## 1. Akses dan login
 

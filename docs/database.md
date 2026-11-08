@@ -1,6 +1,6 @@
 # Database — AI Center UBAYA CMS
 
-Dilebur dari `docs/_arsip/00-detail-rencana-web.md` dan `docs/_arsip/01-kontrak-api.md`. Skema lama (`D:\aicenter\notes\ext-database.md`) hanya dipakai untuk detail yang sudah diverifikasi terhadap plan.
+Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Skema lama (`D:\aicenter\notes\ext-database.md`, di luar repo) hanya dipakai untuk detail yang sudah diverifikasi terhadap plan.
 
 ## 1. Ruang lingkup
 

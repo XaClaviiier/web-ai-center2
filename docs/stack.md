@@ -1,6 +1,6 @@
 # Stack — AI Center UBAYA CMS
 
-Dilebur dari `docs/_arsip/00-detail-rencana-web.md` dan `docs/_arsip/01-kontrak-api.md`.
+Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`).
 
 ## 1. Alur fase kerja
 
