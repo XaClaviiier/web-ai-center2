@@ -8,6 +8,10 @@ Navigation Bar menggunakan referensi dari tautan: [https\://symboolic.com/en](ht
 
 Animasi untuk interaksi button, card, pada page secara global: Fase prototype: CSS/JS murni. Fase stack: GSAP dan motion.dev \[Lihat stack.md §2\]. Pengecualian: animasi bola neural pada hero Beranda memakai canvas 2D dengan loop `requestAnimationFrame` sendiri (bukan GSAP/motion.dev); acuannya `prototype/assets/js/bola-neural.js`.
 
+Hero Beranda berupa bidang navy dengan "bola neural" (canvas 2D): titik berbentuk bola yang berputar pelan dan "bernapas", sesekali satu node menyala mint beserta garis tipis ke tetangganya, dan titik di dekat kursor tertarik sedikit (tidak aktif di atas tautan atau CTA). Bola adalah lapisan latar yang tidak menerima klik, dengan scrim statis agar teks tetap terbaca. Perangkat tanpa hover atau pointer halus memakai titik lebih sedikit, frame rate lebih rendah, dan tanpa interaksi. `prefers-reduced-motion`: bola diam. Bila waktu kerja per frame terlalu tinggi, titik dikurangi, lalu bola diam. Animasi berhenti saat hero di luar layar atau tab tersembunyi. Angka rinci ada di `KONFIG` pada `bola-neural.js`; kinerja belum diukur di perangkat nyata.
+
+Tidak ada tombol jeda untuk animasi hero, dan carousel (testimoni Beranda, pertanyaan Inference) juga tanpa tombol jeda. Ini penyimpangan disengaja dari WCAG 2.2.2 (Pause, Stop, Hide) atas keputusan pemilik. Untuk membatasinya, autoplay carousel hanya aktif di perangkat ber-hover dan berhenti saat disorot atau difokus; keringanan lain hanya `prefers-reduced-motion`.
+
 ## 2. Referensi visual per halaman
 
 **Landing Page (Home)**
@@ -74,12 +78,13 @@ Komposisi menggunakan hierarki tipografi dan susunan fasilitas yang lebih editor
 * Main Font: General Sans, Cabinet Grotesk  
 * Additional Font: Geist Mono  
 * Primary colors: `#FFFFFF`; `#D8EBF8`; `#0674FD`; `#2547F4`; `#0A2240`  
-* Warna overlay / teks sekunder: `#0000006B`  
+* Warna overlay: `#0000006B` (kontrasnya sekitar 3:1, jadi tidak dipakai sebagai teks sekunder)  
+* Teks sekunder (turunan prototype): `#0A2240` dengan opasitas 72%  
 * Secondary Color: `#3CFBC5`; `#F3D502`; `#0C7C6C`; `#FF6B2C`  
 * Borders: adjust to needs.  
 * Warna status: secondary color or Sesuaikan dengan arah desain.  
 * Aturan: status wajib ada teks, bukan warna saja.  
-* Kontras: Sesuaikan dengan arah desain.  
+* Kontras: Sesuaikan dengan arah desain. `#0674FD` di atas putih sekitar 4,3:1 sehingga tidak dipakai untuk teks biasa; `#FF6B2C` juga kurang untuk teks, sehingga pesan galat memakai turunan `#B23F0D`. Nama dan nilai token turunan (jarak, radius, bayangan, skala teks) sementara didefinisikan di `prototype/assets/css/tokens.css`.  
 * Keluarga font: Sesuaikan dengan arah desain.  
 * Skala ukuran: judul, isi, tabel, catatan kecil; Sesuaikan dengan arah desain.  
 * Angka tabel rata.  

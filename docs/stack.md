@@ -19,7 +19,8 @@ Kriteria selesai per fase: \[Lihat requirement.md §8\].
 * GSAP dan motion.dev: animasi.  
 * Embla-carousel: Library Carousel  
 * TanStack Query: pengambilan data server dan cache di browser.  
-* Bun: tooling dependency, build, dan pengujian frontend.
+* Bun: tooling dependency, build, dan pengujian frontend.  
+* Pemilih tanggal \[terbuka\]: belum ditentukan apakah komponen kalender shadcn/ui memenuhi semua aturan (format `DD-MM-YYYY`, bahasa Indonesia, minggu mulai Senin, tanggal setelah hari ini nonaktif) atau `prototype/assets/js/kalender.js` diterjemahkan langsung.
 
 ## 3. Backend
 
@@ -111,7 +112,7 @@ Hanya mengembalikan data berstatus posted.
 | GET | `/api/dokumentasi` | Daftar dokumentasi; parameter `page`, `limit`, `q` (pencarian judul, minimal 2 karakter) |
 | GET | `/api/dokumentasi/:slug` | Detail dokumentasi |
 | GET | `/api/testimoni` | Daftar testimoni |
-| GET | `/api/tim` | Daftar tim |
+| GET | `/api/tim` | Daftar tim; tanpa parameter `q`. Pencarian di prototype dilakukan di browser pada nama, jabatan, dan bidang riset \[terbuka: tetap di browser atau pindah ke server\] |
 
 Layanan (Pelatihan, Inference and Solutions) tidak punya endpoint; isinya hardcode di frontend.
 
@@ -143,7 +144,7 @@ Endpoint autentikasi \[menunggu konfirmasi Keycloak\]:
 | GET | `/api/auth/callback` | Terima kode OIDC, buat session |
 | POST | `/api/auth/logout` | Hapus session |
 | GET | `/api/auth/me` | Info pengguna (nama \+ role) |
-| \[diisi\] | \[diisi\] | Login development (hanya `APP_ENV=development`) \[Lihat security.md §1\] |
+| \[diisi\] | \[diisi\] | Login development (hanya `APP_ENV=development`) \[Lihat security.md §1; KONFLIK belum diputuskan\] |
 
 ### 9.6 Skema JSON per entitas
 

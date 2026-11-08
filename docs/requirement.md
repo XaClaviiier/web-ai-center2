@@ -20,7 +20,7 @@ Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak
 
 ### Scope User
 
-Sistem ini akan memiliki 2 sisi, yaitu publik dan internal. Dari sisi publik, sistem ini akan diakses oleh pengunjung anonim dan semua orang bisa baca. Dari sisi internal, staff internal bisa melakukan akses ke dashboard admin yang berfungsi untuk mengelola CRUD Dokumentasi, Berita, Tim, Testimoni, yang bisa juga melakukan unggah gambar (jpg/png/webp maks 2MB). Konten Pelatihan (Program Reguler, Program Khusus, Seminar / Workshop untuk Bisnis) hardcode di frontend pada tahap ini, hapus/logout akan selalu memakai konfirmasi. Kemudian, untuk pengelolaan login user akan dikelola oleh 1 tools sistem bernama keycloak. Dan memiliki 2 role yaitu direktur dan pegawai. \[menunggu konfirmasi Keycloak\]
+Sistem ini akan memiliki 2 sisi, yaitu publik dan internal. Dari sisi publik, sistem ini akan diakses oleh pengunjung anonim dan semua orang bisa baca. Dari sisi internal, staff internal bisa melakukan akses ke dashboard admin yang berfungsi untuk mengelola CRUD Dokumentasi, Berita, Tim, Testimoni, yang bisa juga melakukan unggah gambar (jpg/png/webp maks 2MB). Konten Pelatihan (Program Reguler, Program Khusus, Seminar / Workshop untuk Bisnis) hardcode di frontend pada tahap ini, hapus/logout akan selalu memakai konfirmasi. \[Direncanakan: Retract juga memakai konfirmasi, dan form yang isinya berubah menampilkan peringatan sebelum ditinggalkan; keduanya belum ada di prototype.\] Kemudian, untuk pengelolaan login user akan dikelola oleh 1 tools sistem bernama keycloak. Dan memiliki 2 role yaitu direktur dan pegawai. \[menunggu konfirmasi Keycloak\]
 
 Validasi upload: \[Lihat security.md §7\] dan \[Lihat database.md §3\].
 
@@ -55,7 +55,7 @@ Section jenis layanan memuat dua card, yaitu 'Pelatihan' dan ''Inference and Sol
 
 Section dokumentasi akan menampilkan 3 unggahan dokumentasi terbaru (dari halaman detail dokumentasi), lalu ada button untuk menuju page daftar dokumentasi. Tiap preview item dokumentasi akan muncul dalam bentuk card yang berisi (foto headline, judul, tanggal publikasi dokumentasi terkait), lalu ada button untuk melihat detail dokumentasi yang dipilih.
 
-Section testimoni klien (carousel otomatis, gerak per 10 detik). Per carousel akan tampilkan 1 testimoni.
+Section testimoni klien (carousel otomatis, gerak per 10 detik). Per carousel akan tampilkan 1 testimoni. Autoplay hanya aktif di perangkat dengan hover dan berhenti saat disorot atau difokus; di layar sentuh dan saat `prefers-reduced-motion`, carousel digerakkan manual lewat panah. Tidak ada tombol jeda \[Lihat design.md §1\].
 
 Section berita menampilkan 3 unggahan berita terbaru (dari halaman detail berita), lalu ada button untuk menuju page daftar berita. Tiap preview item berita akan muncul dalam bentuk card yang berisi (foto headline, judul, potongan berita dari paragraf pertama artikel terkait), lalu ada button untuk melihat detail berita yang dipilih.
 
@@ -95,6 +95,16 @@ Rute /tentang-kami. Referensi visual: \[Lihat design.md §2\].
 
 Page admin memuat data-data terkait Berita, Dokumentasi, Testimoni, Tim.
 
+**Aturan umum admin** (berlaku untuk §5.1 sampai §5.4):
+
+* Edit, Hapus, dan Post hanya muncul untuk item berstatus draft. Item posted hanya punya Retract.  
+* Item yang sedang dikunci pengguna lain: Hapus dan Post nonaktif, sedangkan Edit berganti menjadi "Lihat" (mode baca saja) \[Lihat database.md §4\].  
+* Tabel Trash tidak memiliki kolom Status, karena Restore selalu mengembalikan item ke draft.  
+* Tanggal publikasi (Berita dan Dokumentasi): input teks `DD-MM-YYYY` dengan kalender (bahasa Indonesia, minggu mulai Senin). Form tambah mengisinya dengan hari ini. Tanggal setelah hari ini ditolak, sehingga tidak ada posting terjadwal \[Lihat database.md §2\]. Testimoni dan Tim tidak memiliki tanggal publikasi.  
+* Tidak ada dashboard, pencarian, atau pagination di daftar admin, dan tanggal masuk trash tidak ditampilkan \[terbuka\].  
+* \[Terbuka, perlu didiskusikan sebelum backend karena berdampak ke API\] Konten posted harus di-Retract sebelum diedit, sehingga memperbaiki satu typo membuat halaman publiknya 404 sementara, termasuk bagi tautan yang sudah dibagikan.  
+* Konfirmasi Retract dan peringatan perubahan belum tersimpan: \[Direncanakan\] \[Lihat §2\].
+
 ### 5.1 Bagian Berita
 
 ada section yang mendisplay semua berita yang ada di database sistem (status draft & posted), section untuk edit berita (memuat image highlight, judul, tanggal publikasi, konten berita), section untuk Trash Berita (apapun data berita yang di page ini akan dihapus dalam waktu 30 hari setelah dipindahkan ke trash ini). Saat status berita adalah 'draft', button pada tiap item berita (pada section display semua berita) ada button untuk 'edit', 'hapus', 'post';
@@ -103,7 +113,7 @@ Saat status 'posted', button pada tiap item berita (pada display) ada button 're
 
 Bila item berita pada list dihapus, maka item tersebut akan pindah ke section 'trash berita' sebagai mekanisme soft delete. Semua item yang berada di sini lebih dari 30 hari (setelah dipindahkan) akan terhapus secara permanen.
 
-Di section trash tersedia tombol 'Pulihkan' (kembali ke draft) dan 'Hapus permanen' (dengan konfirmasi).
+Di section trash tersedia tombol 'Restore' (kembali ke draft) dan 'Hapus Permanen' (dengan konfirmasi).
 
 ### 5.2 Bagian Dokumentasi
 
@@ -113,7 +123,7 @@ Saat status dokumentasi adalah 'draft', button pada tiap item dokumentasi (pada 
 
 Bila item dokumentasi pada list dihapus, maka item tersebut akan pindah ke section 'trash dokumentasi' sebagai mekanisme soft delete. Semua item yang berada di sini lebih dari 30 hari (setelah dipindahkan) akan terhapus secara permanen.
 
-Di section trash tersedia tombol 'Pulihkan' (kembali ke draft) dan 'Hapus permanen' (dengan konfirmasi).
+Di section trash tersedia tombol 'Restore' (kembali ke draft) dan 'Hapus Permanen' (dengan konfirmasi).
 
 ### 5.3 Bagian Testimoini
 
@@ -125,7 +135,7 @@ Saat status testimoni adalah 'draft', button pada tiap testimoni (pada section d
 
 Bila item testimoni pada list dihapus, maka item tersebut akan pindah ke section 'trash testimoni' sebagai mekanisme soft delete. Semua item yang berada di sini lebih dari 30 hari (setelah dipindahkan) akan terhapus secara permanen.
 
-Di section trash tersedia tombol 'Pulihkan' (kembali ke draft) dan 'Hapus permanen' (dengan konfirmasi).
+Di section trash tersedia tombol 'Restore' (kembali ke draft) dan 'Hapus Permanen' (dengan konfirmasi).
 
 Tampilan carousel testimoni: \[Lihat §4.1\] dan \[Lihat design.md §2\].
 
@@ -133,7 +143,7 @@ Tampilan carousel testimoni: \[Lihat §4.1\] dan \[Lihat design.md §2\].
 
 ada section yang mendisplay semua data tim dan section untuk edit tim.
 
-Untuk data tim itu field inputnya: Foto, posisi / jabatan, nama, & bidang riset
+Untuk data tim itu field inputnya: Foto, posisi / jabatan, nama, bidang riset, & urutan (angka bulat mulai dari 1; angka kecil tampil lebih dulu). Tabel Tim tetap memakai kolom Foto.
 
 ## 6. Pengguna, peran, izin
 

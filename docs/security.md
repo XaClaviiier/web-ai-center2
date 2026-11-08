@@ -12,6 +12,8 @@ Endpoint auth: \[Lihat stack.md §9.5\]. \[menunggu konfirmasi Keycloak\]
 
 **Login development (sebelum Keycloak siap):** backend Go menyediakan login password yang mengikuti logika mekanisme login yang ada saat ini, tetapi hasilnya adalah cookie session yang sama dengan alur Keycloak (bukan Bearer token), sehingga frontend admin hanya punya satu cara autentikasi. Login ini hanya aktif bila `APP_ENV=development`; server menolak start bila login ini aktif di luar development. Saat Keycloak siap, hanya endpoint login yang diganti.
 
+\[KONFLIK, belum diputuskan\] Catatan prototype menyebut keputusan terbaru bahwa aplikasi tidak memiliki halaman login sendiri, sedangkan paragraf Login development di atas mendefinisikan login password. Tentukan mana yang berlaku sebelum fase backend. Sampai itu jelas, paragraf tersebut tidak dihapus \[Lihat juga stack.md §9.5\].
+
 ## 2. Session
 
 **Session login:** Key `session:{id}` berisi `sub`, nama, token CSRF, dan waktu dibuat. Cookie hanya berisi ID acak (256 bit). Dibuat setelah login Keycloak berhasil, dihapus saat logout. Pengguna yang dinonaktifkan di Keycloak tetap punya session sampai kedaluwarsa \[Diputuskan pada fase backend: validasi ulang ke Keycloak berkala\]. Idle 1 jam (diperpanjang tiap request), batas mutlak 8 jam; cookie dibuat berumur sama dengan batas mutlak.
@@ -41,6 +43,7 @@ Cache konten (TTL dan invalidasi): \[Lihat database.md §7\].
 * Query database: selalu berparameter (tidak menyambung string SQL dari input user) untuk mencegah SQL injection.  
 * Search box: (sarankan review security audit).  
 * Parameter request dipastikan bertipe benar, `page` minimal 1, `limit` dibatasi maksimum, dan nilai yang tidak valid ditolak dengan `400`.  
+* `tanggal_publikasi` harus berformat `DD-MM-YYYY`, ada di kalender, dan tidak boleh setelah hari ini. Judul Berita dan Dokumentasi maksimal 70 karakter. Pelanggaran ditolak dengan `400` \[Lihat database.md §2\].  
 * Konten teks (judul, `isi`): disimpan sebagai teks biasa. Format paragraf dan potongan kartu: \[Lihat database.md §3.1\]. Backend melakukan trim, membatasi panjang, dan membuang karakter kontrol. Pencegahan XSS dilakukan saat ditampilkan: frontend merender konten sebagai teks (bukan HTML mentah), dan tidak boleh memakai `innerHTML` atau `set:html` untuk konten ini.  
 * Upload file ke RustFS: tipe file dicek dari isi file (bukan hanya ekstensi), ukuran dibatasi, dan nama file diganti dengan nama acak agar tidak terjadi path traversal atau tabrakan nama.  
 * Respons error: tidak menampilkan detail internal (stack trace, query, struktur database) ke client; detailnya hanya dicatat di log. \[RP-06\]

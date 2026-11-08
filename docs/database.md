@@ -16,7 +16,8 @@ Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak
 * `id`: `bigint generated always as identity`.  
 * `status`: `text` dengan `CHECK (status IN ('draft','posted'))`.  
 * Timestamp sistem: `timestamptz`; di API berformat ISO 8601 UTC.  
-* `tanggal_publikasi`: tipe `date`; di API dikirim dan diterima sebagai `DD-MM-YYYY`; format lain ditolak `400`. Tampilan di UI juga `DD-MM-YYYY`.
+* `tanggal_publikasi`: tipe `date`; di API dikirim dan diterima sebagai `DD-MM-YYYY`; format lain ditolak `400`. Tampilan di UI juga `DD-MM-YYYY`. Tanggal harus ada di kalender dan tidak boleh setelah hari ini; backend menolaknya dengan `400`. Zona waktu acuan yang menentukan "hari ini" \[terbuka\]: tanggal lokal perangkat bisa berbeda dari tanggal server. Rancangan ini tidak mendukung posting terjadwal. Item lama yang sudah bertanggal masa depan tetap tampil apa adanya, tetapi tidak bisa disimpan sampai tanggalnya diperbaiki; aturan untuk data serupa saat migrasi \[terbuka\].  
+* `judul` Berita dan `judul` kegiatan Dokumentasi: maksimal 70 karakter. Panjang dihitung sebagai `String.length` pada nilai yang sudah di-trim (spasi dihitung, emoji dihitung 2), sama dengan atribut `maxlength` HTML. Judul lama yang melebihi 70 tetap boleh disimpan selama judulnya tidak diubah. \[Belum diterapkan: kode `src/` dan `server/` masih memakai batas 200. Sebelum diterapkan, periksa judul live yang lebih dari 70 karakter.\] Batas ini tidak berlaku untuk judul modul kursus, hero, inference, nama layanan, atau nama tim.
 
 ## 3. Entitas
 
@@ -154,9 +155,17 @@ Edit hanya untuk data berstatus draft (konten yang sudah terbit di-Retract dulu)
 
 Kolom `version` dicek saat Simpan. Semua perubahan diterapkan dalam satu request dan satu transaksi bersama pengecekan `version`, lalu `version` dinaikkan. Jika versi tidak cocok, backend mengembalikan `409 Conflict`. `version` naik 1 setiap Simpan, Post, dan Retract.
 
+**Perilaku di antarmuka admin**
+
+* Item yang dikunci pengguna lain: tombol Hapus dan Post nonaktif; Edit berganti "Lihat" untuk mode baca saja.  
+* Sesi edit berakhir (heartbeat gagal): Simpan nonaktif, isian tetap ada di form, dan pengguna diminta menyalin lalu memuat ulang. Batas waktu pengguna diam \[terbuka\].  
+* Konten posted harus di-Retract sebelum diedit \[terbuka, perlu didiskusikan sebelum backend karena berdampak ke API; lihat requirement.md §5\].
+
 ## 5. Penyimpanan gambar (RustFS)
 
 ### 5.1 Dokumentasi
+
+File di RustFS memakai nama unik yang tidak berubah: `dokumentasi/{id}/{uuid}.ext`, mengikuti pola Berita, Testimoni, dan Tim. \[RP-11\]
 
 **Tambah dan Edit**
 
