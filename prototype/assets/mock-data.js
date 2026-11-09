@@ -154,21 +154,35 @@ const MOCK = (() => {
       { nama: 'Inference and Solutions', deskripsi: 'Bantu organisasi Anda menerapkan model AI ke dalam sistem atau proses kerja, dengan dukungan integrasi dan pendampingan teknis sesuai kebutuhan.', href: 'inference.html' },
     ],
     pelatihan: {
-      hero_judul: 'Pelatihan AI untuk kebutuhan belajar dan kerja.',
-      hero_sub: 'Kenali Pelatihan Reguler yang sedang disiapkan, Pelatihan Khusus sesuai kebutuhan kelompok, serta Workshop atau Seminar untuk Bisnis.',
-      reguler: 'Program pelatihan reguler sedang kami siapkan.',
-      khusus_sub: 'Ceritakan tujuan belajar dan kebutuhan peserta. UBAYA AI Center dapat membahas format pelatihan untuk sekolah, kampus, komunitas, atau organisasi.',
+      hero_judul: 'Pelatihan AI untuk Kebutuhan Belajar dan Kerja',
+      hero_sub: 'Kembangkan kompetensi AI melalui kelas yang disesuaikan dengan kebutuhan peserta atau organisasi. Untuk perusahaan, tersedia pula workshop dan seminar untuk mengeksplorasi peluang penerapan AI dalam proses bisnis.',
+      reguler: 'Program pelatihan AI dengan topik dan jadwal yang telah ditentukan sedang kami persiapkan. Informasi program akan diumumkan setelah tersedia.',
+      khusus_isi: [
+        'Pelatihan Khusus dirancang untuk membantu individu, kelompok, maupun organisasi mengembangkan pemahaman dan keterampilan AI sesuai tujuan pembelajaran.',
+        'Materi dan pendekatan pelatihan dapat disesuaikan dengan latar belakang peserta serta persoalan yang ingin dipelajari, sehingga pembelajaran tidak berhenti pada teori, tetapi juga menghubungkan AI dengan konteks penggunaan yang relevan.',
+      ],
+      khusus_fokus: ['Memahami konsep dan kemampuan AI.', 'Mempelajari contoh penerapan AI sesuai kebutuhan.', 'Mengembangkan keterampilan melalui pendekatan pembelajaran yang disepakati.'],
       // Empat langkah berikut dikonfirmasi sebagai proses layanan oleh pemilik.
       alur_konsultasi: [
         { judul: 'Ceritakan kebutuhan', deskripsi: 'Hubungi kami dan sampaikan tujuan serta peserta pelatihan.' },
         { judul: 'Diskusi bersama tim', deskripsi: 'Kami memetakan materi, durasi, dan format yang paling sesuai.' },
         { judul: 'Terima usulan program', deskripsi: 'Anda menerima usulan program untuk ditinjau bersama.' },
-        { judul: 'Pelatihan berjalan', deskripsi: 'Program dijalankan dan didampingi oleh tim AI Center.' },
+        { judul: 'Pelatihan berjalan', deskripsi: 'Program dijalankan dan didampingi oleh tim UBAYA AI Center.' },
       ],
-      workshop_sub: 'Bantu tim dan pimpinan bisnis memahami penerapan AI yang relevan dengan pekerjaan mereka melalui workshop atau seminar.',
+      workshop_isi: [
+        'Workshop dan seminar untuk perusahaan yang ingin membangun pemahaman bersama tentang AI, mengenali peluang penerapannya, serta mendiskusikan manfaat dan tantangannya dalam konteks bisnis.',
+        'Kegiatan ini dapat melibatkan tim maupun pimpinan perusahaan, dengan pembahasan yang disesuaikan dengan kebutuhan dan persoalan organisasi.',
+      ],
+      workshop_fokus: ['Memahami peluang dan keterbatasan penerapan AI dalam bisnis.', 'Mengeksplorasi contoh penggunaan AI pada proses kerja.', 'Membangun landasan diskusi untuk langkah eksplorasi berikutnya.'],
+      jalur: [
+        { kebutuhan: 'Perusahaan ingin 15 karyawan mempelajari penerapan AI untuk pekerjaan sehari-hari.', layanan: 'Pelatihan Khusus', href: '#khusus', tautan: 'Lihat Pelatihan Khusus', alasan: 'Tujuan utamanya adalah mengembangkan kompetensi peserta, meskipun pelatihan dipesan oleh perusahaan.' },
+        { kebutuhan: 'Manajemen ingin memahami peluang dan risiko AI dalam proses bisnis.', layanan: 'Workshop & Seminar Bisnis', href: '#workshop', tautan: 'Lihat Workshop Bisnis', alasan: 'Tujuan utamanya adalah membangun pemahaman bersama dan membuka diskusi mengenai peluang penerapan AI di organisasi.' },
+        { kebutuhan: 'Seorang peserta ingin mengikuti kelas AI yang sesuai dengan kebutuhan belajarnya.', layanan: 'Pelatihan Khusus', href: '#khusus', tautan: 'Lihat Pelatihan Khusus', alasan: 'Pelatihan Khusus juga melayani kebutuhan individu. Format dan cakupan pembelajaran dapat dibicarakan saat konsultasi.' },
+        { kebutuhan: 'Tim operasional ingin mengikuti workshop untuk mengeksplorasi ide penggunaan AI.', layanan: 'Workshop & Seminar Bisnis', href: '#workshop', tautan: 'Lihat Workshop Bisnis', alasan: 'Fokusnya adalah mengeksplorasi peluang AI bersama tim. Jika diperlukan pembelajaran lebih mendalam, kebutuhan tersebut dapat dilanjutkan melalui Pelatihan Khusus.' },
+      ],
     },
     inference: {
-      hero_judul: 'Bawa model AI ke penggunaan nyata.',
+      hero_judul: 'Dari Model AI Menuju Penerapan Nyata.',
       hero_sub: 'Inference adalah proses menggunakan model AI untuk menghasilkan prediksi pada data baru. UBAYA AI Center membantu membahas bagaimana hasil tersebut dapat digunakan oleh aplikasi atau sistem sesuai kebutuhan Anda.',
       pertanyaan: [
         'Model riset atau prototipe sudah jadi, tetapi belum bisa dipakai tim lain?',
@@ -190,9 +204,9 @@ const MOCK = (() => {
         { judul: 'Operasional & purna implementasi', deskripsi: 'Monitoring, pembaruan model, dan dukungan teknis setelah layanan berjalan.' },
       ],
       portofolio: [
-        { judul: 'JejakAlumni', bidang: 'Pendidikan', deskripsi: 'Jelajahi contoh analisis data alumni sekolah, mulai dari penyerapan kerja hingga contoh ringkasan masukan lulusan berbantuan AI.', gambar: 'jejak-alumni-preview.webp', href: 'jejak-alumni.html', status: 'Demo Konsep · Data Simulasi', cta: 'Jelajahi Demo' },
-        { judul: 'Perencanaan Implan Gigi Berbasis AI', bidang: 'Riset AI Medis', deskripsi: 'Jelajahi bagaimana pendekatan AI digunakan untuk mengidentifikasi area kehilangan gigi, memetakan struktur rahang, dan mendukung visualisasi perencanaan implan.', gambar: 'implan-gigi-konseptual.svg', href: 'perencanaan-implan-gigi.html', status: 'Demo Penelitian · Visualisasi Konseptual · Nonklinis', cta: 'Jelajahi Demo' },
-        { judul: 'DocNext', bidang: 'AI untuk Bisnis', deskripsi: 'Jelajahi bagaimana pendekatan AI dapat membantu mengekstraksi informasi dari dokumen bisnis, mencocokkan data transaksi, dan mengidentifikasi ketidaksesuaian yang memerlukan pemeriksaan lebih lanjut.', gambar: 'document-intelligence-konseptual.svg', href: 'document-intelligence.html', status: 'Demo Konsep · Dokumen Sintetis', cta: 'Jelajahi Demo' },
+        { judul: 'JejakAlumni', bidang: 'Pendidikan', deskripsi: 'Lihat bagaimana data alumni dapat diolah menjadi informasi tentang penyerapan kerja, tren lulusan, dan ringkasan masukan alumni berbantuan AI.', gambar: 'jejak-alumni-konseptual.svg', href: 'jejak-alumni.html', status: 'Demo Konsep · Data Simulasi', cta: 'Jelajahi Demo' },
+        { judul: 'Perencanaan Implan Gigi Berbasis AI', bidang: 'Riset AI Medis', deskripsi: 'Kenali pendekatan AI untuk mengidentifikasi area kehilangan gigi, memetakan struktur anatomi rahang, dan memvisualisasikan tahapan perencanaan implan.', gambar: 'implan-gigi-konseptual.svg', href: 'perencanaan-implan-gigi.html', status: 'Demo Penelitian · Visualisasi Konseptual · Nonklinis', cta: 'Jelajahi Demo' },
+        { judul: 'DocNext', bidang: 'AI untuk Bisnis', deskripsi: 'Pelajari bagaimana AI dapat membantu membaca dokumen bisnis, mengekstraksi informasi penting, dan menemukan ketidaksesuaian antar dokumen untuk ditinjau lebih lanjut.', gambar: 'document-intelligence-konseptual.svg', href: 'document-intelligence.html', status: 'Demo Konsep · Dokumen Sintetis', cta: 'Jelajahi Demo' },
       ],
     },
     // Seluruh angka dan teks berikut adalah simulasi, bukan data sekolah dan bukan hasil model AI.

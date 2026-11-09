@@ -15,7 +15,7 @@ const BolaNeural = (() => {
     putarMs: 75000, miring: 0.38,
     napas: { amplitudo: 0.035, aMs: 7000, bMs: 11000 },
     titik: { jari: 1.7, jariAktif: 2.8, alfa: [0.28, 0.5, 0.9] }, // alfa: belakang, tengah, depan
-    aktivasi: { jedaMs: [1800, 4200], jedaDiamMs: [4000, 8000], naikMs: 500, tahanMs: 900, turunMs: 1100, tetangga: 3, serentak: 2, garisAlfa: 0.55, garisTebal: 0.75 },
+    aktivasi: { jedaMs: [1607, 3750], jedaDiamMs: [4000, 8000], naikMs: 500, tahanMs: 900, turunMs: 1100, tetangga: 3, serentak: 2, garisAlfa: 0.55, garisTebal: 0.75 },
     magnet: { radius: 110, kuat: 0.22, tauMs: 180 },
     kerjaMaksMs: 6, jendela: 120, // p90 waktu kerja per frame di atas ini => partikel dikurangi, lalu diam
     warna: {},                   // { titik, aksen }; kosong = token --warna-putih dan --warna-mint

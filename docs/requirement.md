@@ -28,6 +28,10 @@ Validasi upload: \[Lihat security.md §7\] dan \[Lihat database.md §3\].
 
 Website dari sisi user akan memiliki navbar dan footer. Kemudian akan berisi:
 
+Menu publik “Profil” mengelompokkan Tim dan Tentang Kami sebagai dua tautan anak; kedua halaman dan tujuannya tetap. Dropdown tersedia pada desktop dan panel navigasi mobile, dengan padanan native `details` pada fallback tanpa JavaScript. Pengelompokan ini tidak menambah halaman Profil baru.
+
+Navbar publik menambahkan “Contoh Aplikasi” setelah menu Layanan, menuju bagian Portofolio di Inference and Solutions (prototype `inference.html#portofolio`, produksi `/layanan/inference-solutions#portofolio`), bukan halaman baru. Seluruh menu, dropdown Layanan, serta tujuan yang ada dipertahankan. CTA “Diskusikan Kebutuhan AI” membuka WhatsApp resmi. Penanganan anchor mendukung klik lintas halaman, klik pada halaman yang sama, refresh langsung, dan Back/Forward dengan offset header. Status Contoh Aplikasi aktif pada hash Portofolio tanpa penekanan utama Layanan bersamaan. HTML publik menyediakan fallback navigasi tanpa JavaScript; Inference menyediakan target Portofolio dan tautan demo statis. Detail visual serta perilaku responsive navbar: [Lihat design.md §1].
+
 * fitur Beranda /beranda,  
 * Berita /berita \+ /berita/:slug: daftar \+ pencarian judul (server-side lewat parameter `?q=`, minimal 2 karakter, dengan pagination), detail dengan gambar.  
 * Dokumentasi /dokumentasi \+ /dokumentasi/:slug. HTML detail disajikan Go dengan meta SEO dan data awal \[Lihat stack.md §3\]; data juga tersedia lewat `GET /api/dokumentasi/:slug`.  
@@ -61,9 +65,15 @@ Section berita menampilkan 3 unggahan berita terbaru (dari halaman detail berita
 
 Section footer yang berisi kontak berupa nomor whatsapp, email, akun instagram, alamat resmi, dan peta lokasi.
 
-### 4.2 Page pelatihan \-\> Detailing 3 Layanannya apa
+### 4.2 Page Pelatihan
 
-Referensi page pelatihan adalah [https\://aici-umg.com/](https://aici-umg.com/) ; akan tetapi dengan alur story telling: hero (deskripsi singkat soal 3 layanan, lalu tombol 'Pelatihan Reguler' yang akan scroll ke section pelatihan reguler & 'Konsultasi Gratis' yang akan scroll ke section pelatihan khusus), section pelatihan reguler (ditulis coming soon), section pelatihan khusus (urutan tulisan: alur konsultasi seperti referensi di [https\://lppm.ubaya.ac.id/aicenter/](https://lppm.ubaya.ac.id/aicenter/) lalu, tombol untuk 'Konsultasi dengan kami') , section Workshop atau Seminar untuk Bisnis (urutan tulisan: deskripsi singkat, lalu tombol untuk 'Hubungi Kami'
+Halaman layanan Pelatihan UBAYA AI Center bertujuan memulai konsultasi. Alurnya: hero teks, pemilih jalur berdasarkan tujuan, Pelatihan Khusus, Workshop & Seminar untuk Bisnis, teaser Pelatihan Reguler, lalu penutup konsultasi. Tombol utama hero dan penutup berlabel tepat “Konsultasi Gratis” menuju WhatsApp resmi; “Lihat Pilihan Pelatihan” menggulir ke pemilih jalur. Halaman tidak menyediakan pendaftaran atau transaksi.
+
+Pelatihan Khusus melayani individu, kelompok, dan organisasi (B2B/B2C), dengan tujuan pengembangan pemahaman serta kompetensi AI melalui materi dan pendekatan yang disesuaikan. Format dan cakupan ditentukan saat konsultasi; tidak menjanjikan kelas privat satu peserta untuk setiap permintaan. Empat langkah konsultasi yang dikonfirmasi pemilik dipertahankan. Workshop & Seminar untuk Bisnis melayani perusahaan (B2B), dengan tujuan membangun pemahaman bersama dan mengeksplorasi peluang, manfaat, keterbatasan, serta tantangan AI dalam proses bisnis. CTA-nya “Tanya Workshop Bisnis”. Pembeda kedua layanan adalah hasil yang diinginkan, bukan jumlah peserta, durasi, atau ada/tidaknya latihan praktik.
+
+Pemilih jalur bersifat opsional dan memakai radio native, tanpa akun, data pribadi, backend, atau model AI. Skenario 15 karyawan belajar penerapan AI dan individu mencari kelas mengarah ke Pelatihan Khusus; skenario manajemen memahami peluang/risiko dan tim operasional mengeksplorasi ide AI mengarah ke Workshop & Seminar Bisnis. Pilihan langsung memperbarui rekomendasi, alasan, serta tautan ke `#khusus` atau `#workshop`, tanpa pemuatan halaman atau perpindahan fokus otomatis. Tidak ada pilihan awal. Kebutuhan yang tumpang tindih dapat dibahas melalui konsultasi.
+
+Pelatihan Reguler tetap terlihat secara sekunder dengan status “Coming Soon”. Jadwal, harga, instruktur, kurikulum, tanggal peluncuran, dan pendaftaran tidak ditambahkan sebelum informasi resminya tersedia.
 
 ### 4.3 Page 'Inference and Solutions' \-\> Inference & Solution
 

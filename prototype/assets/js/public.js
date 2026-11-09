@@ -15,33 +15,158 @@ function navbar(aktif) {
   const MENU = [
     { kunci: 'index', label: 'Beranda', href: 'index.html' },
     { kunci: 'layanan', label: 'Layanan', sub: [{ label: 'Pelatihan', href: 'pelatihan.html' }, { label: 'Inference and Solutions', href: 'inference.html' }] },
+    { kunci: 'contoh-aplikasi', label: 'Contoh Aplikasi', href: 'inference.html#portofolio' },
     { kunci: 'berita', label: 'Berita', href: 'berita.html' },
     { kunci: 'dokumentasi', label: 'Dokumentasi', href: 'dokumentasi.html' },
-    { kunci: 'tim', label: 'Tim', href: 'tim.html' },
-    { kunci: 'tentang-kami', label: 'Tentang Kami', href: 'tentang-kami.html' },
+    { kunci: 'profil', label: 'Profil', sub: [{ label: 'Tim', href: 'tim.html' }, { label: 'Tentang Kami', href: 'tentang-kami.html' }] },
   ];
   const menu = el('ul.nav__menu', { id: 'menu-utama' }, MENU.map((m) => {
-    if (!m.sub) return el('li', null, el('a.nav__tautan', { href: m.href, 'aria-current': m.kunci === aktif ? 'page' : null }, m.label));
-    const sub = el('ul.nav__sub', { hidden: true }, m.sub.map((s) => el('li', null, el('a', { href: s.href, 'aria-current': location.pathname.endsWith(s.href) ? 'page' : null }, s.label))));
-    const btn = el('button.nav__tautan', { type: 'button', 'aria-expanded': 'false', 'data-aktif': m.kunci === aktif ? 'ya' : null,
+    if (!m.sub) return el('li', null, el('a.nav__tautan', { href: m.href, 'data-nav': m.kunci }, m.label));
+    const idSub = `menu-${m.kunci}`;
+    const sub = el('ul.nav__sub', { id: idSub, hidden: true }, m.sub.map((s) => el('li', null, el('a', { href: s.href, 'aria-current': location.pathname.endsWith(s.href) ? 'page' : null }, s.label))));
+    const btn = el('button.nav__tautan', { type: 'button', 'aria-expanded': 'false', 'aria-controls': idSub, 'data-nav': m.kunci,
       onclick: () => { const buka = sub.hidden; sub.hidden = !buka; btn.setAttribute('aria-expanded', String(buka)); } }, m.label, ikon('bawah', 16));
     const item = el('li.nav__punya-sub', null, btn, sub);
     document.addEventListener('click', (e) => { if (!item.contains(e.target)) { sub.hidden = true; btn.setAttribute('aria-expanded', 'false'); } });
     item.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sub.hidden) { e.stopPropagation(); sub.hidden = true; btn.setAttribute('aria-expanded', 'false'); btn.focus(); } });
+    item.addEventListener('focusout', (e) => { if (!item.contains(e.relatedTarget)) { sub.hidden = true; btn.setAttribute('aria-expanded', 'false'); } });
     return item;
   }));
   const alihkanMenu = () => {
     const buka = menu.classList.toggle('terbuka');
+    akar.classList.toggle('nav--menu-terbuka', buka);
     burger.setAttribute('aria-expanded', String(buka));
     burger.setAttribute('aria-label', buka ? 'Tutup menu' : 'Buka menu');
     burger.replaceChildren(ikon(buka ? 'tutup' : 'menu', 24));
   };
   const burger = el('button.nav__burger', { type: 'button', 'aria-label': 'Buka menu', 'aria-expanded': 'false', 'aria-controls': 'menu-utama', onclick: alihkanMenu }, ikon('menu', 24));
-  return el('header.nav', { onkeydown: (e) => { if (e.key === 'Escape' && menu.classList.contains('terbuka')) { alihkanMenu(); burger.focus(); } } },
+  const cta = el('a.nav__cta', { href: K.kontak.whatsapp_url, target: '_blank', rel: 'noopener', 'aria-label': 'Diskusikan Kebutuhan AI melalui WhatsApp (tab baru)' }, 'Diskusikan Kebutuhan AI');
+  const akar = el('header.nav', { onkeydown: (e) => { if (e.key === 'Escape' && menu.classList.contains('terbuka')) { tutupMenu(); burger.focus(); } } },
     el('div.wadah.nav__dalam', null,
-      el('a.nav__logo', { href: 'index.html', 'aria-label': 'UBAYA AI Center, ke Beranda' }, el('img', { src: gambar('AI-Center_Logo.png'), alt: '', height: 40 })),
+      el('span.nav__permukaan', { 'aria-hidden': 'true' }),
+      el('a.nav__logo', { href: 'index.html', 'aria-label': 'UBAYA AI Center, ke Beranda' },
+        el('span.nav__logo-penuh', null, el('img', { src: gambar('AI-Center_Logo.png'), alt: '', width: 440, height: 116 })),
+        el('span.nav__logo-simbol', null, el('img', { src: gambar('AI-Center_Logo.png'), alt: '', width: 440, height: 116 }))),
       burger,
-      el('nav', { 'aria-label': 'Utama' }, menu)));
+      el('nav.nav__navigasi', { 'aria-label': 'Utama' }, menu), cta));
+  const desktop = matchMedia('(min-width: 80rem)');
+  const minimGerak = matchMedia('(prefers-reduced-motion: reduce)');
+  const wadahNav = akar.querySelector('.nav__dalam');
+  const permukaan = akar.querySelector('.nav__permukaan');
+  const bagianBergerak = [akar.querySelector('.nav__logo'), ...menu.children, cta];
+  let animasi = [];
+  function hentikanGerak() {
+    animasi.forEach((a) => a.cancel());
+    animasi = [];
+  }
+  function ubahKeadaan(jadiRingkas, langsung = false) {
+    if (akar.classList.contains('nav--ringkas') === jadiRingkas) return;
+    const bergerak = !langsung && !minimGerak.matches && !akar.classList.contains('nav--mobile') && typeof permukaan.animate === 'function';
+    const elemen = [...bagianBergerak, permukaan];
+    // FLIP membaca posisi yang sedang terlihat agar pembalikan scroll tidak meloncat ke awal.
+    const sebelum = bergerak ? elemen.map((n) => n.getBoundingClientRect()) : [];
+    const opasitas = bergerak ? getComputedStyle(permukaan).opacity : 0;
+    hentikanGerak();
+    akar.classList.toggle('nav--ringkas', jadiRingkas);
+    if (!bergerak) return;
+    const sesudah = elemen.map((n) => n.getBoundingClientRect());
+    elemen.forEach((n, i) => {
+      const awal = sebelum[i], akhir = sesudah[i];
+      if (!akhir.width || !akhir.height) return;
+      const permukaanSaja = n === permukaan;
+      const pindah = `translate(${awal.left - akhir.left}px, ${awal.top - akhir.top}px)`;
+      const dari = { transform: permukaanSaja ? `${pindah} scale(${awal.width / akhir.width}, ${awal.height / akhir.height})` : pindah };
+      const ke = { transform: 'none' };
+      if (permukaanSaja) { dari.opacity = opasitas; ke.opacity = jadiRingkas ? 1 : 0; }
+      animasi.push(n.animate([dari, ke], { duration: 360, easing: 'cubic-bezier(0.77, 0, 0.175, 1)' }));
+    });
+  }
+  akar.classList.toggle('nav--mobile', !desktop.matches);
+  let ringkas = scrollY > 96;
+  let frameScroll = null;
+  let frameUkuran = null;
+  function tutupMenu() {
+    menu.classList.remove('terbuka');
+    akar.classList.remove('nav--menu-terbuka');
+    burger.setAttribute('aria-expanded', 'false');
+    burger.setAttribute('aria-label', 'Buka menu');
+    burger.replaceChildren(ikon('menu', 24));
+    akar.querySelectorAll('.nav__sub').forEach((s) => { s.hidden = true; s.previousElementSibling.setAttribute('aria-expanded', 'false'); });
+  }
+  function aturAktif() {
+    const aplikasi = document.body.dataset.halaman === 'inference' && location.hash === '#portofolio';
+    akar.querySelectorAll('[data-nav]').forEach((n) => {
+      const kunci = n.dataset.nav;
+      const dipilih = aplikasi ? kunci === 'contoh-aplikasi' : kunci === (['tim', 'tentang-kami'].includes(aktif) ? 'profil' : aktif);
+      n.removeAttribute('aria-current');
+      n.removeAttribute('data-aktif');
+      if (dipilih && n.tagName === 'A') n.setAttribute('aria-current', aplikasi ? 'location' : 'page');
+      else if (dipilih) n.setAttribute('data-aktif', 'ya');
+    });
+  }
+  function aturScroll(paksa = false) {
+    if (!paksa && (akar.contains(document.activeElement) || akar.querySelector('.nav__sub:not([hidden])'))) return;
+    if (scrollY > 96) ringkas = true;
+    else if (scrollY < 48) ringkas = false;
+    ubahKeadaan(ringkas && !akar.classList.contains('nav--mobile'), paksa);
+  }
+  function aturUkuran() {
+    hentikanGerak();
+    akar.classList.add('nav--ukur');
+    const sebelumnyaRingkas = akar.classList.contains('nav--ringkas');
+    akar.classList.remove('nav--ringkas');
+    akar.classList.toggle('nav--mobile', !desktop.matches);
+    if (desktop.matches) {
+      const viewport = document.documentElement.clientWidth || innerWidth;
+      const ruang = wadahNav.getBoundingClientRect().width || viewport - 2 * Math.min(64, Math.max(20, viewport * .03));
+      const lebarMenu = menu.scrollWidth;
+      const lebarCta = cta.getBoundingClientRect().width;
+      // Dua sisi sama lebar menjaga menu tepat di tengah, bukan di tengah ruang sisa.
+      if (lebarMenu && lebarMenu + 2 * Math.max(152, lebarCta) + 40 > ruang) akar.classList.add('nav--mobile');
+      else {
+        akar.classList.add('nav--ringkas');
+        const lebarRingkas = menu.scrollWidth + 70 + lebarCta + 60;
+        akar.style.setProperty('--nav-lebar-ringkas', `${Math.ceil(lebarRingkas)}px`);
+      }
+    }
+    akar.classList.toggle('nav--ringkas', sebelumnyaRingkas && !akar.classList.contains('nav--mobile'));
+    if (!akar.classList.contains('nav--mobile')) tutupMenu();
+    document.documentElement.style.setProperty('--nav-offset', akar.classList.contains('nav--mobile') ? '92px' : '104px');
+    aturScroll(true);
+    // Selesaikan pengukuran tanpa memutar ulang crossfade logo saat resize/font siap.
+    getComputedStyle(akar.querySelector('.nav__logo-penuh')).opacity;
+    akar.classList.remove('nav--ukur');
+  }
+  akar.addEventListener('focusin', hentikanGerak);
+  akar.addEventListener('focusout', () => requestAnimationFrame(() => aturScroll()));
+  minimGerak.addEventListener('change', hentikanGerak);
+  akar.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    tutupMenu();
+    const tujuan = new URL(a.href, location.href);
+    if (tujuan.pathname === location.pathname && tujuan.search === location.search && tujuan.hash === '#portofolio') {
+      requestAnimationFrame(() => {
+        const target = document.getElementById('portofolio');
+        if (target) { target.setAttribute('tabindex', '-1'); target.focus({ preventScroll: true }); }
+        aturScroll(true);
+      });
+    }
+  });
+  document.addEventListener('click', (e) => { if (!akar.contains(e.target)) { tutupMenu(); aturScroll(); } });
+  window.addEventListener('hashchange', () => { aturAktif(); aturUkuran(); });
+  window.addEventListener('scroll', () => {
+    if (frameScroll !== null) return;
+    frameScroll = requestAnimationFrame(() => { frameScroll = null; aturScroll(); });
+  }, { passive: true });
+  window.addEventListener('resize', () => {
+    if (frameUkuran !== null) return;
+    frameUkuran = requestAnimationFrame(() => { frameUkuran = null; aturUkuran(); });
+  }, { passive: true });
+  aturAktif();
+  requestAnimationFrame(aturUkuran);
+  document.fonts?.ready.then(aturUkuran);
+  return akar;
 }
 
 function footer() {
@@ -132,7 +257,7 @@ function kartuPortofolio(p) {
       el('h3', null, p.judul),
       p.subjudul && el('p.porto__subjudul', null, p.subjudul),
       el('p.teks-sekunder', null, p.deskripsi),
-      el('p', null, el('span.badge.badge--simulasi', null, p.status)),
+      el('div.porto__status', null, p.status.split('·').map((status) => el('span.badge.badge--simulasi', null, status.trim()))),
       el('span.tautan-panah', null, p.cta, ikon('panah', 18)))));
 }
 
@@ -285,48 +410,146 @@ const HALAMAN = {
   pelatihan() {
     const p = K.pelatihan;
     setJudul('Pelatihan', p.hero_sub);
+    const hasil = el('div', { role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' },
+      el('p.teks-sekunder', null, 'Pilih satu kebutuhan di atas untuk melihat jalur yang dapat dipertimbangkan.'));
+    const tautanHasil = el('a.tautan-panah', { hidden: true });
+    const pilihan = el('fieldset.pelatihan-pilihan', null,
+      el('legend.sr-only', null, 'Pilih kebutuhan pelatihan'),
+      p.jalur.map((jalur, i) => el('label.pelatihan-pilihan__item', { for: `jalur-${i}` },
+        el('input', { type: 'radio', name: 'jalur-pelatihan', id: `jalur-${i}`, value: String(i),
+          onchange: (e) => {
+            if (!e.target.checked) return;
+            hasil.replaceChildren(el('div.pelatihan-hasil__isi', null,
+              el('h3', null, jalur.layanan), el('p', null, jalur.alasan)));
+            tautanHasil.setAttribute('href', jalur.href);
+            tautanHasil.replaceChildren(jalur.tautan, ikon('panah', 18));
+            tautanHasil.hidden = false;
+          } }), el('span', null, jalur.kebutuhan))));
     utama.append(
       breadcrumb([{ label: 'Pelatihan' }]),
       el('section.sampul.sampul--belajar', null, el('div.wadah', null,
         el('h1', null, p.hero_judul), el('p', null, p.hero_sub),
         el('div.hero__aksi', null,
-          tautanTombol('Pelatihan Reguler', 'utama', '#reguler'),
-          tautanTombol('Konsultasi Gratis', 'kedua', '#khusus')))),
-      el('section.bagian.wadah', { id: 'reguler', 'aria-labelledby': 'j-reguler' },
-        el('h2', { id: 'j-reguler' }, 'Pelatihan Reguler'),
-        el('div.segera', null, el('strong', null, 'Segera hadir'), el('p.teks-sekunder', null, p.reguler))),
+          tautanTombol('Konsultasi Gratis', 'utama', K.kontak.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan'),
+          tautanTombol('Lihat Pilihan Pelatihan', 'kedua', '#pilihan-pelatihan')))),
+      el('section.bagian.wadah.pelatihan-pemilih', { id: 'pilihan-pelatihan', 'aria-labelledby': 'j-pilihan' },
+        el('h2', { id: 'j-pilihan' }, 'Pelatihan Mana yang Sesuai dengan Kebutuhan Anda?'),
+        el('p.bagian__sub', null, 'Pilih kebutuhan yang paling mendekati tujuan Anda untuk melihat jalur layanan yang dapat dipertimbangkan.'),
+        pilihan,
+        el('div.pelatihan-hasil', null, hasil, tautanHasil),
+        el('p.teks-sekunder', null, 'Jika kebutuhan Anda mencakup keduanya, bentuk kegiatan dapat ditentukan melalui konsultasi.')),
       el('section.bagian.bagian--muda', { id: 'khusus', 'aria-labelledby': 'j-khusus' }, el('div.wadah', null,
+        el('p.pelatihan-eyebrow', null, 'Pengembangan Kompetensi'),
         el('h2', { id: 'j-khusus' }, 'Pelatihan Khusus'),
-        el('p.bagian__sub', null, p.khusus_sub),
-        el('ol.alur', null, p.alur_konsultasi.map((l, i) => el('li', null, el('span.alur__nomor', { 'aria-hidden': 'true' }, String(i + 1)), el('h3', null, l.judul), el('p.teks-sekunder', null, l.deskripsi)))),
-        tautanTombol('Tanya Pelatihan Khusus', 'utama', K.kontak.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan'))),
+        el('h3.pelatihan-subjudul', null, 'Pembelajaran AI yang Relevan dengan Kebutuhan Anda'),
+        el('div.pelatihan-isi', null, p.khusus_isi.map((teks) => el('p', null, teks))),
+        el('ul.pelatihan-fokus', null, p.khusus_fokus.map((teks) => el('li', null, teks))),
+        tautanTombol('Konsultasi Gratis', 'utama', K.kontak.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan'),
+        el('div.pelatihan-workflow', null,
+          el('h3', null, 'Empat Langkah Konsultasi Pelatihan'),
+          el('ol.alur', { role: 'list' }, p.alur_konsultasi.map((l, i) => el('li', { style: `--alur-urutan:${i}` }, el('span.alur__nomor', null, String(i + 1)), el('h4', null, l.judul), el('p.teks-sekunder', null, l.deskripsi))))))),
       el('section.bagian.wadah', { id: 'workshop', 'aria-labelledby': 'j-workshop' },
-        el('h2', { id: 'j-workshop' }, 'Workshop atau Seminar untuk Bisnis'),
-        el('p.bagian__sub', null, p.workshop_sub),
-        tautanTombol('Tanya Workshop Bisnis', 'utama', K.kontak.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan')));
+        el('p.pelatihan-eyebrow', null, 'Eksplorasi AI untuk Organisasi'),
+        el('h2', { id: 'j-workshop' }, 'Workshop & Seminar untuk Bisnis'),
+        el('h3.pelatihan-subjudul', null, 'Kenali Peluang AI untuk Proses Bisnis Anda'),
+        el('div.pelatihan-isi', null, p.workshop_isi.map((teks) => el('p', null, teks))),
+        el('ul.pelatihan-fokus', null, p.workshop_fokus.map((teks) => el('li', null, teks))),
+        tautanTombol('Tanya Workshop Bisnis', 'utama', K.kontak.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan')),
+      el('section.bagian.wadah.pelatihan-reguler', { id: 'reguler', 'aria-labelledby': 'j-reguler' },
+        el('div.segera', null, el('p.pelatihan-eyebrow', null, 'Coming Soon'),
+          el('h2', { id: 'j-reguler' }, 'Pelatihan Reguler'), el('p.teks-sekunder', null, p.reguler))),
+      el('section.kontak', { 'aria-labelledby': 'j-kontak-pelatihan' }, el('div.wadah.kontak__dalam', null,
+        el('div', null, el('h2', { id: 'j-kontak-pelatihan' }, 'Diskusikan Kebutuhan Pelatihan AI Anda'),
+          el('p', null, 'Baik untuk pengembangan kompetensi maupun eksplorasi peluang AI di organisasi, UBAYA AI Center terbuka untuk mendiskusikan bentuk kegiatan yang sesuai dengan kebutuhan Anda.')),
+        el('div.kontak__aksi', null, tautanTombol('Konsultasi Gratis', 'terang', K.kontak.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan')))));
+    const alur = utama.querySelector('.pelatihan-workflow .alur');
+    const desktop = matchMedia('(min-width: 64rem)');
+    const kurangGerak = matchMedia('(prefers-reduced-motion: reduce)');
+    if (desktop.matches && !kurangGerak.matches && 'IntersectionObserver' in window) {
+      const pengamat = new IntersectionObserver((entri) => {
+        if (entri.some((e) => e.isIntersecting && e.intersectionRatio >= 1)) {
+          alur.classList.add('alur--mengalir');
+          pengamat.disconnect();
+        }
+      }, { threshold: 1 });
+      pengamat.observe(alur);
+      alur.addEventListener('animationend', (e) => {
+        if (e.animationName === 'pelatihan-indikator' && e.target === alur.lastElementChild.querySelector('.alur__nomor')) alur.classList.remove('alur--mengalir');
+      });
+      const hentikan = () => {
+        if (!desktop.matches || kurangGerak.matches) {
+          pengamat.disconnect();
+          alur.classList.remove('alur--mengalir');
+        }
+      };
+      desktop.addEventListener('change', hentikan);
+      kurangGerak.addEventListener('change', hentikan);
+    }
   },
 
   inference() {
     const n = K.inference;
+    const ilustrasiJenis = ['it-service-management-line.svg', 'data-science-line.svg'];
+    const teksHeadline = el('span.inference-headline', null, n.hero_judul);
+    const gerakHero = matchMedia('(prefers-reduced-motion: reduce)');
+    const warnaPaksa = matchMedia('(forced-colors: active)');
+    if (!gerakHero.matches && !warnaPaksa.matches && window.CSS?.supports('background-clip', 'text') && window.CSS.supports('box-decoration-break', 'slice')) {
+      const selesai = () => {
+        teksHeadline.classList.remove('inference-headline--reveal');
+        gerakHero.removeEventListener('change', selesai);
+        warnaPaksa.removeEventListener('change', selesai);
+      };
+      teksHeadline.classList.add('inference-headline--reveal');
+      teksHeadline.addEventListener('animationend', selesai, { once: true });
+      teksHeadline.addEventListener('animationcancel', selesai, { once: true });
+      gerakHero.addEventListener('change', selesai);
+      warnaPaksa.addEventListener('change', selesai);
+    }
     setJudul('Inference and Solutions', n.hero_sub);
     utama.append(
       breadcrumb([{ label: 'Inference and Solutions' }]),
       el('section.sampul.sampul--enterprise', null, el('div.wadah.sampul__dua', null,
-        el('div', null, el('h1', null, n.hero_judul), el('p', null, n.hero_sub)),
-        carousel(n.pertanyaan.map((t) => el('p.pertanyaan', null, t)), { label: 'Pertanyaan untuk Anda', intervalMs: 6000 }))),
+        el('div', null, el('h1', null, teksHeadline), el('p', null, n.hero_sub)),
+        carousel(n.pertanyaan.map((t) => el('p.pertanyaan', null, `“${t}”`)), { label: 'Pertanyaan untuk Anda', intervalMs: 6000 }))),
       el('section.bagian.wadah', { 'aria-labelledby': 'j-jenis' },
-        el('h2', { id: 'j-jenis' }, 'Dua area untuk memulai diskusi.'),
-        el('div.jenis-grid', null, n.jenis.map((j) => el('article.jenis', null, el('h3', null, j.nama), el('p.teks-sekunder', null, j.deskripsi))))),
+        el('h2', { id: 'j-jenis' }, 'Jelajahi Peluang Penerapan AI'),
+        el('div.jenis-grid', null, n.jenis.map((j, i) => el('article.jenis', null,
+          el('img.jenis__ilustrasi', { src: gambar(ilustrasiJenis[i]), alt: '', width: 180, height: 108, loading: 'lazy' }),
+          el('h3', null, j.nama), el('p.teks-sekunder', null, j.deskripsi))))),
       el('section.bagian.bagian--muda', { 'aria-labelledby': 'j-alur' }, el('div.wadah', null,
-        el('h2', { id: 'j-alur' }, 'Tahapan penerapan model AI.'),
-        el('ol.alur.alur--lima', null, n.alur.map((l, i) => el('li', null, el('span.alur__nomor', { 'aria-hidden': 'true' }, String(i + 1)), el('h3', null, l.judul), el('p.teks-sekunder', null, l.deskripsi)))))),
-      el('section.bagian.wadah', { id: 'portofolio', 'aria-labelledby': 'j-porto' },
+        el('div.inference-workflow', null,
+          el('h2', { id: 'j-alur' }, 'Tahapan penerapan model AI.'),
+          el('ol.alur.alur--inference', { role: 'list' }, n.alur.map((l, i) => el('li', { style: `--alur-urutan:${i}` }, el('span.alur__nomor', null, String(i + 1)), el('h3', null, l.judul), el('p.teks-sekunder', null, l.deskripsi))))))),
+      el('section.bagian.wadah', { id: 'portofolio', tabindex: '-1', 'aria-labelledby': 'j-porto' },
         el('div.porto__kepala', null,
           el('p.tentang-label', null, 'Portofolio'),
           el('h2', { id: 'j-porto' }, 'Jelajahi Portofolio Kami.'),
           el('p.bagian__sub', null, 'Kenali contoh penerapan teknologi AI melalui demonstrasi aplikasi.')),
         el('div.grid-kartu.grid-kartu--tiga.porto', null, n.portofolio.map(kartuPortofolio))),
       bagianKontak('Diskusikan kebutuhan AI Anda.', 'Ceritakan model, data, atau tantangan yang sedang Anda hadapi. Tim UBAYA AI Center dapat membantu membahas langkah berikutnya.', { wa: 'Diskusikan Kebutuhan AI' }));
+    const alur = utama.querySelector('.alur--inference');
+    const lebar = matchMedia('(min-width: 80rem)');
+    const kurangGerak = matchMedia('(prefers-reduced-motion: reduce)');
+    if (lebar.matches && !kurangGerak.matches && 'IntersectionObserver' in window) {
+      const pengamat = new IntersectionObserver((entri) => {
+        if (entri.some((e) => e.isIntersecting && e.intersectionRatio >= 1)) {
+          alur.classList.add('inference--mengalir');
+          pengamat.disconnect();
+        }
+      }, { threshold: 1 });
+      pengamat.observe(alur);
+      alur.addEventListener('animationend', (e) => {
+        if (e.animationName === 'inference-indikator' && e.target === alur.lastElementChild.querySelector('.alur__nomor')) alur.classList.remove('inference--mengalir');
+      });
+      const hentikan = () => {
+        if (!lebar.matches || kurangGerak.matches) {
+          pengamat.disconnect();
+          alur.classList.remove('inference--mengalir');
+        }
+      };
+      lebar.addEventListener('change', hentikan);
+      kurangGerak.addEventListener('change', hentikan);
+    }
   },
 
   'jejak-alumni'() {
@@ -514,3 +737,15 @@ const menuAktif = ['pelatihan', 'inference', 'jejak-alumni', 'perencanaan-implan
 document.body.prepend(el('a.lewati', { href: '#utama' }, 'Lewati ke konten'), navbar(menuAktif));
 document.body.append(footer());
 HALAMAN[namaHalaman]();
+
+// Target anchor sudah ada setelah render; tunggu font agar posisi awal tidak meleset.
+if (namaHalaman === 'inference' && location.hash === '#portofolio') {
+  let dibatalkan = false;
+  const batalkan = () => { dibatalkan = true; };
+  const interaksi = ['wheel', 'touchstart', 'pointerdown', 'keydown'];
+  interaksi.forEach((jenis) => window.addEventListener(jenis, batalkan, { once: true, passive: true }));
+  Promise.resolve(document.fonts?.ready).then(() => requestAnimationFrame(() => {
+    interaksi.forEach((jenis) => window.removeEventListener(jenis, batalkan));
+    if (!dibatalkan && location.hash === '#portofolio') document.getElementById('portofolio')?.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }));
+}
