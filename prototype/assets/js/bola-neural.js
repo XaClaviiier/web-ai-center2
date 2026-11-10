@@ -14,7 +14,7 @@ const BolaNeural = (() => {
     perspektif: 4,               // jarak kamera, dalam satuan jari-jari bola
     putarMs: 75000, miring: 0.38,
     napas: { amplitudo: 0.035, aMs: 7000, bMs: 11000 },
-    titik: { jari: 1.7, jariAktif: 2.8, alfa: [0.28, 0.5, 0.9] }, // alfa: belakang, tengah, depan
+    titik: { jari: 1.7, jariAktif: 2.8, tambahJari: 1, alfa: [0.28, 0.5, 0.9] }, // tambahan setelah kedalaman: diameter +2 px
     aktivasi: { jedaMs: [1607, 3750], jedaDiamMs: [4000, 8000], naikMs: 500, tahanMs: 900, turunMs: 1100, tetangga: 3, serentak: 2, garisAlfa: 0.55, garisTebal: 0.75 },
     magnet: { radius: 110, kuat: 0.22, tauMs: 180 },
     kerjaMaksMs: 6, jendela: 120, // p90 waktu kerja per frame di atas ini => partikel dikurangi, lalu diam
@@ -122,7 +122,7 @@ const BolaNeural = (() => {
       return 1 - halus(Math.min(1, (u - a.naikMs - a.tahanMs) / a.turunMs));
     }
 
-    const lingkar = (i, j) => { ctx.moveTo(sx[i] + j, sy[i]); ctx.arc(sx[i], sy[i], j, 0, 6.2832); };
+    const lingkar = (i, j) => { const r = j + k.titik.tambahJari; ctx.moveTo(sx[i] + r, sy[i]); ctx.arc(sx[i], sy[i], r, 0, 6.2832); };
     function gambar() {
       ctx.clearRect(0, 0, lebar, tinggi);
       ctx.fillStyle = warnaTitik;

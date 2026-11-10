@@ -79,6 +79,7 @@ const DocNext = (() => {
     let field = null;
 
     const banner = el('div.dn-banner', null);
+    const ringkasanHasil = el('p.sr-only', { role: 'status', 'aria-atomic': 'true' });
     const sumber = el('p.dn-sumber', { role: 'status' });
     const pratinjau = el('article.dn-dok', { 'aria-label': 'Pratinjau dokumen sintetis' });
     const daftarField = el('ul.dn-field');
@@ -120,6 +121,7 @@ const DocNext = (() => {
       jenis = 'po';
       field = null;
       banner.replaceChildren(lencana(h.status), el('div', null, el('p', null, s.penjelasan), el('p.field__bantuan', null, s.catatan)));
+      ringkasanHasil.textContent = `${s.label}. ${banner.querySelector('.dn-badge')?.textContent || banner.firstElementChild.textContent}. ${s.penjelasan}`;
       daftarBanding.replaceChildren(...h.baris.map((b) => el('li', null,
         el('div.dn-banding__kepala', null, el('strong', null, b.kunci === 'deskripsi' ? 'Identitas barang' : NAMA_FIELD[b.kunci]), lencana(b.status)),
         el('dl.dn-banding__nilai', null, Object.values(NAMA_DOK).map((nama, i) => el('div', null, el('dt', null, nama), el('dd', null, b.nilai[i] ?? 'Tidak tercantum')))),
@@ -144,6 +146,7 @@ const DocNext = (() => {
     gambarSkenario();
     return el('div.dn-kerja', null,
       pilihSkenario,
+      ringkasanHasil,
       banner,
       el('div.dn-kerja__kolom', null,
         el('div.dn-kerja__dokumen', null, pilihDok, sumber, pratinjau),
@@ -170,8 +173,8 @@ const DocNext = (() => {
         el('a.tautan-panah.dn-kembali', { href: 'inference.html#portofolio' }, ikon('kiri', 18), 'Kembali ke Inference and Solutions'),
         el('h1', null, D.judul),
         el('p.dn-kepala__sub', null, D.subjudul),
-        el('p.dn-kepala__tagline', null, D.tagline),
         el('p.teks-sekunder.dn-kepala__teks', null, D.deskripsi),
+        el('a.tautan-panah', { href: '#demo' }, 'Langsung ke Demo', ikon('panah', 18)),
         el('span.badge.badge--simulasi', null, D.status),
         el('div.banner', null, el('div.banner__teks', null, ikon('peringatan', 18), el('span', null, D.disclaimer)))),
       el('section.bagian.wadah', { 'aria-labelledby': 'dn-j-masalah' },

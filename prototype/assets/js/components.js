@@ -112,7 +112,9 @@ function pagination({ page, limit, total }, keHalaman) {
     layar sentuh dan reduced motion manual lewat panah, karena tanpa tombol jeda (WCAG 2.2.2). */
 function carousel(slides, { label, intervalMs }) {
   let posisi = 0;
-  const berjalan = matchMedia('(hover: hover)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hover = matchMedia('(hover: hover)');
+  const kurangGerak = matchMedia('(prefers-reduced-motion: reduce)');
+  let disorot = false;
   let timer = null;
   const nodeSlide = slides.map((isi, i) => el('div.carousel__slide', { role: 'group', 'aria-roledescription': 'slide', 'aria-label': `${i + 1} dari ${slides.length}` }, isi));
   const teksPosisi = el('span.carousel__posisi', { 'aria-hidden': 'true' });
@@ -124,17 +126,19 @@ function carousel(slides, { label, intervalMs }) {
   }
   function atur() {
     clearInterval(timer);
-    if (berjalan && slides.length > 1) timer = setInterval(() => tampil(posisi + 1), intervalMs);
+    if (akar.isConnected && hover.matches && !kurangGerak.matches && !disorot && !akar.contains(document.activeElement) && slides.length > 1) timer = setInterval(() => tampil(posisi + 1), intervalMs);
   }
   const akar = el('div.carousel', { role: 'region', 'aria-roledescription': 'carousel', 'aria-label': label,
-    onmouseenter: () => clearInterval(timer), onmouseleave: atur, onfocusin: () => clearInterval(timer), onfocusout: atur },
+    onmouseenter: () => { disorot = true; atur(); }, onmouseleave: () => { disorot = false; atur(); }, onfocusin: atur, onfocusout: () => queueMicrotask(atur) },
     nodeSlide,
     slides.length > 1 && el('div.carousel__kontrol', null,
       el('button.carousel__tombol', { type: 'button', 'aria-label': 'Sebelumnya', onclick: () => tampil(posisi - 1) }, ikon('kiri', 18)),
       teksPosisi,
       el('button.carousel__tombol', { type: 'button', 'aria-label': 'Berikutnya', onclick: () => tampil(posisi + 1) }, ikon('kanan', 18))));
   tampil(0);
-  atur();
+  kurangGerak.addEventListener('change', atur);
+  hover.addEventListener('change', atur);
+  queueMicrotask(atur);
   return akar;
 }
 

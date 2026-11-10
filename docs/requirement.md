@@ -190,6 +190,8 @@ Untuk data tim itu field inputnya: Foto, posisi / jabatan, nama, bidang riset, &
 
 ## 6. Pengguna, peran, izin
 
+Pembaruan prototype 10 November 2026: konfirmasi Retract kini diimplementasikan sebelum pemanggilan API simulasi; membatalkan dialog tidak mengubah status konten. Ini menyelesaikan rencana konfirmasi Retract yang disebut pada bagian sebelumnya, tanpa mengubah aturan izin. Navbar publik mengelompokkan Berita/Galeri Dokumentasi di bawah Aktivitas; kedua rute tetap. Pencarian dan pagination publik memulihkan state URL `q`/`page` dan memberi status hasil serta pemulihan fokus.
+
 Akun dan pemisahan role dibuat melalui keycloak. \[menunggu konfirmasi Keycloak\]
 
 Daftar role (Direktur dan pegawai).

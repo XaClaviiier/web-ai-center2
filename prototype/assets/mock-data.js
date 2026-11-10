@@ -136,17 +136,17 @@ const MOCK = (() => {
       email: 'aicenter@unit.ubaya.ac.id',
       whatsapp: '0895-6342-22240',
       whatsapp_url: 'https://wa.me/62895634222240?text=' + encodeURIComponent('Halo Ubaya AI Center, saya ingin berdiskusi mengenai layanan/kerja sama AI.'),
-      email_url: 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent('aicenter@unit.ubaya.ac.id') + '&su=' + encodeURIComponent('Kolaborasi dengan UBAYA AI Center'),
+      email_url: 'mailto:aicenter@unit.ubaya.ac.id?subject=' + encodeURIComponent('Kolaborasi dengan UBAYA AI Center'),
       instagram: '@aicenter_ubaya',
       instagram_url: 'https://instagram.com/aicenter_ubaya',
-      alamat: ['Gedung Fakultas Teknik · TA 1.2', 'Jalan Raya Kalirungkut, Tenggilis, Surabaya'],
+      alamat: ['Gedung Fakultas Teknik TA 1.2', 'Jalan Raya Kalirungkut, Tenggilis, Surabaya'],
       peta_embed: 'https://maps.google.com/maps?q=-7.321919965577327,112.76790932621508&z=16&output=embed',
       peta_url: 'https://www.google.com/maps/search/?api=1&query=-7.321919965577327,112.76790932621508',
       deskripsi_footer: 'Pusat riset dan layanan kecerdasan artifisial Universitas Surabaya.',
     },
     hero: {
       judul: 'Pusat Riset & Layanan Kecerdasan Artifisial',
-      sub: 'Kami membantu individu, institusi, dan bisnis mengembangkan keterampilan serta menerapkan AI sesuai kebutuhan.',
+      sub: 'Kami membantu individu, institusi, dan organisasi mengembangkan keterampilan serta menerapkan AI sesuai kebutuhan.',
       gambar: 'hero-1-1600.webp',
     },
     layanan: [
@@ -158,8 +158,7 @@ const MOCK = (() => {
       hero_sub: 'Kembangkan kompetensi AI melalui kelas yang disesuaikan dengan kebutuhan peserta atau organisasi. Untuk perusahaan, tersedia pula workshop dan seminar untuk mengeksplorasi peluang penerapan AI dalam proses bisnis.',
       reguler: 'Program pelatihan AI dengan topik dan jadwal yang telah ditentukan sedang kami persiapkan. Informasi program akan diumumkan setelah tersedia.',
       khusus_isi: [
-        'Pelatihan Khusus dirancang untuk membantu individu, kelompok, maupun organisasi mengembangkan pemahaman dan keterampilan AI sesuai tujuan pembelajaran.',
-        'Materi dan pendekatan pelatihan dapat disesuaikan dengan latar belakang peserta serta persoalan yang ingin dipelajari, sehingga pembelajaran tidak berhenti pada teori, tetapi juga menghubungkan AI dengan konteks penggunaan yang relevan.',
+        'Pelatihan untuk individu, kelompok, dan organisasi yang ingin mengembangkan pemahaman serta keterampilan AI. Materi dan pendekatan disesuaikan dengan tujuan, latar belakang peserta, dan konteks penerapan yang ingin dipelajari.',
       ],
       khusus_fokus: ['Memahami konsep dan kemampuan AI.', 'Mempelajari contoh penerapan AI sesuai kebutuhan.', 'Mengembangkan keterampilan melalui pendekatan pembelajaran yang disepakati.'],
       // Empat langkah berikut dikonfirmasi sebagai proses layanan oleh pemilik.
@@ -170,8 +169,7 @@ const MOCK = (() => {
         { judul: 'Pelatihan berjalan', deskripsi: 'Program dijalankan dan didampingi oleh tim UBAYA AI Center.' },
       ],
       workshop_isi: [
-        'Workshop dan seminar untuk perusahaan yang ingin membangun pemahaman bersama tentang AI, mengenali peluang penerapannya, serta mendiskusikan manfaat dan tantangannya dalam konteks bisnis.',
-        'Kegiatan ini dapat melibatkan tim maupun pimpinan perusahaan, dengan pembahasan yang disesuaikan dengan kebutuhan dan persoalan organisasi.',
+        'Workshop dan seminar bagi tim serta pimpinan perusahaan untuk membangun pemahaman bersama tentang AI dan mengeksplorasi penerapannya. Pembahasan manfaat, keterbatasan, dan tantangan disesuaikan dengan kebutuhan organisasi.',
       ],
       workshop_fokus: ['Memahami peluang dan keterbatasan penerapan AI dalam bisnis.', 'Mengeksplorasi contoh penggunaan AI pada proses kerja.', 'Membangun landasan diskusi untuk langkah eksplorasi berikutnya.'],
       jalur: [
@@ -183,7 +181,7 @@ const MOCK = (() => {
     },
     inference: {
       hero_judul: 'Dari Model AI Menuju Penerapan Nyata.',
-      hero_sub: 'Inference adalah proses menggunakan model AI untuk menghasilkan prediksi pada data baru. UBAYA AI Center membantu membahas bagaimana hasil tersebut dapat digunakan oleh aplikasi atau sistem sesuai kebutuhan Anda.',
+      hero_sub: 'Inference adalah proses menjalankan model AI untuk menghasilkan prediksi atau keluaran berdasarkan data yang diterima. UBAYA AI Center membantu Anda mengeksplorasi bagaimana hasil tersebut dapat dimanfaatkan dalam aplikasi atau sistem sesuai kebutuhan.',
       pertanyaan: [
         'Model riset atau prototipe sudah jadi, tetapi belum bisa dipakai tim lain?',
         'Butuh fitur AI di aplikasi atau website tanpa membangun infrastruktur ML sendiri?',

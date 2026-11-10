@@ -34,6 +34,14 @@ body { background: var(--warna-langit-muda); }
 
 /* Tabel */
 .tabel-wadah { overflow-x: auto; background: var(--warna-putih); border-radius: var(--radius-sedang); box-shadow: var(--bayangan-kecil); }
+.tabel-petunjuk { display: none; }
+@media (max-width: 40rem) {
+  .tabel-wadah .tabel__aksi { position: static; }
+  .tabel-wadah .tabel__utama { min-width: 16rem; }
+  .tabel__judul { display: block; width: 14rem; overflow-wrap: anywhere; white-space: normal; }
+  .tabel-wadah .tabel__kunci { max-width: 14rem; white-space: normal; }
+  .tabel-petunjuk { display: block; padding: var(--jarak-3) var(--jarak-4); font-size: var(--teks-kecil); }
+}
 .tabel { width: 100%; min-width: 46rem; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
 .tabel th { padding: var(--jarak-3) var(--jarak-4); text-align: left; font-size: var(--teks-kecil); font-weight: 600; color: var(--warna-teks-sekunder); border-bottom: 1px solid var(--warna-garis); white-space: nowrap; }
 .tabel td { padding: var(--jarak-3) var(--jarak-4); vertical-align: middle; border-bottom: 1px solid var(--warna-garis); }

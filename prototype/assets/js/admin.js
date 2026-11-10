@@ -164,6 +164,7 @@ function tabel(sumber, items, trash, muat) {
   const judulTabel = `${trash ? 'Trash' : 'Daftar'} ${e.nama}`;
   // Wadah bisa difokus agar tabel lebar bisa digulir dengan keyboard.
   return el('div.tabel-wadah', { role: 'region', tabindex: '0', 'aria-label': judulTabel },
+    el('p.tabel-petunjuk', null, 'Geser tabel ke samping untuk melihat seluruh kolom dan tindakan.'),
     el('table.tabel', null,
       el('caption.sr-only', null, judulTabel),
       el('thead', null, el('tr', null,
@@ -172,7 +173,7 @@ function tabel(sumber, items, trash, muat) {
         el('th.tabel__aksi', { scope: 'col' }, 'Aksi'))),
       el('tbody', null, items.map((b) => el('tr', null,
         e.kolom.map((k) => (k.utama
-          ? el('td.tabel__utama', null, k.isi(b), b.dikunci_oleh && el('span.tabel__kunci', null, ikon('kunci', 16), `Sedang diedit oleh ${b.dikunci_oleh}`))
+          ? el('td.tabel__utama', null, el('span.tabel__judul', null, k.isi(b)), b.dikunci_oleh && el('span.tabel__kunci', null, ikon('kunci', 16), `Sedang diedit oleh ${b.dikunci_oleh}`))
           : el('td', null, k.isi(b)))),
         kolomStatus && el('td', null, badgeStatus(b.status)),
         el('td.tabel__aksi', null, el('div.tabel__tombol', null, aksiBaris(sumber, b, trash, muat))))))));
@@ -207,7 +208,10 @@ function aksiBaris(sumber, b, trash, muat) {
     ];
   }
   if (e.status && b.status === 'posted') {
-    return [kecil('Retract', 'kedua', (t) => jalankan(api.adminRetract(sumber, b.id), 'Dikembalikan ke draft.', t))];
+    return [kecil('Retract', 'kedua', async (t) => {
+      const ya = await konfirmasi({ judul: 'Tarik konten dari publik?', teks: `“${namaBaris}” tidak lagi terlihat oleh pengunjung dan kembali menjadi draft.`, labelYa: 'Retract', labelTidak: 'Batal', varianYa: 'bahaya' });
+      if (ya) return jalankan(api.adminRetract(sumber, b.id), 'Dikembalikan ke draft.', t);
+    })];
   }
   const terkunci = Boolean(b.dikunci_oleh);
   const hasil = [

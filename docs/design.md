@@ -4,6 +4,18 @@ Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak
 
 ## 1. Navbar dan animasi global
 
+### Keputusan audit yang diterapkan — 10 November 2026
+
+Catatan ini memperbarui rincian implementasi sebelumnya tanpa mengubah identitas visual atau motion scroll navbar. Menu utama kini lima: Beranda, Layanan, Contoh Aplikasi, Aktivitas, dan Profil. Aktivitas mengelompokkan Berita serta Galeri Dokumentasi; label galeri juga diselaraskan pada footer, breadcrumb, tautan balik, dan fallback tanpa JavaScript. Kontak email memakai `mailto:` ke alamat resmi.
+
+Pencarian dan pagination Berita/Galeri menyimpan `q` dan `page` di URL serta memulihkannya pada refresh/Back/Forward. Status hasil memakai live region ringkas; aktivasi pagination memulihkan fokus ke hasil bila fokus sebelumnya terlepas saat render, dengan offset header. Nomor halaman di luar jangkauan dikoreksi ke halaman terakhir.
+
+Refinement visual: scrim hero Beranda mobile diperkuat tanpa mengubah ukuran titik; pengantar Berita memakai skala judul lebih tenang; kartu Tim mobile menyandingkan portrait ringkas dengan nama/peran; gambar detail album tampil utuh pada proporsi aslinya. Hero Inference menambah “Lihat Contoh Penerapan” ke Portofolio dan ruang pertanyaan mobile diringkas. JejakAlumni mengurangi label demo lokal berulang dan melipat tab belum tersedia. Pembuka DocNext menghapus tagline berulang, menyediakan tautan langsung ke demo, dan mengumumkan ringkasan hasil skenario. Judul kartu Berita pada Beranda memakai h3.
+
+TRAIN-01 disetujui dengan revisi: hanya paragraf penjelas dua layanan yang dipadatkan; semua judul, eyebrow, skenario, fokus, workflow, dan CTA dipertahankan. Carousel mengikuti perubahan preferensi reduced motion dan kemampuan hover, tanpa menambah tombol jeda. Tabel admin mobile tidak menempelkan kolom aksi di atas judul; tersedia petunjuk scroll dan judul dapat membungkus. Retract memerlukan konfirmasi sebelum konten ditarik.
+
+Keputusan dipertahankan: MOTION-01 serta CONTENT-01/02/03. A11Y-02 ditunda. Label sistem Simulasi tetap. QA-01/02/03 adalah cakupan verifikasi; hasil dan keterbatasan pengujian dicatat di `prototype/CATATAN.md`, bukan dianggap seluruhnya lulus hanya karena implementasi selesai.
+
 Refinement Profil dan hero Beranda (9 November 2026): Tim dan Tentang Kami dikelompokkan di bawah tombol “Profil”, setelah Dokumentasi, dengan tujuan `tim.html` dan `tentang-kami.html` tetap. Profil memakai pola dropdown Layanan dengan ID submenu unik (`menu-profil` dan `menu-layanan`), dukungan keyboard/touch, serta penekanan induk ketika halaman anak aktif; tautan anak tetap memakai `aria-current="page"`. Fallback tanpa JavaScript memakai `details` untuk kedua dropdown. Logika scroll dan timing navbar tidak berubah; lebar kapsul menyesuaikan jumlah menu yang kini enam. Pada hero Beranda, skala bola dikurangi 4% di setiap breakpoint: 1.056 mobile, 1.008 tablet, 1.20 desktop. Pusat dan regangan yang ada dipertahankan. Frekuensi aktivasi mint dinaikkan sekitar 12% melalui jeda 1607–3750 ms, sementara fase muncul/bertahan/meredup tetap 500/900/1100 ms. Jeda mode diam, reduced motion, rotasi, dan napas tidak diubah.
 
 Navigation Bar awalnya menggunakan referensi dari tautan: [https\://symboolic.com/en](https://symboolic.com/en). Koreksi berikut mengikuti spesifikasi dua keadaan dari pemilik; tidak mengasumsikan perilaku tambahan dari referensi.
