@@ -1,5 +1,93 @@
 # Catatan Prototype UBAYA AI Center
 
+## HERO-03 A, SPHERE-03 A, CTA-03 A - Tinggi hero dan ukuran tombol
+
+Disetujui pemilik: layar pertama mencakup navbar, margin dan hero; sphere desktop dibatasi referensi scene 642 px; tombol kontak diperbesar. Persetujuan tambahan SPHERE-03-FIX A mengizinkan pemisahan radius dari kanvas pada `assets/js/bola-neural.js`. File implementasi yang diubah adalah `assets/css/public.css` dan `assets/js/bola-neural.js`.
+
+Chrome headless memeriksa Beranda dan delapan CTA pada lebar 375, 430, 768, 1280, dan 1440 px, dengan viewport setinggi 900 px (40 kombinasi CTA). Section berikutnya pada Beranda mulai tepat di 900 px. Hero terukur 800 px pada ketiga viewport mobile/tablet dan 788 px pada kedua desktop. Padding vertikal tetap 48/72 px dan H1 tetap 36–64 px. Konten hero tetap berada dalam container pada viewport pendek 375×500 serta 1440×500. Tidak terdeteksi overflow horizontal atau exception JavaScript.
+
+Tombol WhatsApp/email memiliki tinggi sama: 52 px pada lebar ≤768 px, 56 px pada desktop; font 16 px, padding horizontal 24 px, ikon 20 px, gap ikon 10 px dan gap antartombol 16 px. Background terhitung identik di seluruh CTA. Kolom CTA Tentang Kami tetap sejajar di desktop. Tab/Enter dan klik mouse pada kedua tautan lulus pada delapan CTA di lima viewport; emulasi tap lulus pada Beranda/Tentang Kami di 375 dan 430 px. Aktivasi kontak dicegat tanpa membuka percakapan atau aplikasi email. Kedua tes existing navbar dan audit-refinements lulus tanpa perubahan file tes.
+
+SPHERE-03-FIX A selesai: kanvas kembali memenuhi seluruh tinggi hero, sementara radius membaca batas CSS desktop 642 px. Validasi browser pada lima viewport mengonfirmasi tepi kanvas berimpit dengan hero dan section berikutnya tetap mulai pada 900 px. Radius dasar desktop terukur 385,2 px pada tinggi viewport 900 maupun 1080 px; mobile/tablet tetap memakai perhitungan tanpa batas desktop. Screenshot desktop serta tablet diperiksa: pemotongan titik pada batas scene internal sudah hilang. Clipping dekoratif yang memang mengikuti batas luar hero tetap sesuai desain sebelumnya.
+
+Uji terkontrol lima skenario lulus: radius pada kanvas tinggi, adaptasi bidang kecil, serta fallback tanpa batas. Browser mengonfirmasi tarikan magnet dan kemunculan mint links tetap aktif, dengan maksimal garis di bawah batas delapan yang disetujui; reduced motion menonaktifkan gerak/interaksi. Pemeriksaan sintaks JS serta kedua tes existing dijalankan ulang dan lulus. Screenshot akhir: `prototype/tests/.browser-check/sphere-full-canvas-1440.png`, `sphere-full-canvas-768.png`, `sphere-full-canvas-375.png`, `cta-large-tentang-kami-1440.png`, dan `cta-large-tim-375.png`. Screenshot `hero-full-*` terdahulu menunjukkan tahap sementara sebelum pemisahan radius/kanvas.
+
+Tidak menjalankan Git/GitHub, menambah dependency, atau mengubah kode production/backend. Emulasi touch bukan pengujian perangkat fisik.
+
+## CTA-ABOUT-01 A dan TYPO-01 B - Layout serta tipografi terarah
+
+Disetujui pemilik: CTA Tentang Kami horizontal pada desktop dan penyesuaian TYPO-01A–F. Teks CTA berada di kiri, kelompok tombol di kanan, dengan pusat vertikal sejajar mulai 1024 px. Tablet/mobile tetap vertikal. Gradient, radius, warna, ikon, dan tujuan kontak mengikuti komponen existing. File implementasi yang diubah hanya `assets/css/public.css` dan `assets/css/document-intelligence.css`; spesifikasi ada di `docs/design.md`.
+
+| Komponen | Sebelum (375 / 768 / 1440 px) | Sesudah (375 / 768 / 1440 px) |
+|---|---|---|
+| H1 hero Beranda/Pelatihan/Inference | 40.5 / 57.79 / 80 px | 36 / 47.04 / 64 px |
+| H1 Tim/Galeri/Tentang Kami | 40.5 / 57.79 / 80 px | 32 / 42.34 / 56 px |
+| Tautan navbar | 16 / 16 / 14 px | 16 / 16 / 15 px |
+| Portofolio: judul/deskripsi/badge pada tablet | 18 / 14 / 12 px, tiga kolom | 20 / 16 / 13 px, dua kolom |
+| Dokumen sumber DocNext | 14 / 14 / 14 px | 16 / 15 / 15 px |
+| H1 detail berita/dokumentasi | 32.15 / 42.37 / 56 px | 32 / 40.06 / 48 px |
+
+Validasi Chrome headless memeriksa 13 halaman publik pada lebar 375, 430, 768, 1280, dan 1440 px (65 kombinasi). Ukuran terhitung memenuhi rentang yang disetujui, tanpa overflow horizontal atau exception JavaScript terdeteksi. Kolom CTA Tentang Kami sejajar di tengah pada desktop dan tidak bertabrakan; batas 1024 px juga diperiksa. Kartu portofolio memakai 1/2/3 kolom sesuai viewport tanpa tumpang tindih. Body 16 px, artikel 19 px, metadata 14 px dan footer 16 px terkonfirmasi tetap; tag kecil DocNext tetap 12 px.
+
+Pemeriksaan tambahan: 13 halaman publik tidak mengalami overflow horizontal pada lebar 320 px. Navbar dengan teks 15 px tetap berganti ringkas/lebar dan kembali ke atas tanpa kehilangan fokus. Tab/Enter pada kedua kontak CTA Tentang Kami di 375 serta 1440 px mempertahankan indikator fokus dan tujuan WhatsApp/email; aktivasi dicegat sebelum membuka layanan eksternal. Kedua tes existing `node prototype/tests/navbar.test.cjs` dan `node prototype/tests/audit-refinements.test.cjs` lulus tanpa perubahan file tes.
+
+Screenshot yang diperiksa: `prototype/tests/.browser-check/refine-about-1440.png`, `refine-about-375.png`, `refine-index-1440.png`, `refine-portfolio-768.png`, dan `refine-docnext-375.png`. Pengujian ini bukan sertifikasi WCAG. Zoom native 200%, pembesaran teks serta text spacing menyeluruh, screen reader, dan perangkat fisik belum dinyatakan terverifikasi. Uji 320 px membuktikan reflow halaman yang diperiksa, bukan seluruh perilaku zoom native. Tidak menjalankan Git/GitHub, menambah dependency, atau mengubah kode production/backend.
+
+## UI-04 - Outline Portofolio pada navigasi lintas halaman
+
+Disetujui pemilik: aturan lokal `#portofolio:focus { outline: none; }` menggantikan pengecualian yang hanya berlaku ketika penanda klik pointer tersedia. Sebelumnya, navigasi lintas halaman memfokuskan target hash tanpa membawa penanda tersebut, sehingga aturan global focus-visible menggambar kotak biru sekeliling section.
+
+Validasi Chrome headless pada lebar 1440 dan 390 px: klik Contoh Aplikasi dari Beranda, Tim, dan Berita menuju Inference tidak menggambar outline section; target berada pada offset navbar yang benar dan menu Contoh Aplikasi aktif. Klik pada halaman Inference yang sama juga lulus. Tab dari section memfokuskan kartu pertama dengan indikator focus-visible solid yang tetap terlihat. Tidak terdeteksi exception JavaScript. Screenshot desktop diperiksa; bukti berada di `prototype/tests/.browser-check/portofolio-no-outline-1440.png` dan `portofolio-no-outline-390.png`. Tidak menjalankan Git/GitHub atau mengubah kode production/backend.
+
+## Gradient dan kontak seluruh CTA - pilihan CTA-02 B
+
+Disetujui pemilik melalui pilihan B: dua tautan layanan pada CTA Tentang Kami diganti WhatsApp/email. Seluruh delapan CTA kini memakai helper `aksiKontak()` dengan label “Hubungi lewat WhatsApp” dan “Kirim email”, URL dari konfigurasi existing, ikon/varian existing, serta fokus native. Email tidak memaksa tab baru. CTA Pelatihan dan Tim memperoleh tombol email; CTA lain diseragamkan labelnya. Tombol kontak pada navbar, hero, dan konten layanan bukan bagian dari perubahan ini.
+
+CSS bersama menggantikan gradient linear lama dan pengecualian Beranda: navy radial ellipse 35% × 65% di kanan bawah, di atas dasar linear biru terang/medium. Token tetap `#2547F4` dan `#0A2240`. Footer tidak direvisi. Pada mobile, dua tombol mengisi lebar yang tersedia dan membungkus vertikal.
+
+Validasi: kedua tes prototype lulus, termasuk regresi delapan CTA dengan nomor `62895634222240`, email `aicenter@unit.ubaya.ac.id`, parameter pesan/subjek, ikon, serta fokus kedua tautan. Chrome headless memeriksa delapan CTA pada lebar 1440, 820, dan 390 px (24 kombinasi): background terhitung identik, dua tombol terlihat dengan tinggi minimal 44 px, tanpa overflow horizontal atau exception JavaScript. Tab/Enter dan klik mouse masing-masing mengaktifkan kedua tautan dengan tujuan yang benar; event dicegat sebelum membuka WhatsApp atau handler email. Tidak mengirim pesan/email dan tidak mengklaim status akun atau pengiriman terverifikasi.
+
+Screenshot Beranda desktop, Tim mobile, dan Tentang Kami desktop diperiksa. Sampling background di dekat empat sudut Beranda pada ketiga viewport mengonfirmasi kanan bawah paling gelap. Bukti berada di `prototype/tests/.browser-check/cta-shared-index-1440.png`, `cta-shared-index-820.png`, `cta-shared-index-390.png`, `cta-shared-tim-390.png`, serta `cta-shared-tentang-kami-1440.png`. Hasil terbatas pada browser headless yang diuji. Tidak menjalankan Git/GitHub, menambah dependency, atau mengubah kode production/backend.
+
+## CTA-03 A - Titik tergelap pada kanan bawah Beranda
+
+Disetujui pemilik: khusus CTA Beranda memakai arah `to bottom right` dengan titik biru 0%, campuran biru/navy 80/20 pada 40%, campuran 45/55 pada 72%, serta navy 100%. Token tetap `#2547F4` dan `#0A2240`. Gradient CTA lain dan footer tidak direvisi.
+
+Chrome headless memeriksa lebar 1440, 820, dan 390 px. Perbandingan runtime sebelum/sesudah background mengonfirmasi geometri, padding, radius, font, warna teks, posisi tombol, dan background footer identik. Tidak terdeteksi overflow horizontal atau exception JavaScript. Screenshot desktop dan mobile diperiksa: transisi halus tanpa batas warna tajam yang terlihat; teks putih serta tombol tetap terbaca. Sampling background di dekat empat sudut mengonfirmasi kanan bawah paling gelap. Contoh mobile: kanan atas RGB 29/60/190, kanan bawah 12/39/83; kiri atas 36/70/238 dan kiri bawah 28/59/186. Screenshot mobile menggunakan viewport utuh agar koordinat sampel tidak terpengaruh pemotongan otomatis.
+
+Bukti: `prototype/tests/.browser-check/cta-corner-1440.png`, `cta-corner-820.png`, dan `cta-corner-390.png`. Hasil ini terbatas pada browser headless yang diuji, bukan penilaian banding pada seluruh panel layar fisik. Tidak menjalankan Git/GitHub atau menambah dependency.
+
+## UI-03 - Sudut membulat hanya di atas
+
+Disetujui pemilik: permukaan section utama publik, termasuk hero, CTA, dan section demo aplikasi, memakai radius 24 px pada kiri atas dan kanan atas; kedua sudut bawah menjadi siku. Aturan bersama section/artikel dan aturan hero diselaraskan pada `public.css`; spesifikasi aktif dicatat di `docs/design.md`.
+
+Validasi Chrome headless memeriksa 13 halaman pada lebar 1440 dan 390 px (26 kombinasi, 78 section/artikel). Seluruh elemen yang diperiksa memiliki radius terhitung 24/24/0/0 px, tanpa overflow horizontal atau exception JavaScript terdeteksi. Screenshot hero mobile dan CTA desktop diperiksa; bukti tersimpan di `prototype/tests/.browser-check/top-corners-hero-390.png` dan `top-corners-cta-1440.png`. Tidak menjalankan Git/GitHub atau menambah dependency.
+
+## CTA-02 A - Gradient linear sesuai referensi
+
+Disetujui pemilik: seluruh bidang CTA `.kontak` memakai `linear-gradient(135deg, var(--warna-biru), var(--warna-navy))`, dari biru `#2547F4` di kiri atas menuju navy `#0A2240` di kanan bawah. Ini menggantikan glow radial CTA sebelumnya. Spesifikasi aktif diselaraskan di `docs/design.md`.
+
+Validasi Chrome headless pada Beranda, Tim, dan Tentang Kami di lebar 1440 serta 390 px (enam kombinasi) mengonfirmasi gradient terhitung sesuai token, tanpa overflow horizontal atau exception JavaScript terdeteksi. Screenshot desktop dan mobile diperiksa di `prototype/tests/.browser-check/cta-linear-1440.png` dan `cta-linear-390.png`. Tidak menjalankan Git/GitHub atau menambah dependency.
+
+## Revisi UI/UX prototype - 10 November 2026
+
+Disetujui pemilik: HERO-01 A, HERO-02, NAV-01/03, NAV-02 B, UI-01 A, UI-02, TEAM-01/02/03, CTA-01 A, FOOTER-01/02, NEWS-01, dan DOC-01 A. Implementasi dan spesifikasi terbaru ada di `docs/design.md` bagian 1 serta catatan khusus prototype pada `docs/requirement.md`. HERO-03 dikonfirmasi pemilik sebagai salah ketik; tidak ada revisi tambahan.
+
+Root cause NAV-03 direproduksi pada kode lama dengan JSDOM: scroll 200, fokus menu, lalu scroll 0 tetap ringkas; blur memulihkan keadaan lebar. Penyebabnya guard fokus/dropdown keluar sebelum state scroll diperbarui. Perbaikan mengizinkan pemulihan di bawah 48 px tanpa memindahkan fokus. NAV-02 menghitung section dengan pasangan menu langsung memakai offset sticky header; section tanpa pasangan mempertahankan menu terakhir.
+
+Verifikasi implementasi: `node prototype/tests/navbar.test.cjs` lulus untuk 13 halaman/fallback, enam menu, Kabar, Tim/Tentang Kami langsung, scrollspy dua arah dengan geometry tiruan, fokus/dropdown saat kembali ke atas, keyboard/pointer anchor, mobile, batas ruang, FLIP dan reduced motion. `node prototype/tests/audit-refinements.test.cjs` lulus untuk pagination/search/URL existing, enam profil tanpa pencarian, bidang riset, simulasi Tim kosong/error/pulih, alamat footer, penulis berita dan jumlah foto album. Uji canvas terkontrol 1600 frame menghasilkan kelompok 3/4/5 dot, maksimal delapan garis per frame dan 300 partikel. Uji ini bukan pengukuran performa perangkat nyata.
+
+QA-01 disetujui pemilik. Chrome headless memeriksa 13 halaman pada lebar 390, 820, dan 1440 px (39 kombinasi) melalui file lokal prototype, tanpa overflow horizontal, gambar rusak, atau exception JavaScript yang terdeteksi. Screenshot pilihan diperiksa untuk hero, Tim, CTA/footer, galeri, menu mobile dan fokus Portofolio. Profil dan screenshot berada di `prototype/tests/.browser-check/`. Browser berhasil dijalankan di luar sandbox setelah izin eksekusi diberikan; inisialisasi renderer melalui CDP tidak merespons di dalam sandbox.
+
+Pengujian interaksi browser menemukan bug ikon hamburger: penggantian SVG saat klik membuat target event lama terlepas dari DOM, lalu listener dokumen salah menganggap klik berasal dari luar navbar. Pemeriksaan menggunakan composedPath memperbaikinya. Regresi JSDOM kini mengklik path SVG; klik nyata pada lebar 390/820 px mengonfirmasi menu tetap terbuka, dropdown Kabar/Escape bekerja, dan Tim dapat dibuka dengan status halaman yang benar.
+
+Lulus pada browser: scrollspy Beranda dua arah; navbar kembali lebar pada scroll 0 meskipun fokus/dropdown masih di navbar; Portofolio aktif setelah anchor mencapai offset sekitar 104 px; klik pointer tanpa outline section, Enter/Tab dengan fokus terlihat, serta Enter pada kartu membuka JejakAlumni. Galeri diuji dengan 1-6 clone gambar dalam DOM untuk memeriksa slot setara 4:3 dan contain pada tiga viewport; clone tidak ditulis ke sumber/data. Screenshot memperlihatkan foto utuh, kartu Tim ringkas, logo/alamat footer, serta gradient CTA/footer.
+
+Instrumentasi canvas sementara di browser mencatat tarikan magnet sekitar 6,60 px dan p90 kerja 0,30 ms pada sampel desktop headless. Canvas berhenti menggambar saat keluar viewport dan menonaktifkan gerakan/interaksi pada reduced motion. Emulasi touch mengonfirmasi media tanpa hover/pointer halus. Ini bukan benchmark perangkat nyata atau bukti semua browser/perangkat. Konten iframe Google Maps, screen reader, dan touch fisik tidak dinilai.
+
+Tidak menjalankan Git/GitHub, tidak menambah dependency, dan tidak mengubah kode aplikasi utama/backend. Dua tes prototype dijalankan ulang setelah perbaikan hamburger dan lulus.
+
+
 ## Implementasi keputusan audit — 10 November 2026
 
 Selesai: NAV-01/02 (Aktivitas, konsistensi Galeri), UX-01/02/03 (fokus/status pagination, URL q/page dan Back/Forward, mailto), HOME-01 (scrim mobile), TRAIN-01 B (hanya paragraf layanan, semua judul tetap), INF-01 (tautan contoh penerapan), NEWS-01 (pengantar ringkas), TEAM-01 (portrait mobile 96×120 berdampingan dengan identitas), GAL-01 (gambar detail utuh), ALUMNI-01 (label lokal ringkas/tab dilipat), DOC-01 (tagline dihapus/jump link), UI-01 (h3 berita Beranda), MOTION-02 (perubahan reduced motion/hover), A11Y-01 (status skenario DocNext), ADMIN-01/02 (konfirmasi Retract, judul tabel mobile tidak tertutup aksi).

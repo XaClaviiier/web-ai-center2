@@ -139,7 +139,7 @@ const MOCK = (() => {
       email_url: 'mailto:aicenter@unit.ubaya.ac.id?subject=' + encodeURIComponent('Kolaborasi dengan UBAYA AI Center'),
       instagram: '@aicenter_ubaya',
       instagram_url: 'https://instagram.com/aicenter_ubaya',
-      alamat: ['Gedung Fakultas Teknik TA 1.2', 'Jalan Raya Kalirungkut, Tenggilis, Surabaya'],
+      alamat: ['Gedung Fakultas Teknik TA', 'Jalan Raya Kalirungkut, Tenggilis, Surabaya'],
       peta_embed: 'https://maps.google.com/maps?q=-7.321919965577327,112.76790932621508&z=16&output=embed',
       peta_url: 'https://www.google.com/maps/search/?api=1&query=-7.321919965577327,112.76790932621508',
       deskripsi_footer: 'Pusat riset dan layanan kecerdasan artifisial Universitas Surabaya.',

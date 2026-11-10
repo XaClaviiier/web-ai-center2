@@ -2,6 +2,17 @@
 
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). File planning lain: `stack.md`, `design.md`, `database.md`, `security.md`.
 
+## Keputusan khusus prototype - 10 November 2026
+
+Ketentuan berikut berlaku hanya untuk simulasi `prototype/`, mendahului catatan prototype lama yang bertentangan pada bagian selanjutnya. Kebutuhan dan implementasi produksi tidak direvisi pada pekerjaan ini.
+
+- Menu utama: Beranda, Layanan, Contoh Aplikasi, Kabar, Tim, Tentang Kami. Kabar berisi Berita/Galeri Dokumentasi; tidak ada menu Profil.
+- Status navigasi mengikuti halaman dan section yang memiliki pasangan menu langsung (NAV-02 B). Section lainnya mempertahankan pasangan terakhir; scroll kembali ke atas memulihkan status halaman. Navbar harus kembali lebar walaupun fokus/dropdown masih berada di navbar.
+- Halaman Tim tidak menyediakan pencarian. Enam anggota dan urutan existing tetap; kartu mengutamakan bidang penelitian dengan portrait ringkas.
+- Detail berita menampilkan tanggal diikuti "oleh Tim Media Ubaya AI Center". Detail dokumentasi menampilkan seluruh foto setara, utuh, tanpa foto headline.
+- Penyelarasan radius section publik, CTA/footer, logo/alamat footer, serta hero neural mengikuti keputusan pada `design.md` bagian 1. Tidak memerlukan layanan atau dependency baru.
+
+
 ## 1. Tujuan dan batas produk
 
 **Website ini buat apa?** Website ini memiliki 2 sisi. Sisi utama (publik) untuk menampilkan konten kepada calon customer sekaligus menjadi wadah untuk mempromosikan atau branding, perusahaan kami yaitu AI Center Universitas Surabaya (UBAYA), dimana kami memiliki fokus penyediaan layanan berbasis AI ('Pelatihan AI' dan 'Inference and Solutions'). Sisi kedua (internal) digunakan oleh tim internal perusahaan untuk input/edit data perubahan konten yang ditampilkan di sisi utama (publik). Fokus website: pengelolaan konten publlik

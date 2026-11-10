@@ -36,7 +36,7 @@
 .dn-sumber { min-height: 1.6em; font-size: var(--teks-kecil); font-weight: 500; }
 
 /* Pratinjau dokumen */
-.dn-dok { display: grid; gap: var(--jarak-4); padding: var(--jarak-5); background: var(--warna-putih); border: 1px solid var(--warna-garis); border-radius: var(--radius-kecil); font-size: var(--teks-kecil); overflow-wrap: anywhere; }
+.dn-dok { display: grid; gap: var(--jarak-4); padding: var(--jarak-5); background: var(--warna-putih); border: 1px solid var(--warna-garis); border-radius: var(--radius-kecil); font-size: .9375rem; overflow-wrap: anywhere; }
 .dn-dok__kepala { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--jarak-2) var(--jarak-4); padding-bottom: var(--jarak-3); border-bottom: 2px solid var(--warna-navy); }
 .dn-dok__kepala h4 { font: 700 var(--teks-besar)/1.2 var(--font-data); letter-spacing: 0; }
 .dn-dok__meta { display: grid; gap: var(--jarak-2) var(--jarak-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); margin: 0; }
@@ -48,7 +48,7 @@
 .dn-tabel th { padding: var(--jarak-2); background: var(--warna-langit-muda); font-weight: 600; text-align: left; }
 .dn-tabel td { padding: var(--jarak-2); border-bottom: 1px solid var(--warna-garis); font-variant-numeric: tabular-nums; }
 @media (max-width: 47.99rem) {
-  .dn-dok { padding: var(--jarak-4); }
+  .dn-dok { padding: var(--jarak-4); font-size: var(--teks-isi); }
   .dn-tabel thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .dn-tabel tr, .dn-tabel td { display: block; }
   .dn-tabel td { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: var(--jarak-2); }

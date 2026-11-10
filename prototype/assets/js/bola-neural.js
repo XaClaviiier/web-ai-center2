@@ -15,8 +15,8 @@ const BolaNeural = (() => {
     putarMs: 75000, miring: 0.38,
     napas: { amplitudo: 0.035, aMs: 7000, bMs: 11000 },
     titik: { jari: 1.7, jariAktif: 2.8, tambahJari: 1, alfa: [0.28, 0.5, 0.9] }, // tambahan setelah kedalaman: diameter +2 px
-    aktivasi: { jedaMs: [1607, 3750], jedaDiamMs: [4000, 8000], naikMs: 500, tahanMs: 900, turunMs: 1100, tetangga: 3, serentak: 2, garisAlfa: 0.55, garisTebal: 0.75 },
-    magnet: { radius: 110, kuat: 0.22, tauMs: 180 },
+    aktivasi: { jedaMs: [1200, 2800], jedaDiamMs: [4000, 8000], naikMs: 500, tahanMs: 900, turunMs: 1100, tetangga: 6, dotMin: 3, dotMaks: 5, serentak: 2, garisAlfa: 0.55, garisTebal: 0.75 },
+    magnet: { radius: 150, kuat: 0.32, tauMs: 180 },
     kerjaMaksMs: 6, jendela: 120, // p90 waktu kerja per frame di atas ini => partikel dikurangi, lalu diam
     warna: {},                   // { titik, aksen }; kosong = token --warna-putih dan --warna-mint
   };
@@ -77,7 +77,7 @@ const BolaNeural = (() => {
     let magnetCss = true, dpr = 1, regangY = 1;
     let gerak = !gerakKurang.matches, tingkat = 0; // tingkat 1 = partikel separuh, 2 = diam
     let t = 0, terakhir = 0, raf = 0, tidur = 0, tampak = true, kursor = null;
-    let peristiwa = [], berikut = 0, garisMaks = 0, geserMaks = 0, kerja = [];
+    let peristiwa = [], berikut = 0, garisMaks = 0, geserMaks = 0, kerja = [], pusatTerakhir = -1;
     const jeda = () => { const [lo, hi] = gerak ? a.jedaMs : a.jedaDiamMs; return lo + rndAktif() * (hi - lo); };
     berikut = jeda();
 
@@ -110,8 +110,15 @@ const BolaNeural = (() => {
       peristiwa = peristiwa.filter((e) => t - e.mulai < umurPeristiwa);
       if (t >= berikut && peristiwa.length < a.serentak) {
         let i = 0, coba = 0;
-        do { i = Math.floor(rndAktif() * n); } while (dz[i] < 0.6 && ++coba < 12); // pilih yang menghadap depan
-        peristiwa.push({ i, mulai: t });
+        do { i = Math.floor(rndAktif() * n); } while ((dz[i] < 0.6 || i === pusatTerakhir || peristiwa.some((e) => e.i === i)) && ++coba < 12); // pilih yang menghadap depan
+        const kandidat = [...data.tet[i]];
+        for (let j = kandidat.length - 1; j > 0; j--) {
+          const pilih = Math.floor(rndAktif() * (j + 1));
+          [kandidat[j], kandidat[pilih]] = [kandidat[pilih], kandidat[j]];
+        }
+        const jumlah = a.dotMin + Math.floor(rndAktif() * (a.dotMaks - a.dotMin + 1));
+        peristiwa.push({ i, mulai: t, tet: kandidat.slice(0, jumlah - 1) });
+        pusatTerakhir = i;
         berikut = t + jeda();
       }
     }
@@ -137,7 +144,7 @@ const BolaNeural = (() => {
       let garis = 0;
       ctx.strokeStyle = aksen; ctx.fillStyle = aksen; ctx.lineWidth = a.garisTebal;
       for (const e of peristiwa) {
-        const nyala = selubung(t - e.mulai), tet = data.tet[e.i];
+        const nyala = selubung(t - e.mulai), tet = e.tet;
         ctx.globalAlpha = nyala * a.garisAlfa;
         ctx.beginPath();
         for (const j of tet) { ctx.moveTo(sx[e.i], sy[e.i]); ctx.lineTo(sx[j], sy[j]); garis++; }
@@ -179,6 +186,7 @@ const BolaNeural = (() => {
     function henti() { cancelAnimationFrame(raf); clearTimeout(tidur); raf = 0; tidur = 0; terakhir = 0; }
 
     /* Posisi dan skala bola datang dari CSS (--bola-x, --bola-y, --bola-skala, --bola-magnet),
+       dengan --bola-tinggi-acuan opsional dalam CSS px untuk membatasi radius tanpa mengecilkan kanvas;
        dibaca hanya saat ukuran berubah, supaya komposisi per breakpoint cukup diatur di CSS. */
     const angka = (nama, cadangan) => { const v = parseFloat(gaya.getPropertyValue(nama)); return Number.isFinite(v) ? v : cadangan; };
     function ukur() {
@@ -187,7 +195,8 @@ const BolaNeural = (() => {
       dpr = Math.min(window.devicePixelRatio || 1, ringkas ? k.dprRingkas : k.dprMaks, Math.sqrt(k.pikselMaks / (lebar * tinggi)));
       kanvas.width = Math.round(lebar * dpr); kanvas.height = Math.round(tinggi * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      R = (angka('--bola-skala', k.isi) * Math.min(lebar, tinggi)) / 2;
+      const tinggiAcuan = Math.max(1, angka('--bola-tinggi-acuan', tinggi));
+      R = (angka('--bola-skala', k.isi) * Math.min(lebar, tinggi, tinggiAcuan)) / 2;
       cx = angka('--bola-x', 0.5) * lebar; cy = angka('--bola-y', 0.5) * tinggi;
       magnetCss = angka('--bola-magnet', 1) > 0;
       regangY = angka('--bola-regang-y', 1); // >1 = bola diregangkan vertikal saja (lebar tetap)

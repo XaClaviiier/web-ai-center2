@@ -4,6 +4,52 @@ Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak
 
 ## 1. Navbar dan animasi global
 
+### Hero viewport dan tombol kontak - HERO-03 A, SPHERE-03 A, CTA-03 A
+
+Persetujuan terbaru: navbar, margin hero 12 px di setiap sisi vertikal, dan hero bersama-sama memenuhi satu layar pertama. `--hero-tinggi-navbar` lokal Beranda bernilai 88 px atau 76 px ketika navbar memakai keadaan mobile; `:has(> .nav--mobile)` mengikuti fallback menu berdasarkan ruang. Hero memakai minimum `100svh - tinggi navbar - 24px`, dengan fallback `100vh`. Isi tetap dapat menambah tinggi jika diperlukan. Padding vertikal 48 px mobile/72 px mulai tablet, gutter responsif, gap 24 px, serta H1 36–64 px dipertahankan. Komposisi teks berada di tengah vertikal ruang hero.
+
+SPHERE-03-FIX A disetujui dan menggantikan pembatasan tinggi kanvas sebelumnya. Kanvas memenuhi tinggi hero; CSS desktop menetapkan `--bola-tinggi-acuan: 642` sebagai angka dalam CSS px. `bola-neural.js` membaca acuan opsional hanya ketika ukuran berubah, lalu menghitung radius dari skala dikali sisi terkecil antara lebar, tinggi kanvas, dan tinggi acuan. Tanpa acuan, perhitungan mengikuti ukuran kanvas seperti sebelumnya. Radius dasar desktop tetap 385,2 px pada hero yang lebih tinggi, dengan pusat/skala/regangan terdokumentasi. Tidak ada batas scene internal yang memotong titik; clipping dekoratif di batas luar hero sesuai skala yang ada tetap berlaku. Parameter magnet, aktivasi mint dan konektivitas tidak direvisi.
+
+Delapan kelompok `.kontak__aksi` memakai tombol dengan minimum tinggi 56 px pada layar di atas 48rem, serta 52 px pada lebar ≤48rem. Padding .75rem/1.5rem (12/24 px), font 16 px, ikon CSS 20 px, gap ikon 10 px, gap tombol 16 px. Pada mobile, grid satu kolom dengan baris setinggi sama menjaga konsistensi bila label membungkus. Seluruh permukaan tautan tetap menjadi target klik; varian primary putih dan secondary outline mengikuti style existing. Dimensi tombol di navbar/hero serta gradient CTA/footer tidak direvisi.
+
+### Revisi UI prototype yang disetujui - 10 November 2026
+
+Keputusan berikut berlaku hanya pada direktori `prototype/` dan menggantikan rincian prototype terdahulu yang bertentangan di bawahnya. Implementasi produksi tidak diubah.
+
+- Navbar berisi Beranda, Layanan, Contoh Aplikasi, Kabar, Tim, dan Tentang Kami. Kabar mengelompokkan Berita/Galeri Dokumentasi; Profil dihapus. Semua 13 fallback tanpa JavaScript mengikuti susunan ini. Listener klik luar memakai jalur event (composedPath) agar penggantian ikon hamburger tidak langsung menutup menu yang baru dibuka.
+- NAV-02 pilihan B: hanya section dengan pasangan menu langsung yang mengubah menu aktif. Di Beranda: hero menjadi Beranda, Layanan menjadi Layanan, Galeri Dokumentasi/Berita menjadi Kabar. Testimoni, kontak, dan footer mempertahankan pasangan terakhir. Inference memakai Layanan sampai Portofolio menjadi aktif, lalu Contoh Aplikasi. Scroll kembali ke atas memulihkan menu halaman; halaman terpisah mengikuti konteksnya. Pembacaan posisi dibatasi requestAnimationFrame dan memakai offset navbar 92/104 px; resize, font siap, dan perubahan tinggi konten mengevaluasi ulang posisi.
+- Navbar mempertahankan threshold 96/48 px dan FLIP 360 ms. Fokus/dropdown masih menahan transformasi di tengah halaman, tetapi tidak menghalangi pemulihan keadaan lebar pada scroll <48 px. Fokus pengguna tidak dipindahkan.
+- HERO-01 A: radius magnet 150 px, kekuatan 0,32, tau 180 ms; ukuran/posisi bola tidak diubah. HERO-02: jeda aktivasi mint 1200-2800 ms, kelompok 3-5 dot total dari kandidat tetangga terdekat yang diacak; maksimal dua kelompok dan delapan garis per frame. Batas DPR, partikel, reduced motion, serta penghentian di luar viewport/tab tersembunyi dipertahankan.
+- UI-03: permukaan section utama publik, termasuk hero, CTA, dan demo aplikasi, memakai token radius besar 24 px hanya pada kiri atas dan kanan atas. Kedua sudut bawah siku (`border-radius: var(--radius-besar) var(--radius-besar) 0 0`). Tidak memakai clipping global yang memotong fokus/dropdown; pola lembar bertumpuk tetap.
+- UI-04: container `#portofolio` tidak menggambar outline saat menerima fokus anchor, termasuk navigasi lintas halaman. Fokus tetap dapat dipindahkan ke section sebagai titik awal navigasi. Border dan outline keyboard pada tautan kartu, tombol, serta navbar tetap terlihat melalui aturan focus-visible existing; Tab dari section menuju kartu pertama. Aturan fokus global dan skip link tetap.
+- Tim tanpa pencarian; foto 96x120 px berdampingan dengan identitas. Bidang penelitian ditampilkan pada panel berpenekanan visual, tanpa mengubah isi keahlian. Grid 3/2/1 kolom; padding atas hero 32 px.
+- Seluruh delapan CTA mengikuti revisi gradient/kontak bersama di bawah. Footer memakai glow radial biru terang di kanan atas (28%). Logo footer dibatasi lebar 198 px dengan rasio intrinsik; tinggi sekitar 64 px termasuk padding. Alamat: Gedung Fakultas Teknik TA.
+- Metadata berita: [tanggal existing] oleh Tim Media Ubaya AI Center. Foto detail album setara dalam bingkai 4:3 dengan object-fit: contain; dua kolom desktop/tablet, satu kolom mobile. Tidak ada perlakuan headline untuk foto pertama. Foto berbeda rasio menyisakan ruang latar.
+
+Revisi gradient/kontak seluruh CTA, dengan pilihan CTA-02 B, menggantikan aturan linear CTA-02 A dan aturan khusus Beranda CTA-03 A. Delapan section `.kontak` (Beranda, Pelatihan, Inference, JejakAlumni, Perencanaan Implan Gigi, DocNext, Tim, Tentang Kami) memakai CSS bersama: radial ellipse 35% × 65% berpusat di kanan bawah, navy penuh di pusat, navy beralfa 65% pada 30%, transparan pada 100%. Dasarnya linear 110° dari biru ke campuran biru/navy 80/20. Biru terang/medium mendominasi; navy pekat terbatas di sudut. Token tetap `#2547F4` dan `#0A2240`; gradient footer tidak direvisi.
+
+Helper `aksiKontak()` menghasilkan dua tautan native dengan ikon existing: “Hubungi lewat WhatsApp” (`https://wa.me/62895634222240` beserta pesan existing, tab baru dengan noopener) serta “Kirim email” (`mailto:aicenter@unit.ubaya.ac.id` beserta subjek existing, tanpa memaksa tab baru). Keduanya memakai sumber `MOCK.konten.kontak`, yang sesuai konfigurasi `src/data/kontak.ts`. Seluruh CTA memakai label, varian, gap, hover dan fokus yang sama; pada lebar ≤48rem kedua tombol memakai lebar penuh dan membungkus vertikal. Pelatihan/Tim memperoleh email. Pilihan B mengganti dua tautan layanan pada CTA Tentang Kami dengan pasangan kontak. Tidak menambah section CTA pada halaman yang sebelumnya tidak memilikinya. Pengujian tidak mengirim pesan atau email sungguhan.
+
+HERO-03 dikonfirmasi sebagai salah ketik. QA-01 disetujui dan validasi Chrome headless selesai; rincian bukti dan batas pengujian ada di `prototype/CATATAN.md`.
+
+### CTA Tentang Kami dan penyesuaian tipografi terarah
+
+Disetujui pemilik: CTA-ABOUT-01 A dan TYPO-01 B (TYPO-01A–F). Ketentuan ini menggantikan rincian prototype terdahulu yang bertentangan; token global, font, body, nama/jabatan/bidang riset Tim, metadata, footer dan tipografi admin tetap. TYPO-01G–I dipertahankan; TYPO-01J ditunda.
+
+CTA Tentang Kami memakai dua kolom `minmax(0, 1fr) auto` mulai 64rem (1024 px), dengan `align-items: center` dan gap existing 3rem (48 px). Judul/deskripsi berada di kiri, pasangan tombol horizontal di kanan. Di bawah breakpoint tersebut, grid satu kolom tetap. Aturan dibatasi pada `.kontak--tentang .kontak__dalam`; gradient, radius, ikon, tautan kontak dan komponen tombol mengikuti spesifikasi bersama.
+
+| Kode | Komponen | Ukuran dan perilaku aktif |
+|---|---|---|
+| TYPO-01A | Hero Beranda, Pelatihan, Inference | `clamp(2.25rem, 1.5rem + 3vw, 4rem)`: 36–64 px pada root 16 px |
+| TYPO-01B | H1 Tim, Galeri Dokumentasi, Tentang Kami | `clamp(2rem, 1.35rem + 2.7vw, 3.5rem)`: 32–56 px |
+| TYPO-01C | Tautan menu navbar | Desktop .9375rem (15 px), mobile tetap 1rem (16 px); pengukuran ruang/hamburger existing tetap |
+| TYPO-01D | Kartu portofolio tablet | Pada 48–63.99rem: dua kolom, judul 1.25rem (20 px), deskripsi 1rem/1.6 (16/25.6 px), badge .8125rem (13 px). Desktop tiga kolom dan mobile satu kolom tetap; subgrid menyelaraskan isi kartu |
+| TYPO-01E | Dokumen sumber DocNext | .9375rem (15 px) pada tablet/desktop; 1rem (16 px) pada mobile. Tag kecil tetap .75rem (12 px) sesuai penundaan TYPO-01J |
+| TYPO-01F | H1 detail berita/dokumentasi | `clamp(2rem, 1.4rem + 2.3vw, 3rem)`: 32–48 px; lebar baca dan isi artikel tetap |
+
+Implementasi memakai selector khusus halaman/komponen dalam `public.css` serta `document-intelligence.css`, sehingga `--judul-1`, `--judul-2`, dan `--teks-kecil` tidak diubah secara global. Font Cabinet Grotesk, General Sans, serta Geist Mono dipertahankan. Hasil computed style, pemeriksaan layout, dan batas validasi aksesibilitas dicatat di `prototype/CATATAN.md`.
+
+
 ### Keputusan audit yang diterapkan — 10 November 2026
 
 Catatan ini memperbarui rincian implementasi sebelumnya tanpa mengubah identitas visual atau motion scroll navbar. Menu utama kini lima: Beranda, Layanan, Contoh Aplikasi, Aktivitas, dan Profil. Aktivitas mengelompokkan Berita serta Galeri Dokumentasi; label galeri juga diselaraskan pada footer, breadcrumb, tautan balik, dan fallback tanpa JavaScript. Kontak email memakai `mailto:` ke alamat resmi.

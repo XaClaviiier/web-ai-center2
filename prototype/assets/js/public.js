@@ -16,8 +16,9 @@ function navbar(aktif) {
     { kunci: 'index', label: 'Beranda', href: 'index.html' },
     { kunci: 'layanan', label: 'Layanan', sub: [{ label: 'Pelatihan', href: 'pelatihan.html' }, { label: 'Inference and Solutions', href: 'inference.html' }] },
     { kunci: 'contoh-aplikasi', label: 'Contoh Aplikasi', href: 'inference.html#portofolio' },
-    { kunci: 'aktivitas', label: 'Aktivitas', sub: [{ label: 'Berita', href: 'berita.html' }, { label: 'Galeri Dokumentasi', href: 'dokumentasi.html' }] },
-    { kunci: 'profil', label: 'Profil', sub: [{ label: 'Tim', href: 'tim.html' }, { label: 'Tentang Kami', href: 'tentang-kami.html' }] },
+    { kunci: 'kabar', label: 'Kabar', sub: [{ label: 'Berita', href: 'berita.html' }, { label: 'Galeri Dokumentasi', href: 'dokumentasi.html' }] },
+    { kunci: 'tim', label: 'Tim', href: 'tim.html' },
+    { kunci: 'tentang-kami', label: 'Tentang Kami', href: 'tentang-kami.html' },
   ];
   const menu = el('ul.nav__menu', { id: 'menu-utama' }, MENU.map((m) => {
     if (!m.sub) return el('li', null, el('a.nav__tautan', { href: m.href, 'data-nav': m.kunci }, m.label));
@@ -92,20 +93,34 @@ function navbar(aktif) {
     burger.replaceChildren(ikon('menu', 24));
     akar.querySelectorAll('.nav__sub').forEach((s) => { s.hidden = true; s.previousElementSibling.setAttribute('aria-expanded', 'false'); });
   }
-  function aturAktif() {
-    const aplikasi = document.body.dataset.halaman === 'inference' && location.hash === '#portofolio';
+  function aturAktif(dariScroll = false) {
+    const halaman = document.body.dataset.halaman;
+    let induk = ['berita', 'dokumentasi'].includes(aktif) ? 'kabar' : aktif;
+    if (halaman === 'inference' && location.hash === '#portofolio') induk = 'contoh-aplikasi';
+    if (dariScroll && ['index', 'inference'].includes(halaman)) {
+      const batas = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-offset')) || 104;
+      const sections = [...utama.querySelectorAll('[data-nav-section]')].map((section) => ({ section, posisi: section.getBoundingClientRect() }));
+      // Section tanpa pasangan menu mempertahankan pasangan terakhir yang telah dilewati.
+      if (sections.some(({ posisi }) => posisi.height)) {
+        induk = aktif;
+        for (const { section, posisi } of sections) {
+          if (posisi.height && posisi.top <= batas + 1) induk = section.dataset.navSection;
+        }
+        if (scrollY <= 1) induk = aktif;
+      }
+    }
     akar.querySelectorAll('[data-nav]').forEach((n) => {
       const kunci = n.dataset.nav;
-      const induk = ['tim', 'tentang-kami'].includes(aktif) ? 'profil' : ['berita', 'dokumentasi'].includes(aktif) ? 'aktivitas' : aktif;
-      const dipilih = aplikasi ? kunci === 'contoh-aplikasi' : kunci === induk;
+      const dipilih = kunci === induk;
       n.removeAttribute('aria-current');
       n.removeAttribute('data-aktif');
-      if (dipilih && n.tagName === 'A') n.setAttribute('aria-current', aplikasi ? 'location' : 'page');
+      if (dipilih && n.tagName === 'A') n.setAttribute('aria-current', induk === 'contoh-aplikasi' || induk !== aktif ? 'location' : 'page');
       else if (dipilih) n.setAttribute('data-aktif', 'ya');
     });
   }
   function aturScroll(paksa = false) {
-    if (!paksa && (akar.contains(document.activeElement) || akar.querySelector('.nav__sub:not([hidden])'))) return;
+    aturAktif(true);
+    if (!paksa && scrollY >= 48 && (akar.contains(document.activeElement) || akar.querySelector('.nav__sub:not([hidden])'))) return;
     if (scrollY > 96) ringkas = true;
     else if (scrollY < 48) ringkas = false;
     ubahKeadaan(ringkas && !akar.classList.contains('nav--mobile'), paksa);
@@ -148,12 +163,20 @@ function navbar(aktif) {
     if (tujuan.pathname === location.pathname && tujuan.search === location.search && tujuan.hash === '#portofolio') {
       requestAnimationFrame(() => {
         const target = document.getElementById('portofolio');
-        if (target) { target.setAttribute('tabindex', '-1'); target.focus({ preventScroll: true }); }
+        if (target) {
+          target.setAttribute('tabindex', '-1');
+          if (e.detail > 0) target.dataset.fokusPointer = 'ya';
+          else delete target.dataset.fokusPointer;
+          target.addEventListener('blur', () => delete target.dataset.fokusPointer, { once: true });
+          target.addEventListener('keydown', () => delete target.dataset.fokusPointer, { once: true });
+          target.focus({ preventScroll: true });
+        }
         aturScroll(true);
       });
     }
   });
-  document.addEventListener('click', (e) => { if (!akar.contains(e.target)) { tutupMenu(); aturScroll(); } });
+  // Jalur event tetap mengenali ikon hamburger yang diganti ketika tombol diklik.
+  document.addEventListener('click', (e) => { if (!e.composedPath().includes(akar)) { tutupMenu(); aturScroll(); } });
   window.addEventListener('hashchange', () => { aturAktif(); aturUkuran(); });
   window.addEventListener('scroll', () => {
     if (frameScroll !== null) return;
@@ -166,6 +189,10 @@ function navbar(aktif) {
   aturAktif();
   requestAnimationFrame(aturUkuran);
   document.fonts?.ready.then(aturUkuran);
+  if ('ResizeObserver' in window) new ResizeObserver(() => {
+    if (frameScroll !== null) return;
+    frameScroll = requestAnimationFrame(() => { frameScroll = null; aturAktif(true); });
+  }).observe(utama);
   return akar;
 }
 
@@ -175,7 +202,7 @@ function footer() {
   return el('footer.footer', null,
     el('div.wadah.footer__grid', null,
       el('div.footer__profil', null,
-        el('img', { src: gambar('AI-Center_Logo.png'), alt: 'UBAYA AI Center', height: 44, class: 'footer__logo' }),
+        el('img', { src: gambar('AI-Center_Logo.png'), alt: 'UBAYA AI Center', width: 440, height: 116, class: 'footer__logo' }),
         el('p', null, k.deskripsi_footer)),
       el('div', null, el('h2', null, 'Jelajahi'), el('ul', null,
         tautan('Pelatihan', 'pelatihan.html'), tautan('Inference and Solutions', 'inference.html'), tautan('Berita', 'berita.html'),
@@ -243,10 +270,9 @@ function kartuAlbum(d) {
 
 function kartuTim(t) {
   return el('article.kartu-tim', null,
-    el('img', { src: gambar(t.foto), alt: `Foto ${t.nama}`, loading: 'lazy', width: 520, height: 650 }),
-    el('h2', null, t.nama),
-    el('p.kartu-tim__jabatan', null, t.posisi),
-    el('p.teks-sekunder', null, `Bidang penelitian: ${t.bidang_riset}`));
+    el('img', { src: gambar(t.foto), alt: `Foto ${t.nama}`, loading: 'lazy', width: 96, height: 120 }),
+    el('div.kartu-tim__identitas', null, el('h2', null, t.nama), el('p.kartu-tim__jabatan', null, t.posisi)),
+    el('div.kartu-tim__riset', null, el('p.kartu-tim__label', null, 'Bidang Penelitian'), el('p', null, t.bidang_riset)));
 }
 
 function kartuPortofolio(p) {
@@ -262,13 +288,17 @@ function kartuPortofolio(p) {
 }
 
 /* === Bagian bersama === */
-function bagianKontak(judul, sub, cta = {}) {
+function aksiKontak() {
   const k = K.kontak;
+  return el('div.kontak__aksi', null,
+    tautanTombol('Hubungi lewat WhatsApp', 'terang', k.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan'),
+    tautanTombol('Kirim email', 'garis-terang', k.email_url, null, 'surat'));
+}
+
+function bagianKontak(judul, sub) {
   return el('section.kontak', { 'aria-labelledby': 'judul-kontak' }, el('div.wadah.kontak__dalam', null,
     el('div', null, el('h2', { id: 'judul-kontak' }, judul), el('p', null, sub)),
-    el('div.kontak__aksi', null,
-      tautanTombol(cta.wa ?? 'Hubungi lewat WhatsApp', 'terang', k.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan'),
-      tautanTombol(cta.email ?? 'Kirim email', 'garis-terang', k.email_url, { target: '_blank', rel: 'noopener' }, 'surat'))));
+    aksiKontak()));
 }
 
 /** Muat data ke wadah, lengkap dengan loading, galat, dan kosong. Dipanggil ulang saat panel berubah. */
@@ -385,7 +415,7 @@ const HALAMAN = {
     const wadahTesti = el('div');
     const wadahBerita = el('div');
     utama.append(
-      el('section.hero', { 'aria-labelledby': 'judul-hero' },
+      el('section.hero', { 'aria-labelledby': 'judul-hero', 'data-nav-section': 'index' },
         el('canvas.hero__bola', { 'aria-hidden': 'true' }),
         el('div.wadah.hero__isi', null,
           el('div.hero__teks', null,
@@ -394,18 +424,18 @@ const HALAMAN = {
             el('div.hero__aksi', null,
               tautanTombol('Diskusikan Kebutuhan AI', 'terang', K.kontak.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan'),
               tautanTombol('Lihat Layanan', 'garis-terang', '#layanan'))))),
-      el('section.lembar.lembar--putih', { id: 'layanan', 'aria-labelledby': 'judul-layanan' }, el('div.wadah', null,
+      el('section.lembar.lembar--putih', { id: 'layanan', 'aria-labelledby': 'judul-layanan', 'data-nav-section': 'layanan' }, el('div.wadah', null,
         el('h2', { id: 'judul-layanan' }, 'Dua cara kami membantu Anda'),
         el('div.layanan-grid', null, K.layanan.map((l, i) => el('article', { class: `layanan-kartu layanan-kartu--${i ? 'gelap' : 'terang'}` },
           el('h3', null, l.nama), el('p', null, l.deskripsi),
           tautanTombol(i ? 'Lihat Solusi AI' : 'Lihat Pelatihan', i ? 'terang' : 'utama', l.href, null, 'panah')))))),
-      el('section.lembar.lembar--muda', { 'aria-labelledby': 'judul-dok' }, el('div.wadah', null,
+      el('section.lembar.lembar--muda', { 'aria-labelledby': 'judul-dok', 'data-nav-section': 'kabar' }, el('div.wadah', null,
         el('div.judul-baris', null, el('h2', { id: 'judul-dok' }, 'Galeri Dokumentasi'), el('a.tautan-panah', { href: 'dokumentasi.html' }, 'Lihat Galeri Dokumentasi', ikon('panah', 18))),
         wadahDok)),
       el('section.lembar.lembar--langit', { 'aria-labelledby': 'judul-testi' }, el('div.wadah.testi', null,
         el('h2', { id: 'judul-testi' }, 'Cerita dari mereka yang belajar dan bekerja bersama kami'),
         wadahTesti)),
-      el('section.lembar.lembar--putih', { 'aria-labelledby': 'judul-berita' }, el('div.wadah', null,
+      el('section.lembar.lembar--putih', { 'aria-labelledby': 'judul-berita', 'data-nav-section': 'kabar' }, el('div.wadah', null,
         el('div.judul-baris', null, el('h2', { id: 'judul-berita' }, 'Berita terbaru'), el('a.tautan-panah', { href: 'berita.html' }, 'Semua berita', ikon('panah', 18))),
         wadahBerita)),
       bagianKontak('Punya kebutuhan AI? Mari berdiskusi.', 'Ingin mengembangkan kemampuan AI atau mengeksplorasi penerapannya? Ceritakan kebutuhan Anda, dan mari temukan langkah yang sesuai bersama UBAYA AI Center.'));
@@ -491,7 +521,7 @@ const HALAMAN = {
       el('section.kontak', { 'aria-labelledby': 'j-kontak-pelatihan' }, el('div.wadah.kontak__dalam', null,
         el('div', null, el('h2', { id: 'j-kontak-pelatihan' }, 'Diskusikan Kebutuhan Pelatihan AI Anda'),
           el('p', null, 'Baik untuk pengembangan kompetensi maupun eksplorasi peluang AI di organisasi, UBAYA AI Center terbuka untuk mendiskusikan bentuk kegiatan yang sesuai dengan kebutuhan Anda.')),
-        el('div.kontak__aksi', null, tautanTombol('Konsultasi Gratis', 'terang', K.kontak.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan')))));
+        aksiKontak())));
     const alur = utama.querySelector('.pelatihan-workflow .alur');
     const desktop = matchMedia('(min-width: 64rem)');
     const kurangGerak = matchMedia('(prefers-reduced-motion: reduce)');
@@ -538,12 +568,13 @@ const HALAMAN = {
     setJudul('Inference and Solutions', n.hero_sub);
     utama.append(
       breadcrumb([{ label: 'Inference and Solutions' }]),
-      el('section.sampul.sampul--enterprise', null, el('div.wadah.sampul__dua', null,
+      el('section.sampul.sampul--enterprise', { 'data-nav-section': 'layanan' }, el('div.wadah.sampul__dua', null,
         el('div', null, el('h1', null, teksHeadline), el('p', null, n.hero_sub),
           el('div.hero__aksi', null, tautanTombol('Lihat Contoh Penerapan', 'terang', '#portofolio', null, 'panah'))),
         carousel(n.pertanyaan.map((t) => el('p.pertanyaan', null, `“${t}”`)), { label: 'Pertanyaan untuk Anda', intervalMs: 6000 }))),
       el('section.bagian.wadah', { 'aria-labelledby': 'j-jenis' },
         el('h2', { id: 'j-jenis' }, 'Jelajahi Peluang Penerapan AI'),
+        el('p.bagian__sub', null, 'Solusi inference utama yang kami tawarkan.'),
         el('div.jenis-grid', null, n.jenis.map((j, i) => el('article.jenis', null,
           el('img.jenis__ilustrasi', { src: gambar(ilustrasiJenis[i]), alt: '', width: 180, height: 108, loading: 'lazy' }),
           el('h3', null, j.nama), el('p.teks-sekunder', null, j.deskripsi))))),
@@ -551,13 +582,13 @@ const HALAMAN = {
         el('div.inference-workflow', null,
           el('h2', { id: 'j-alur' }, 'Tahapan penerapan model AI.'),
           el('ol.alur.alur--inference', { role: 'list' }, n.alur.map((l, i) => el('li', { style: `--alur-urutan:${i}` }, el('span.alur__nomor', null, String(i + 1)), el('h3', null, l.judul), el('p.teks-sekunder', null, l.deskripsi))))))),
-      el('section.bagian.wadah', { id: 'portofolio', tabindex: '-1', 'aria-labelledby': 'j-porto' },
+      el('section.bagian.wadah', { id: 'portofolio', tabindex: '-1', 'aria-labelledby': 'j-porto', 'data-nav-section': 'contoh-aplikasi' },
         el('div.porto__kepala', null,
           el('p.tentang-label', null, 'Portofolio'),
           el('h2', { id: 'j-porto' }, 'Jelajahi Portofolio Kami.'),
           el('p.bagian__sub', null, 'Kenali contoh penerapan teknologi AI melalui demonstrasi aplikasi.')),
         el('div.grid-kartu.grid-kartu--tiga.porto', null, n.portofolio.map(kartuPortofolio))),
-      bagianKontak('Diskusikan kebutuhan AI Anda.', 'Punya model AI, data, atau ide penerapan yang ingin dikembangkan? Ceritakan kepada tim UBAYA AI Center, dan mari diskusikan langkah yang paling sesuai.', { wa: 'Diskusikan Kebutuhan AI' }));
+      bagianKontak('Diskusikan kebutuhan AI Anda.', 'Punya model AI, data, atau ide penerapan yang ingin dikembangkan? Ceritakan kepada tim UBAYA AI Center, dan mari diskusikan langkah yang paling sesuai.'));
     const alur = utama.querySelector('.alur--inference');
     const lebar = matchMedia('(min-width: 80rem)');
     const kurangGerak = matchMedia('(prefers-reduced-motion: reduce)');
@@ -588,7 +619,7 @@ const HALAMAN = {
     utama.append(
       breadcrumb([{ label: 'Inference and Solutions', href: 'inference.html' }, { label: 'JejakAlumni' }]),
       JejakAlumni.halaman(),
-      bagianKontak('Ingin membahas data lulusan di institusi Anda?', 'Ceritakan kebutuhan evaluasi lulusan Anda. Tim UBAYA AI Center dapat membantu membahas langkah berikutnya.', { wa: 'Diskusikan Kebutuhan AI' }));
+      bagianKontak('Ingin membahas data lulusan di institusi Anda?', 'Ceritakan kebutuhan evaluasi lulusan Anda. Tim UBAYA AI Center dapat membantu membahas langkah berikutnya.'));
   },
 
   'perencanaan-implan-gigi'() {
@@ -597,7 +628,7 @@ const HALAMAN = {
     utama.append(
       breadcrumb([{ label: 'Inference and Solutions', href: 'inference.html' }, { label: d.judul }]),
       ...ImplanGigi.bagian(),
-      bagianKontak('Tertarik Mengembangkan Solusi AI Serupa?', 'Diskusikan peluang kolaborasi riset atau pengembangan solusi AI sesuai kebutuhan institusi Anda.', { wa: 'Diskusikan Kebutuhan AI' }));
+      bagianKontak('Tertarik Mengembangkan Solusi AI Serupa?', 'Diskusikan peluang kolaborasi riset atau pengembangan solusi AI sesuai kebutuhan institusi Anda.'));
   },
 
   'document-intelligence'() {
@@ -606,7 +637,7 @@ const HALAMAN = {
     utama.append(
       breadcrumb([{ label: 'Inference and Solutions', href: 'inference.html' }, { label: d.judul }]),
       ...DocNext.bagian(),
-      bagianKontak('Punya Proses Bisnis yang Ingin Dibantu AI?', 'Diskusikan kebutuhan pengolahan dokumen, integrasi sistem, atau implementasi AI di lingkungan internal perusahaan bersama UBAYA AI Center.', { wa: 'Diskusikan Kebutuhan AI' }));
+      bagianKontak('Punya Proses Bisnis yang Ingin Dibantu AI?', 'Diskusikan kebutuhan pengolahan dokumen, integrasi sistem, atau implementasi AI di lingkungan internal perusahaan bersama UBAYA AI Center.'));
   },
 
   berita() {
@@ -629,7 +660,7 @@ const HALAMAN = {
         el('article.artikel', null,
           el('header.artikel__kepala', null,
             el('h1', null, b.judul),
-            el('p.artikel__meta', null, el('time.tanggal', null, b.tanggal_publikasi), el('span', null, 'Tim Media Ubaya AI Center'))),
+            el('p.artikel__meta', null, el('time.tanggal', null, b.tanggal_publikasi), ' ', el('span', null, 'oleh Tim Media Ubaya AI Center'))),
           el('img.artikel__gambar', { src: gambar(b.gambar), alt: '' }),
           el('div.artikel__isi', null, isi.map((p) => el('p', null, p))),
           el('a.tautan-panah.artikel__kembali', { href: 'berita.html' }, 'Semua berita', ikon('panah', 18))),
@@ -658,36 +689,22 @@ const HALAMAN = {
     const sub = 'Kenali tim yang berkontribusi dalam riset, pengembangan, dan pembelajaran AI di UBAYA AI Center.';
     setJudul(judul, sub);
     const wadah = el('div');
-    const petunjuk = el('p.field__bantuan', { id: 'petunjuk-cari', role: 'status' });
-    let semua = [];
-    let q = '';
-    function saring() {
-      const hasil = q ? semua.filter((t) => `${t.nama} ${t.posisi} ${t.bidang_riset}`.toLowerCase().includes(q.toLowerCase())) : semua;
-      petunjuk.textContent = q ? `${hasil.length} anggota ditemukan.` : `${hasil.length} anggota tim.`;
-      wadah.replaceChildren(hasil.length
-        ? el('div.grid-tim', null, hasil.map(kartuTim))
-        : keadaan({ judul: 'Tidak ada hasil', teks: `Tidak ada anggota tim yang cocok dengan "${q}".`, namaIkon: 'cari' }));
-    }
     function muat() {
       muatKe(wadah, {
         kerangka: () => kerangkaKartu(6),
         ambil: () => api.daftarTim(),
         kosong: () => keadaan({ judul: 'Belum ada data tim', teks: 'Susunan tim akan tampil di sini.' }),
-        gambarkan: (h) => { semua = h.items; const c = el('div'); queueMicrotask(saring); return c; },
+        gambarkan: (h) => el('div.grid-tim', null, h.items.map(kartuTim)),
       });
     }
     utama.append(breadcrumb([{ label: judul }]),
       el('header.kepala-halaman.wadah', null, el('h1', null, 'Berkenalan dengan Tim Kami.'), el('p', null, sub)),
-      el('div.wadah.daftar.daftar--tim', null,
-        el('div.field.cari-blok', null, el('label', { for: 'cari' }, 'Cari anggota tim'),
-          el('div.cari', null, ikon('cari', 20), el('input.input', { type: 'search', id: 'cari', placeholder: 'Cari nama, jabatan, atau bidang', 'aria-describedby': 'petunjuk-cari',
-            oninput: (e) => { q = e.target.value.trim().replace(/\s+/g, ' '); if (semua.length) saring(); } })), petunjuk),
-        wadah),
+      el('div.wadah.daftar.daftar--tim', null, wadah),
       el('section.kontak.kontak--tim', { 'aria-labelledby': 'judul-kontak-tim' }, el('div.wadah.kontak__dalam', null,
         el('div', null,
           el('h2', { id: 'judul-kontak-tim' }, 'Mari Diskusikan Kebutuhan Anda.'),
           el('p', null, 'Punya pertanyaan, ide kolaborasi, atau ingin mengetahui bagaimana AI dapat membantu? Hubungi UBAYA AI Center untuk memulai percakapan.')),
-        tautanTombol('Hubungi via WhatsApp', 'terang', K.kontak.whatsapp_url, { target: '_blank', rel: 'noopener' }, 'pesan'))));
+        aksiKontak())));
     muat();
   },
 
@@ -719,13 +736,7 @@ const HALAMAN = {
         el('div.tentang-ungkap', null,
           el('h2', { id: 'judul-kontak' }, 'Langkah Berikutnya Dimulai di Sini.'),
           el('p', null, 'Ingin mengembangkan keterampilan AI atau menerapkannya untuk kebutuhan nyata? Jelajahi layanan kami dan temukan langkah yang sesuai untuk Anda.')),
-        el('div.tentang-layanan', null,
-          el('a.tentang-layanan__tautan', { href: 'pelatihan.html' },
-            el('span.tentang-layanan__isi', null, el('strong', null, 'Pelatihan'), el('span', null, 'Kembangkan pengetahuan dan keterampilan AI.')),
-            ikon('panah', 20)),
-          el('a.tentang-layanan__tautan', { href: 'inference.html' },
-            el('span.tentang-layanan__isi', null, el('strong', null, 'Inference and Solutions'), el('span', null, 'Konsultasikan kebutuhan AI dan jelajahi solusi penerapannya.')),
-            ikon('panah', 20))))));
+        aksiKontak())));
     if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const pengamat = new IntersectionObserver((entri) => entri.forEach((e) => {
         if (e.isIntersecting) { e.target.classList.add('tentang--masuk'); pengamat.unobserve(e.target); }
