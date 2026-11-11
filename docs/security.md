@@ -1,5 +1,13 @@
 # Security — UBAYA AI Center CMS
 
+## Log Aktivitas — batas simulasi dan rancangan keamanan produksi
+
+Disetujui 11 November 2026. Prototype hanya menawarkan pembacaan log lewat `api.adminLog`; penulisan dilakukan helper privat dari callback mutasi setelah berhasil. Admin API memeriksa akun aktif dan role, selain skenario 401/error/429. Hapus Tim dan hapus permanen memeriksa keberadaan item terlebih dahulu agar tidak mencatat sukses palsu. Respons akun/log berupa salinan sehingga perubahan objek respons tidak mengubah penyimpanan internal.
+
+Ini **bukan batas keamanan server**: akun dipilih melalui URL, data berada di browser, dan jam perangkat bisa dimanipulasi. Label Simulasi tetap ada. Tidak ada klaim persistensi atau audit terpercaya. localStorage/sessionStorage tidak digunakan untuk log. Judul/nama ditampilkan sebagai teks melalui helper DOM, bukan HTML; payload lengkap tidak disalin. Judul/nama sendiri tetap harus bebas rahasia karena dapat menjadi label log.
+
+Rencana produksi (belum diterapkan): ambil `sub` dan username dari sesi server yang diverifikasi; tambahkan snapshot username pada sesi dan respons identitas (`/api/auth/me`). Sumber claim username Keycloak perlu dikonfirmasi saat integrasi, tidak menerima username dari body mutasi. Timestamp berasal dari server/database. Penulisan log menyatu dengan transaksi perubahan data; gagal menulis log menggagalkan perubahan. Endpoint baca wajib autentikasi dan role CMS yang diizinkan, tanpa endpoint tulis/edit/hapus log untuk admin. Role database runtime hanya diberi SELECT/INSERT pada log, tanpa UPDATE/DELETE; pengelolaan retensi memakai akses operasional terpisah. Jangan mencatat password, cookie, token Keycloak/CSRF, atau payload form. Log admin tidak boleh terpapar endpoint publik atau cache publik.
+
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Peran pengguna: \[Lihat requirement.md §6\]. Audit `created_by` / `updated_by`: \[Lihat database.md §3.6\].
 
 ## 1. Akses dan login

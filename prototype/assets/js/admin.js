@@ -117,6 +117,7 @@ function tanganiGalat(g) {
 function kerangka(aktif, isi) {
   const samping = el('nav.samping', { 'aria-label': 'Menu admin' }, Object.entries(ENTITAS).map(([kunci, e]) =>
     el('a', { href: `#/${kunci}`, 'aria-current': kunci === aktif ? 'page' : null }, ikon(e.ikon, 20), e.label)));
+  samping.append(el('a', { href: '#/log-aktivitas', 'aria-current': aktif === 'log-aktivitas' ? 'page' : null }, ikon('berita', 20), 'Log Aktivitas'));
   aplikasi.replaceChildren(
     // Hash dipakai router, jadi skip link memindahkan fokus tanpa mengubah hash.
     el('a.lewati', { href: '#isi', onclick: (e) => { e.preventDefault(); document.getElementById('isi').focus(); } }, 'Lewati ke konten'),
@@ -126,6 +127,71 @@ function kerangka(aktif, isi) {
         el('span.atas__nama', null, el('strong', null, akun.nama), el('span.teks-sekunder', null, akun.role)),
         tombol('Keluar', 'kedua', { class: 'tombol tombol--kedua tombol--kecil', onclick: keluar }, 'keluar'))),
     el('div.tata', null, samping, el('main.isi', { id: 'isi', tabindex: '-1' }, isi)));
+}
+
+/* === Log aktivitas simulasi, baca saja === */
+function halamanLog() {
+  document.title = 'Log Aktivitas | Admin UBAYA AI Center';
+  let page = 1;
+  let permintaan = 0;
+  const hasil = el('div.log-hasil', { id: 'hasil-log', tabindex: '-1' });
+  const status = el('p.teks-sekunder', { role: 'status', 'aria-live': 'polite' });
+  const username = el('select.input', { id: 'log-username' }, el('option', { value: '' }, 'Semua username'));
+  const jenis = el('select.input', { id: 'log-jenis' },
+    [['', 'Semua aktivitas'], ['tambah', 'Tambah Data'], ['ubah', 'Ubah Data'], ['hapus', 'Hapus Data']].map(([value, label]) => el('option', { value }, label)));
+  const dari = el('input.input', { id: 'log-dari', type: 'date' });
+  const sampai = el('input.input', { id: 'log-sampai', type: 'date' });
+  const field = (label, input) => el('div.field', null, el('label', { for: input.id }, label), input);
+  const filter = el('form.log-filter', { 'aria-label': 'Filter log aktivitas', onsubmit: (ev) => {
+    ev.preventDefault();
+    sampai.setCustomValidity(dari.value && sampai.value && dari.value > sampai.value ? 'Tanggal akhir harus sama dengan atau setelah tanggal awal.' : '');
+    if (!filter.reportValidity()) return;
+    page = 1;
+    muat(true);
+  } }, field('Username', username), field('Jenis aktivitas', jenis), field('Dari tanggal (WIB)', dari), field('Sampai tanggal (WIB)', sampai),
+  el('div.log-filter__aksi', null, tombol('Terapkan', 'utama', { type: 'submit' }), tombol('Reset filter', 'kedua', { onclick: () => {
+    filter.reset(); sampai.setCustomValidity(''); page = 1; muat(true);
+  } })));
+  for (const input of [dari, sampai]) input.addEventListener('input', () => sampai.setCustomValidity(''));
+  kerangka('log-aktivitas', [
+    el('div.kepala', null, el('h1', { tabindex: '-1' }, 'Log Aktivitas')),
+    el('p.log-simulasi', null, el('strong', null, 'Simulasi. '), 'Aktivitas simulasi hanya tersimpan selama halaman ini terbuka dan kembali kosong setelah refresh. Identitas akun dan waktu perangkat belum diverifikasi server.'),
+    filter, status, hasil,
+  ]);
+
+  async function muat(fokus = false) {
+    const urutan = ++permintaan;
+    const opsi = { page, username: username.value, jenis: jenis.value, dari: dari.value, sampai: sampai.value };
+    hasil.replaceChildren(kerangkaBaris());
+    status.textContent = 'Memuat log aktivitas…';
+    try {
+      const data = await api.adminLog(opsi);
+      if (urutan !== permintaan || !hasil.isConnected) return;
+      page = data.page;
+      const dipilih = username.value;
+      username.replaceChildren(el('option', { value: '' }, 'Semua username'), data.usernames.map((u) => el('option', { value: u }, u)));
+      username.value = dipilih;
+      const terfilter = opsi.username || opsi.jenis || opsi.dari || opsi.sampai;
+      hasil.replaceChildren(data.items.length ? el('div.tabel-wadah.log-tabel-wadah', { role: 'region', tabindex: '0', 'aria-label': 'Log aktivitas' },
+        el('p.tabel-petunjuk', null, 'Geser tabel ke samping untuk melihat seluruh kolom.'),
+        el('table.tabel.log-tabel', null, el('caption.sr-only', null, 'Riwayat aktivitas simulasi, terbaru dahulu'),
+          el('thead', null, el('tr', null, ['Tanggal & Waktu', 'Aktivitas', 'Username'].map((teks) => el('th', { scope: 'col' }, teks)))),
+          el('tbody', null, data.items.map((b) => el('tr', null,
+            el('td', null, el('time', { datetime: b.terjadi_pada }, Format.waktuJakarta(b.terjadi_pada))),
+            el('td.log-tabel__aktivitas', null, Format.aktivitas(b)), el('td.log-tabel__username', null, b.username))))))
+        : keadaan({ judul: terfilter ? 'Tidak ada aktivitas yang cocok' : 'Belum ada aktivitas', teks: terfilter ? 'Coba ubah atau reset filter.' : 'Perubahan data yang berhasil pada simulasi ini akan tercatat di sini.' }));
+      const navigasi = pagination(data, (n) => { page = n; muat(true); });
+      if (navigasi) hasil.append(navigasi);
+      status.textContent = data.total ? `${data.total} aktivitas. Halaman ${page} dari ${Math.ceil(data.total / data.limit)}. Waktu Asia/Jakarta (WIB).` : 'Tidak ada aktivitas untuk ditampilkan.';
+    } catch (g) {
+      if (urutan !== permintaan || !hasil.isConnected) return;
+      if (g?.status === 401) return layar401();
+      hasil.replaceChildren(keadaanGalat(g, () => muat(true)));
+      status.textContent = 'Log aktivitas belum dapat dimuat.';
+    }
+    if (fokus && hasil.isConnected) hasil.focus();
+  }
+  muat();
 }
 
 /* === Daftar === */
@@ -526,6 +592,7 @@ function render() {
   if (!akun) return layarMasuk();
   if (!akun.role) return layar403();
   const [sumber, a, b] = location.hash.replace(/^#\/?/, '').split('/');
+  if (sumber === 'log-aktivitas' && !a) return halamanLog();
   if (!ENTITAS[sumber]) { location.hash = '#/berita'; return undefined; }
   if (a === 'baru') return halamanForm(sumber, null);
   if (a === 'trash' && ENTITAS[sumber].status) return halamanDaftar(sumber, true);

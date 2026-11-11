@@ -1,5 +1,11 @@
 # Stack — UBAYA AI Center CMS
 
+## Log Aktivitas — tambahan 11 November 2026
+
+Prototype menyediakan `api.adminLog({ page, username, jenis, dari, sampai })`, respons `{ items, page, limit: 10, total, usernames }`. Filter tanggal memakai YYYY-MM-DD dan hari Asia/Jakarta secara inklusif. Urutan terbaru lalu ID menurun; page dibatasi ke halaman tersedia. `usernames` berisi username yang pernah tercatat pada instance halaman untuk pilihan filter. Akses lewat akun aktif simulasi yang memiliki role. Data kosong saat halaman baru/refresh; panel Simulasi tetap mendukung loading/kosong/error/429/401. Tidak menambah dependency atau menghubungkan backend lama.
+
+Kontrak produksi yang direncanakan, **belum tersedia**: `GET /api/admin/log-aktivitas?page=1&limit=10&username=...&jenis=...&dari=YYYY-MM-DD&sampai=YYYY-MM-DD`, respons pagination sesuai §9.2; daftar username untuk filter perlu disertakan sebagai metadata. Field entri produksi camelCase (`terjadiPada`, `penggunaSub`, `itemId`, `labelItem`), timestamp UTC, tanggal filter Jakarta. Endpoint spesifik ini didaftarkan sebelum rute dinamis `:sumber`. Tidak menyediakan POST/PUT/PATCH/DELETE log. Sesi dan `/api/auth/me` perlu memuat username terverifikasi selain nama/role. Rancangan transaksi dan akses: lihat bagian Log Aktivitas di `database.md` dan `security.md`.
+
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`).
 
 ## 1. Alur fase kerja

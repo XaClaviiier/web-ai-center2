@@ -117,9 +117,9 @@ const MOCK = (() => {
   ].map(([nama, posisi, foto, bidang_riset], i) => ({ id: i + 1, nama, posisi, bidang_riset, foto, urutan: i + 1, version: 1, ...audit(i) }));
 
   const akun = [
-    { id: 'direktur', sub: 'sub-direktur', nama: 'Dian Direktur', role: 'Direktur' },
-    { id: 'pegawai', sub: 'sub-pegawai', nama: 'Pandu Pegawai', role: 'Pegawai' },
-    { id: 'tanpa-role', sub: 'sub-lain', nama: 'Tamu Tanpa Role', role: null },
+    { id: 'direktur', sub: 'sub-direktur', username: 'dian.direktur', nama: 'Dian Direktur', role: 'Direktur' },
+    { id: 'pegawai', sub: 'sub-pegawai', username: 'pandu.pegawai', nama: 'Pandu Pegawai', role: 'Pegawai' },
+    { id: 'tanpa-role', sub: 'sub-lain', username: 'tamu', nama: 'Tamu Tanpa Role', role: null },
   ];
 
   // Kunci awal oleh pengguna lain. Di implementasi ini ada di Redis, bukan tabel.

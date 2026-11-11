@@ -1,5 +1,24 @@
 /* Format data. Tanggal berupa string DD-MM-YYYY di data maupun tampilan. */
 const Format = {
+  /** Hari kalender Jakarta untuk pembandingan rentang log (YYYY-MM-DD). */
+  hariJakarta(waktu) {
+    const bagian = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(waktu));
+    const nilai = (tipe) => bagian.find((b) => b.type === tipe).value;
+    return `${nilai('year')}-${nilai('month')}-${nilai('day')}`;
+  },
+
+  waktuJakarta(waktu) {
+    const bagian = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(waktu));
+    const nilai = (tipe) => bagian.find((b) => b.type === tipe).value;
+    return `${nilai('day')} ${nilai('month')} ${nilai('year')}, ${nilai('hour')}:${nilai('minute')} WIB`;
+  },
+
+  aktivitas(log) {
+    const kata = { tambah: 'Menambahkan', ubah: 'Mengubah', post: 'Mempublikasikan', retract: 'Menarik publikasi', restore: 'Memulihkan', hapus: log.modul === 'tim' ? 'Menghapus permanen' : 'Memindahkan ke trash', hapus_permanen: 'Menghapus permanen' };
+    const modul = { berita: 'berita', dokumentasi: 'dokumentasi', testimoni: 'testimoni', tim: 'anggota Tim' };
+    return `${kata[log.aksi]} ${modul[log.modul]} "${log.label_item}" (ID ${log.item_id})`;
+  },
+
   /** Ubah "DD-MM-YYYY" menjadi Date; null bila format salah atau tanggal tidak ada. */
   parseTanggal(teks) {
     const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(String(teks ?? '').trim());

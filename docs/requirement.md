@@ -1,5 +1,15 @@
 # Requirement — UBAYA AI Center CMS
 
+## Log Aktivitas — disetujui 11 November 2026
+
+Bagian admin baru `#/log-aktivitas` menampilkan Tanggal & Waktu, Aktivitas, dan Username, terbaru dahulu. Baca-saja, tanpa tambah/edit/hapus log. Mendukung filter username, jenis aktivitas dan rentang hari Asia/Jakarta; pagination 10 entri per halaman khusus log (daftar CRUD tetap mengikuti aturan sebelumnya).
+
+Prototype mencatat otomatis setelah mutasi API tiruan berhasil: tambah, ubah, hapus ke trash, hapus permanen, Post, Retract, dan Restore pada Berita/Dokumentasi/Testimoni; tambah/ubah/hapus permanen pada Tim. Post/Retract/Restore termasuk jenis Ubah Data. Perubahan foto mengikuti penyimpanan item induk. Batal, pembacaan, heartbeat, dan perubahan gagal tidak dicatat. Tidak ada entri riwayat palsu pada awal halaman.
+
+Status saat ini **simulasi frontend**, bukan audit log server-side: log tersimpan di memori instance halaman, hilang setelah refresh/logout yang memuat ulang halaman, tidak dibagikan antar-tab/pengguna/perangkat. Username berasal dari akun aktif contoh, bukan isian form; akun ini belum terautentikasi nyata. Waktu memakai jam perangkat dan ditampilkan dalam WIB. Label Simulasi dipertahankan dan keterbatasan dijelaskan pada halaman.
+
+Audit log produksi memerlukan identitas sesi terverifikasi, waktu server, penyimpanan PostgreSQL transaksional dan pembatasan akses log. Belum diimplementasikan; lihat `database.md`, `security.md`, dan `stack.md` bagian Log Aktivitas.
+
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). File planning lain: `stack.md`, `design.md`, `database.md`, `security.md`.
 
 ## Keputusan khusus prototype - 10 November 2026

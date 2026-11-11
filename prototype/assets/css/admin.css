@@ -1,5 +1,33 @@
 body { background: var(--warna-langit-muda); }
 
+/* Log aktivitas memakai permukaan dan kontrol admin yang sama. */
+.log-simulasi { padding: var(--jarak-4); border: 1px dashed var(--warna-navy); border-radius: var(--radius-kecil); background: var(--warna-putih); }
+.log-filter { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--jarak-4); align-items: end; }
+.log-filter .field { min-width: 0; }
+.log-filter__aksi { display: flex; flex-wrap: wrap; grid-column: 1 / -1; gap: var(--jarak-2); align-items: center; }
+.log-filter .input, .log-filter__aksi .tombol { height: 2.75rem; min-height: 2.75rem; }
+.log-filter__aksi .tombol { white-space: nowrap; }
+.log-filter select.input {
+  appearance: none;
+  padding-inline-end: 2.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230A2240' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1rem 1rem;
+}
+@media (min-width: 80rem) {
+  .log-filter { grid-template-columns: repeat(4, minmax(0, 1fr)) max-content; }
+  .log-filter__aksi { grid-column: auto; flex-wrap: nowrap; }
+}
+@media (forced-colors: active) {
+  .log-filter select.input { appearance: auto; background-image: none; }
+}
+.log-hasil:focus-visible { outline: 2px solid var(--warna-biru); outline-offset: 4px; }
+.log-tabel-wadah .log-tabel { min-width: 40rem; }
+.log-tabel time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.log-tabel .log-tabel__aktivitas { min-width: 15rem; overflow-wrap: anywhere; }
+.log-tabel .log-tabel__username { overflow-wrap: anywhere; max-width: 14rem; }
+
 /* Layar masuk, 401, 403 */
 .layar { min-height: 100dvh; display: grid; place-items: center; padding: var(--jarak-5); }
 .layar__kartu { width: min(100%, 28rem); display: grid; justify-items: start; gap: var(--jarak-4); padding: var(--jarak-6); background: var(--warna-putih); border: 1px solid var(--warna-garis); border-radius: var(--radius-besar); box-shadow: var(--bayangan-kecil); }

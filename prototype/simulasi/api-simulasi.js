@@ -8,6 +8,22 @@ const api = (() => {
   const BATAS_HALAMAN = 9;
   let akunAktif = null;
   let kunciSaya = null;
+  const logAktivitas = [];
+  let nomorLog = 0;
+  const MODUL = ['berita', 'dokumentasi', 'testimoni', 'tim'];
+
+  function cekAkun() {
+    if (!akunAktif) throw gagal(401, 'unauthorized', 'Silakan masuk kembali.');
+    if (!akunAktif.role) throw gagal(403, 'forbidden', 'Anda tidak punya akses.');
+  }
+
+  function catat(nama, sumber, baris) {
+    const jenis = nama === 'adminTambah' ? 'tambah' : ['adminHapus', 'adminHapusPermanen'].includes(nama) ? 'hapus' : 'ubah';
+    const aksi = { adminTambah: 'tambah', adminUbah: 'ubah', adminPost: 'post', adminRetract: 'retract', adminHapus: 'hapus', adminPulihkan: 'restore', adminHapusPermanen: 'hapus_permanen' }[nama];
+    logAktivitas.push({ id: ++nomorLog, terjadi_pada: new Date().toISOString(), pengguna_sub: akunAktif.sub,
+      username: akunAktif.username, jenis, aksi, modul: sumber, item_id: baris.id,
+      label_item: bersih(baris.judul ?? baris.nama ?? '').slice(0, 140) });
+  }
 
   const gagal = (status, code, message, tambahan) => Object.assign({ status, error: { code, message } }, tambahan);
   // Cermin validasi server: judul berita/dokumentasi maksimal 70 karakter (salinan MAKS_JUDUL di admin.js).
@@ -25,6 +41,7 @@ const api = (() => {
           if (admin && SIMULASI.paksa401) throw gagal(401, 'unauthorized', 'Sesi Anda sudah berakhir.');
           if (SIMULASI.keadaan === 'error') throw gagal(500, 'server_error', 'Terjadi kendala di server. Coba lagi beberapa saat lagi.');
           if (SIMULASI.keadaan === '429') throw gagal(429, 'too_many_requests', 'Terlalu banyak permintaan.', { retry_after: 30 });
+          if (admin) cekAkun();
           selesai(JSON.parse(JSON.stringify(fungsi())));
         } catch (e) {
           tolak(e);
@@ -52,6 +69,7 @@ const api = (() => {
   }
 
   function cari(sumber, id) {
+    if (!MODUL.includes(sumber)) throw BUKAN();
     const baris = db[sumber].find((b) => b.id === id);
     if (!baris) throw BUKAN();
     return baris;
@@ -79,7 +97,7 @@ const api = (() => {
 
   function urutanTim(a, b) { return a.urutan - b.urutan || a.id - b.id; }
 
-  return {
+  const layanan = {
     // === Publik ===
     daftarBerita: (opsi = {}) => jawab(() => daftarPublik('berita', opsi)),
     daftarDokumentasi: (opsi = {}) => jawab(() => daftarPublik('dokumentasi', opsi)),
@@ -97,7 +115,19 @@ const api = (() => {
     daftarTim: () => jawab(() => ({ items: kosongkan([...db.tim]).sort(urutanTim) })),
 
     // === Sesi ===
-    masuk(idAkun) { akunAktif = db.akun.find((a) => a.id === idAkun) ?? null; return akunAktif; },
+    masuk(idAkun) { akunAktif = db.akun.find((a) => a.id === idAkun) ?? null; return akunAktif ? { ...akunAktif } : null; },
+
+    adminLog: (opsi = {}) => jawab(() => {
+      const { username = '', jenis = '', dari = '', sampai = '' } = opsi;
+      if (dari && sampai && dari > sampai) throw gagal(400, 'validation_error', 'Tanggal awal harus sebelum atau sama dengan tanggal akhir.');
+      const hasil = kosongkan(logAktivitas).filter((b) => {
+        const hari = Format.hariJakarta(b.terjadi_pada);
+        return (!username || b.username === username) && (!jenis || b.jenis === jenis) && (!dari || hari >= dari) && (!sampai || hari <= sampai);
+      }).sort((a, b) => new Date(b.terjadi_pada) - new Date(a.terjadi_pada) || b.id - a.id);
+      const limit = 10;
+      const page = Math.min(Math.max(1, Math.floor(Number(opsi.page)) || 1), Math.max(1, Math.ceil(hasil.length / limit)));
+      return { ...halaman(hasil, { page, limit }), usernames: [...new Set(logAktivitas.map((b) => b.username))].sort() };
+    }, { admin: true }),
 
     // === Admin ===
     adminDaftar: (sumber, { trash = false } = {}) => jawab(() => {
@@ -114,7 +144,9 @@ const api = (() => {
     }, { admin: true }),
 
     adminTambah: (sumber, data) => jawab(() => {
+      if (!MODUL.includes(sumber)) throw BUKAN();
       cekJudul(sumber, data);
+      if (sumber === 'dokumentasi' && !Array.isArray(data.gambar_daftar)) throw gagal(400, 'validation_error', 'Daftar gambar wajib diisi.');
       const id = idBaru(db[sumber]);
       const baris = { id, version: 1, created_at: new Date().toISOString(), created_by: pengguna(), updated_by: pengguna() };
       for (const [k, v] of Object.entries(data)) if (k !== 'gambar_daftar') baris[k] = typeof v === 'string' ? bersih(v) : v;
@@ -122,6 +154,7 @@ const api = (() => {
       if (sumber === 'berita' || sumber === 'dokumentasi') baris.slug = slugUnik(baris.judul, sumber);
       db[sumber].push(baris);
       if (sumber === 'dokumentasi') simpanGambarDokumentasi(id, data.gambar_daftar);
+      catat('adminTambah', sumber, baris);
       return baris;
     }, { admin: true }),
 
@@ -131,26 +164,32 @@ const api = (() => {
       if (data.judul !== b.judul) cekJudul(sumber, data); // judul lama >70 tetap bisa disimpan bila tidak diubah
       if (SIMULASI.paksa409) { b.version += 1; SIMULASI.paksa409 = false; }
       if (b.version !== version) throw gagal(409, 'conflict', 'Data sudah diubah oleh pengguna lain.');
+      if (sumber === 'dokumentasi' && !Array.isArray(data.gambar_daftar)) throw gagal(400, 'validation_error', 'Daftar gambar wajib diisi.');
       for (const [k, v] of Object.entries(data)) if (k !== 'gambar_daftar') b[k] = typeof v === 'string' ? bersih(v) : v;
       if (sumber === 'dokumentasi') simpanGambarDokumentasi(id, data.gambar_daftar);
       b.version += 1;
       b.updated_by = pengguna();
       kunciSaya = null;
+      catat('adminUbah', sumber, b);
       return b;
     }, { admin: true }),
 
-    adminPost: (sumber, id) => jawab(() => { cekTerkunci(sumber, id); const b = cari(sumber, id); b.status = 'posted'; b.version += 1; return b; }, { admin: true }),
-    adminRetract: (sumber, id) => jawab(() => { const b = cari(sumber, id); b.status = 'draft'; b.version += 1; return b; }, { admin: true }),
+    adminPost: (sumber, id) => jawab(() => { cekTerkunci(sumber, id); const b = cari(sumber, id); b.status = 'posted'; b.version += 1; catat('adminPost', sumber, b); return b; }, { admin: true }),
+    adminRetract: (sumber, id) => jawab(() => { const b = cari(sumber, id); b.status = 'draft'; b.version += 1; catat('adminRetract', sumber, b); return b; }, { admin: true }),
     adminHapus: (sumber, id) => jawab(() => {
       cekTerkunci(sumber, id);
-      if (sumber === 'tim') { db.tim = db.tim.filter((b) => b.id !== id); return {}; }
-      cari(sumber, id).deleted_at = new Date().toISOString();
+      const b = cari(sumber, id);
+      if (sumber === 'tim') db.tim = db.tim.filter((b) => b.id !== id);
+      else b.deleted_at = new Date().toISOString();
+      catat('adminHapus', sumber, b);
       return {};
     }, { admin: true }),
-    adminPulihkan: (sumber, id) => jawab(() => { const b = cari(sumber, id); b.deleted_at = null; b.status = 'draft'; b.version += 1; return b; }, { admin: true }),
+    adminPulihkan: (sumber, id) => jawab(() => { const b = cari(sumber, id); b.deleted_at = null; b.status = 'draft'; b.version += 1; catat('adminPulihkan', sumber, b); return b; }, { admin: true }),
     adminHapusPermanen: (sumber, id) => jawab(() => {
+      const b = cari(sumber, id);
       db[sumber] = db[sumber].filter((b) => b.id !== id);
       if (sumber === 'dokumentasi') db.dokumentasi_gambar = db.dokumentasi_gambar.filter((g) => g.dokumentasi_id !== id);
+      catat('adminHapusPermanen', sumber, b);
       return {};
     }, { admin: true }),
 
@@ -168,4 +207,6 @@ const api = (() => {
     }, { admin: true }),
     kunciLepas: () => { kunciSaya = null; },
   };
+
+  return layanan;
 })();

@@ -1,5 +1,25 @@
 # Database — UBAYA AI Center CMS
 
+## Log Aktivitas — rancangan produksi, belum diimplementasikan
+
+Disetujui 11 November 2026. `created_by`/`updated_by` pada §3.6 tidak menggantikan riwayat aktivitas: keduanya hanya menunjukkan pembuat/pengubah terakhir. Tabel terpisah `log_aktivitas` direncanakan dengan struktur berikut. Prototype memakai padanan di memori, bukan tabel database nyata.
+
+| Kolom | Rencana tipe/isi |
+|---|---|
+| id | bigint identity, unik dan tidak dipakai ulang |
+| terjadi_pada | timestamptz dari server, API ISO 8601 UTC |
+| pengguna_sub | text, identitas stabil dari sesi terverifikasi |
+| username | text, snapshot username saat kejadian |
+| jenis | text, tambah/ubah/hapus |
+| aksi | text, tambah/ubah/post/retract/restore/hapus/hapus_permanen |
+| modul | text, berita/dokumentasi/testimoni/tim |
+| item_id | bigint, ID sasaran tanpa cascade delete ke log |
+| label_item | text, snapshot judul/nama ringkas, maksimal 140 unit UTF-16 pada prototype |
+
+Deskripsi dibentuk dari aksi/modul/label/ID dengan templat tetap. Tidak menyimpan payload, isi berita/testimoni, password atau token. Label dan username tetap tersedia setelah sasaran dihapus/diubah. Perubahan foto dicatat sebagai perubahan item induk.
+
+Rencana server: perubahan data dan INSERT log berada dalam transaksi PostgreSQL yang sama; kegagalan salah satunya menggagalkan transaksi. Urutan `(terjadi_pada DESC, id DESC)`, indeks sesuai urutan dan kebutuhan filter; range tanggal Jakarta dikonversi ke batas UTC [awal hari, awal hari sesudah tanggal akhir). Kebijakan retensi/akses operasional ditentukan sebelum implementasi backend, bukan disamakan dengan trash konten 30 hari. Nama JSON produksi mengikuti konvensi camelCase pada §2; prototype tetap memakai snake_case seperti data tiruan lainnya.
+
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Skema lama (`D:\aicenter\notes\ext-database.md`, di luar repo) hanya dipakai untuk detail yang sudah diverifikasi terhadap plan.
 
 ## 1. Ruang lingkup

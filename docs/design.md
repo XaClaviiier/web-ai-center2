@@ -1,5 +1,17 @@
 # Design — UBAYA AI Center CMS
 
+## Log Aktivitas admin — 11 November 2026
+
+Menu Log Aktivitas ditambahkan setelah Tim pada navigasi admin yang sama. Rute `#/log-aktivitas` memakai kerangka, token warna, tipografi, tabel, tombol, empty/error/loading state yang tersedia. Tidak ada kolom aksi atau kontrol modifikasi log. Label Simulasi dan keterangan hilang setelah refresh terlihat di atas filter.
+
+Filter berlabel: Username, Jenis aktivitas (Tambah Data/Ubah Data/Hapus Data), Dari tanggal (WIB), Sampai tanggal (WIB), tombol Terapkan dan Reset filter. Rentang inklusif berdasarkan hari Jakarta, tanggal awal tidak boleh melewati tanggal akhir. Kontrol tanggal native browser mengirim YYYY-MM-DD; tampilannya mengikuti locale browser. Pagination 10 entri dengan status jumlah/halaman dan fokus ke hasil setelah filter/perpindahan halaman.
+
+Penyempurnaan filter: mulai 1280 px, empat field dan kelompok tombol berada pada satu baris; kolom tombol mengikuti lebar isinya sehingga Terapkan dan Reset filter berdampingan tanpa membungkus. Di bawah 1280 px kelompok tombol memakai baris sendiri dan boleh membungkus saat ruang sempit. Kontrol dan tombol filter setinggi 44 px, sejajar pada sisi bawah dengan gap token existing. Khusus dua select Log Aktivitas, padding kanan 2.75rem menyediakan ruang untuk chevron CSS 1rem yang berjarak 1rem dari tepi kanan; dropdown tetap elemen native. Mode forced colors memulihkan panah native. Handler, label, tipografi dan komponen admin lain tetap.
+
+Tabel memiliki caption, header kolom berscope, elemen time dengan ISO UTC, tampilan `11 Nov 2026, 10:30 WIB`. Urutan timestamp menurun, ID log menurun sebagai pemutus seri. Pada mobile filter membungkus, teks aktivitas/username dapat membungkus, dan region tabel dapat difokus/digulir horizontal dengan petunjuk. Gaya log dibatasi kelas khusus agar tabel CRUD tidak berubah.
+
+Empty state awal: Belum ada aktivitas; filter tanpa hasil: Tidak ada aktivitas yang cocok. Galat mempunyai Coba lagi. Respons lama diabaikan setelah rute berubah atau permintaan baru dimulai.
+
 Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Alur konten halaman: \[Lihat requirement.md §4 dan §5\].
 
 ## 1. Navbar dan animasi global

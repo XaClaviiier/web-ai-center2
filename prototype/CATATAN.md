@@ -1,5 +1,23 @@
 # Catatan Prototype UBAYA AI Center
 
+## Penyempurnaan filter Log Aktivitas — 11 November 2026
+
+Disetujui setelah audit baca-saja: Terapkan dan Reset filter berdampingan, sejajar dengan empat kontrol pada desktop mulai 1280 px. Kolom tombol mengikuti lebar isinya; pada layar lebih kecil kelompok tombol turun baris dan boleh membungkus bila diperlukan. Tinggi kontrol/tombol 44 px. Dua select log memakai padding kanan 44 px dan chevron CSS 16 px pada jarak 16 px dari tepi kanan; elemen select tetap native, panah native dipulihkan dalam forced colors. Tipografi, handler, label Simulasi, dan komponen admin lain dipertahankan.
+
+Perubahan sumber hanya `prototype/assets/css/admin.css`, `docs/design.md`, dan catatan ini. Verifikasi memakai suite Log Aktivitas existing dengan tambahan pengukuran browser sementara di memori, tanpa mengubah file tes. API/UI regresi lulus; Chrome headless pada 1440, 1280, 1024, 820, 390, dan 320 px mengonfirmasi tinggi 44 px, tombol berdampingan dengan gap, padding/posisi panah, tanpa overflow halaman. Seluruh kontrol satu baris dan sejajar pada 1440/1280 px; filter/reset, pagination dan batal hapus tetap lulus pada enam ukuran. Screenshot desktop 1440 dan mobile 320 px diperiksa visual; bukti `prototype/tests/.browser-check/log-aktivitas-{1440,1280,1024,820,390,320}.png`. Pengujian terbatas pada Chrome headless, bukan perangkat fisik. Tidak melakukan operasi Git yang mengubah state; `/docs/_arsip/` diabaikan.
+
+## Log Aktivitas — 11 November 2026
+
+Disetujui setelah audit baca-saja. Menu admin `#/log-aktivitas` menampilkan tabel baca-saja Tanggal & Waktu/Aktivitas/Username, terbaru dahulu, filter username/jenis/rentang hari Jakarta, pagination 10 entri, loading/error/retry serta dua empty state. Label Simulasi dipertahankan dan batas penyimpanan dijelaskan langsung pada halaman. Tidak ada log contoh pada awal halaman.
+
+Log dibuat di lapisan API tiruan setelah mutasi berhasil: tambah, ubah, Post, Retract, Restore, hapus ke trash dan hapus permanen pada Berita/Dokumentasi/Testimoni; tambah/ubah/hapus permanen Tim. Username dari akun aktif contoh, bukan payload form; ID dan snapshot label tetap terbaca setelah item dihapus. Admin API memeriksa akun/role, respons akun/log disalin, dan penghapusan item yang tidak ada ditolak tanpa entri log. Deskripsi tidak menyalin isi berita/testimoni atau payload autentikasi.
+
+**Batas:** hanya memori instance halaman; refresh/logout yang memuat ulang halaman mengosongkan log dan mengembalikan data awal. Tidak dibagikan antar-tab atau pengguna. Identitas pilihan URL dan waktu perangkat tidak diverifikasi server. Ini simulasi perilaku, bukan audit log persisten yang aman. Tidak menggunakan localStorage. Rancangan backend transaksional, username sesi, serta hak akses log dicatat sebagai rencana di lima dokumen aktif, belum diterapkan pada backend.
+
+Verifikasi: `node prototype/tests/activity-log.test.cjs --browser` menguji seluruh mutasi empat modul, atribusi username/sub, respons salinan, galat 400/401/403/404/409/423/429/500 tanpa tambahan log, urutan/pagination/filter gabungan, batas 17:00 UTC menjadi hari berikutnya di Jakarta, pembatalan hapus, teks menyerupai HTML yang tidak dieksekusi, empty/error/retry serta halaman baru kosong. JSDOM memakai shim dialog buka/tutup; Chrome headless juga memeriksa pembatalan dialog native, filter dan pagination pada 1440/820/390 px. Halaman tidak overflow horizontal; tabel 390 px digulir di dalam region sendiri. Tidak ada exception JavaScript yang terdeteksi pada alur browser tersebut. Bukti screenshot: `prototype/tests/.browser-check/log-aktivitas-{1440,820,390}.png`. Hasil ini terbatas pada Chrome headless, bukan pengujian perangkat fisik/screen reader.
+
+Regresi existing lulus: `node prototype/tests/navbar.test.cjs` dan `node prototype/tests/audit-refinements.test.cjs`. Perubahan sumber terbatas pada `/prototype/` dan `/docs/`, tanpa dependency baru, perubahan backend/production atau operasi Git yang mengubah state. `/docs/_arsip/` diabaikan.
+
 ## HERO-03 A, SPHERE-03 A, CTA-03 A - Tinggi hero dan ukuran tombol
 
 Disetujui pemilik: layar pertama mencakup navbar, margin dan hero; sphere desktop dibatasi referensi scene 642 px; tombol kontak diperbesar. Persetujuan tambahan SPHERE-03-FIX A mengizinkan pemisahan radius dari kanvas pada `assets/js/bola-neural.js`. File implementasi yang diubah adalah `assets/css/public.css` dan `assets/js/bola-neural.js`.
