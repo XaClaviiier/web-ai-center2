@@ -18,11 +18,11 @@ Thumbs.db
 .idea/
 docker-compose.production.yml
 deploy/
-docs/backend/
-CLAUDE.md
 
 # test / coverage
 coverage/
+docs/backend/01-kontrak-api.md
+docs/backend/Schema.md
 
 # data DB dev (PGlite) — lokal saja
 .pglite/
