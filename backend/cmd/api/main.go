@@ -12,8 +12,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/redis/go-redis/v9"
+
+	"github.com/XaClaviiier/web-ai-center2/backend/internal/admin"
+	"github.com/XaClaviiier/web-ai-center2/backend/internal/auth"
+	"github.com/XaClaviiier/web-ai-center2/backend/internal/cache"
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/config"
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/httpapi"
+	"github.com/XaClaviiier/web-ai-center2/backend/internal/media"
+	"github.com/XaClaviiier/web-ai-center2/backend/internal/ratelimit"
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/store"
 )
 
@@ -51,9 +58,67 @@ func jalankan() error {
 	}
 	defer st.Close()
 
+	rdbOpt, err := redis.ParseURL(cfg.RedisURL)
+	if err != nil {
+		return fmt.Errorf("REDIS_URL tidak valid: %w", err)
+	}
+	rdb := redis.NewClient(rdbOpt)
+	defer rdb.Close()
+	pingCtx, batalPing := context.WithTimeout(ctx, 5*time.Second)
+	err = rdb.Ping(pingCtx).Err()
+	batalPing()
+	if err != nil {
+		return fmt.Errorf("Redis tidak terjangkau: %w", err)
+	}
+
+	gambar := media.NewS3(media.S3Config{
+		Endpoint:  cfg.RustFSEndpoint,
+		AccessKey: cfg.RustFSAccessKey,
+		SecretKey: cfg.RustFSSecretKey,
+		Bucket:    cfg.RustFSBucket,
+	})
+	// Bucket dibuat otomatis hanya di luar production (kemudahan dev); di production harus sudah ada.
+	bktCtx, batalBkt := context.WithTimeout(ctx, 10*time.Second)
+	err = gambar.PastikanBucket(bktCtx, cfg.AppEnv != config.EnvProduction)
+	batalBkt()
+	if err != nil {
+		return fmt.Errorf("storage gambar: %w", err)
+	}
+
+	handler := httpapi.NewRouter(httpapi.Deps{
+		Log:             log,
+		DB:              st,
+		Konten:          st,
+		Media:           gambar,
+		UploadMaxBytes:  cfg.UploadMaxBytes,
+		Cache:           &cache.Cache{C: rdb, TTL: cfg.CacheTTL},
+		PublikLimiter:   ratelimit.Redis{C: rdb, Jendela: time.Minute},
+		BatasPublik:     cfg.RateLimitPublicMissPerMinute,
+		BatasAdminBaca:  cfg.RateLimitAdminReadPerMinute,
+		BatasAdminTulis: cfg.RateLimitAdminWritePerMinute,
+		ProxyTepercaya:  cfg.TrustedProxies,
+		Admin: httpapi.DepsAdmin{
+			Berita:      admin.BeritaLayanan{Repo: st.AdminBerita(), Media: gambar, Log: log},
+			Dokumentasi: admin.DokumentasiLayanan{Repo: st.AdminDokumentasi(), Media: gambar, Log: log},
+			Testimoni:   admin.TestimoniLayanan{Repo: st.AdminTestimoni(), Media: gambar, Log: log},
+			Tim:         admin.TimLayanan{Repo: st.AdminTim(), Media: gambar, Log: log},
+		},
+		Auth: httpapi.DepsAuth{
+			Sesi:           auth.NewManager(auth.RedisStore{C: rdb}, cfg.SessionIdleTTL, cfg.SessionAbsoluteTTL),
+			Limiter:        ratelimit.Redis{C: rdb, Jendela: time.Minute},
+			DevLoginAktif:  cfg.DevLoginAktif,
+			AdminPassword:  cfg.AdminPassword,
+			BatasLogin:     cfg.RateLimitLoginPerMinute,
+			CookieName:     cfg.SessionCookieName,
+			CookieSecure:   cfg.SessionCookieSecure,
+			CookieMaxAge:   cfg.SessionAbsoluteTTL,
+			AllowedOrigins: cfg.AllowedOrigins,
+		},
+	})
+
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", cfg.Port),
-		Handler:           httpapi.NewRouter(httpapi.Deps{Log: log, DB: st}),
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      30 * time.Second,

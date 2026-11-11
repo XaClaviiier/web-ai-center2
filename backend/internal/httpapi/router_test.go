@@ -10,6 +10,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/XaClaviiier/web-ai-center2/backend/internal/konten"
 )
 
 type pingerPalsu struct{ err error }
@@ -17,7 +19,11 @@ type pingerPalsu struct{ err error }
 func (p pingerPalsu) Ping(context.Context) error { return p.err }
 
 func routerUji(p Pinger) http.Handler {
-	return NewRouter(Deps{Log: slog.New(slog.NewTextHandler(io.Discard, nil)), DB: p})
+	return routerUjiDengan(p, kontenPalsu{})
+}
+
+func routerUjiDengan(p Pinger, k konten.BacaPublik) http.Handler {
+	return NewRouter(Deps{Log: slog.New(slog.NewTextHandler(io.Discard, nil)), DB: p, Konten: k})
 }
 
 func panggil(h http.Handler, metode, path string) *httptest.ResponseRecorder {

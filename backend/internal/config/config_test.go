@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func lookupDari(m map[string]string) Lookup {
@@ -16,18 +17,28 @@ func lookupDari(m map[string]string) Lookup {
 
 func dasarDev() map[string]string {
 	return map[string]string{
-		"APP_ENV":        "development",
-		"DATABASE_URL":   "postgres://u:p@localhost:5432/x",
-		"ADMIN_PASSWORD": "rahasia",
+		"APP_ENV":           "development",
+		"DATABASE_URL":      "postgres://u:p@localhost:5432/x",
+		"REDIS_URL":         "redis://:p@localhost:6379/0",
+		"RUSTFS_ENDPOINT":   "http://localhost:9000",
+		"RUSTFS_ACCESS_KEY": "ak",
+		"RUSTFS_SECRET_KEY": "sk",
+		"RUSTFS_BUCKET":     "ai-center-images",
+		"ADMIN_PASSWORD":    "rahasia",
 	}
 }
 
 func dasarProd() map[string]string {
 	return map[string]string{
-		"APP_ENV":         "production",
-		"DATABASE_URL":    "postgres://u:p@db:5432/x",
-		"PUBLIC_BASE_URL": "https://ai-center.example.com/",
-		"ALLOWED_ORIGINS": "https://ai-center.example.com",
+		"APP_ENV":           "production",
+		"DATABASE_URL":      "postgres://u:p@db:5432/x",
+		"REDIS_URL":         "redis://:p@redis:6379/0",
+		"RUSTFS_ENDPOINT":   "http://rustfs:9000",
+		"RUSTFS_ACCESS_KEY": "ak",
+		"RUSTFS_SECRET_KEY": "sk",
+		"RUSTFS_BUCKET":     "ai-center-images",
+		"PUBLIC_BASE_URL":   "https://ai-center.example.com/",
+		"ALLOWED_ORIGINS":   "https://ai-center.example.com",
 	}
 }
 
@@ -38,6 +49,69 @@ func TestLoadDevelopmentDefault(t *testing.T) {
 	}
 	if cfg.Port != 8080 || cfg.SessionCookieName != "session" || cfg.SessionCookieSecure || !cfg.DevLoginAktif {
 		t.Fatalf("default dev salah: %+v", cfg)
+	}
+	if cfg.SessionIdleTTL != time.Hour || cfg.SessionAbsoluteTTL != 8*time.Hour || cfg.RateLimitLoginPerMinute != 10 {
+		t.Fatalf("default TTL/batas login salah: %v %v %d", cfg.SessionIdleTTL, cfg.SessionAbsoluteTTL, cfg.RateLimitLoginPerMinute)
+	}
+	if cfg.RateLimitPublicMissPerMinute != 300 || cfg.CacheTTL != 20*time.Minute {
+		t.Fatalf("default limiter publik/TTL cache salah: %d %v", cfg.RateLimitPublicMissPerMinute, cfg.CacheTTL)
+	}
+}
+
+func TestLoadBatasUnggahDefaultDanEnv(t *testing.T) {
+	cfg, err := Load(lookupDari(dasarDev()))
+	if err != nil || cfg.UploadMaxBytes != 2<<20 {
+		t.Fatalf("default harus 2 MB: %d %v", cfg.UploadMaxBytes, err)
+	}
+	m := dasarDev()
+	m["UPLOAD_MAX_MB"] = "5"
+	cfg, err = Load(lookupDari(m))
+	if err != nil || cfg.UploadMaxBytes != 5<<20 {
+		t.Fatalf("UPLOAD_MAX_MB=5 harus 5 MB: %d %v", cfg.UploadMaxBytes, err)
+	}
+}
+
+func TestLoadRustFSDanBatasUnggahGalat(t *testing.T) {
+	cases := []struct {
+		nama, kunci, nilai, wajib string
+	}{
+		{"endpoint kosong", "RUSTFS_ENDPOINT", "", "RUSTFS_ENDPOINT wajib"},
+		{"endpoint bukan URL", "RUSTFS_ENDPOINT", "localhost:9000", "RUSTFS_ENDPOINT"},
+		{"access key kosong", "RUSTFS_ACCESS_KEY", "", "RUSTFS_ACCESS_KEY wajib"},
+		{"secret key kosong", "RUSTFS_SECRET_KEY", "", "RUSTFS_SECRET_KEY wajib"},
+		{"bucket kosong", "RUSTFS_BUCKET", "", "RUSTFS_BUCKET wajib"},
+		{"upload nol", "UPLOAD_MAX_MB", "0", "UPLOAD_MAX_MB"},
+		{"upload bukan angka", "UPLOAD_MAX_MB", "dua", "UPLOAD_MAX_MB"},
+		{"upload terlalu besar", "UPLOAD_MAX_MB", "500", "terlalu besar"},
+	}
+	for _, c := range cases {
+		t.Run(c.nama, func(t *testing.T) {
+			m := dasarDev()
+			m[c.kunci] = c.nilai
+			_, err := Load(lookupDari(m))
+			if err == nil || !strings.Contains(err.Error(), c.wajib) {
+				t.Fatalf("diharapkan galat memuat %q, dapat: %v", c.wajib, err)
+			}
+		})
+	}
+}
+
+func TestLoadTTLDanBatasLoginDariEnv(t *testing.T) {
+	m := dasarDev()
+	m["SESSION_IDLE_TTL_SECONDS"] = "600"
+	m["SESSION_ABSOLUTE_TTL_SECONDS"] = "7200"
+	m["RATE_LIMIT_LOGIN_PER_MINUTE"] = "3"
+	m["RATE_LIMIT_PUBLIC_MISS_PER_MINUTE"] = "50"
+	m["CACHE_TTL_SECONDS"] = "30"
+	cfg, err := Load(lookupDari(m))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.SessionIdleTTL != 10*time.Minute || cfg.SessionAbsoluteTTL != 2*time.Hour || cfg.RateLimitLoginPerMinute != 3 {
+		t.Fatalf("nilai env tidak terbaca: %+v", cfg)
+	}
+	if cfg.RateLimitPublicMissPerMinute != 50 || cfg.CacheTTL != 30*time.Second {
+		t.Fatalf("env limiter publik/TTL cache tidak terbaca: %d %v", cfg.RateLimitPublicMissPerMinute, cfg.CacheTTL)
 	}
 }
 
@@ -64,6 +138,17 @@ func TestLoadGalat(t *testing.T) {
 		{"APP_ENV kosong", func(m map[string]string) { delete(m, "APP_ENV") }, dasarDev, "APP_ENV wajib"},
 		{"APP_ENV asing", func(m map[string]string) { m["APP_ENV"] = "staging" }, dasarDev, "tidak dikenal"},
 		{"DATABASE_URL kosong", func(m map[string]string) { delete(m, "DATABASE_URL") }, dasarDev, "DATABASE_URL wajib"},
+		{"REDIS_URL kosong", func(m map[string]string) { delete(m, "REDIS_URL") }, dasarDev, "REDIS_URL wajib"},
+		{"REDIS_URL skema salah", func(m map[string]string) { m["REDIS_URL"] = "http://x:6379" }, dasarDev, "REDIS_URL harus"},
+		{"idle TTL nol", func(m map[string]string) { m["SESSION_IDLE_TTL_SECONDS"] = "0" }, dasarDev, "SESSION_IDLE_TTL_SECONDS"},
+		{"mutlak TTL bukan angka", func(m map[string]string) { m["SESSION_ABSOLUTE_TTL_SECONDS"] = "x" }, dasarDev, "SESSION_ABSOLUTE_TTL_SECONDS"},
+		{"idle melebihi mutlak", func(m map[string]string) {
+			m["SESSION_IDLE_TTL_SECONDS"] = "9000"
+			m["SESSION_ABSOLUTE_TTL_SECONDS"] = "100"
+		}, dasarDev, "tidak boleh lebih besar"},
+		{"batas publik nol", func(m map[string]string) { m["RATE_LIMIT_PUBLIC_MISS_PER_MINUTE"] = "0" }, dasarDev, "RATE_LIMIT_PUBLIC_MISS_PER_MINUTE"},
+		{"ttl cache bukan angka", func(m map[string]string) { m["CACHE_TTL_SECONDS"] = "dua" }, dasarDev, "CACHE_TTL_SECONDS"},
+		{"batas login negatif", func(m map[string]string) { m["RATE_LIMIT_LOGIN_PER_MINUTE"] = "-1" }, dasarDev, "RATE_LIMIT_LOGIN_PER_MINUTE"},
 		{"PORT bukan angka", func(m map[string]string) { m["PORT"] = "abc" }, dasarDev, "PORT"},
 		{"PORT di luar rentang", func(m map[string]string) { m["PORT"] = "70000" }, dasarDev, "PORT"},
 		{"dev tanpa ADMIN_PASSWORD", func(m map[string]string) { delete(m, "ADMIN_PASSWORD") }, dasarDev, "ADMIN_PASSWORD wajib"},
@@ -120,5 +205,42 @@ func TestLoadDotEnvTidakMenimpas(t *testing.T) {
 	}
 	if err := LoadDotEnv(filepath.Join(t.TempDir(), "tidak-ada")); err != nil {
 		t.Errorf("berkas tidak ada bukan galat: %v", err)
+	}
+}
+
+func TestLoadLimiterAdminDanProxyTepercaya(t *testing.T) {
+	cfg, err := Load(lookupDari(dasarDev()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.RateLimitAdminReadPerMinute != 180 || cfg.RateLimitAdminWritePerMinute != 30 || len(cfg.TrustedProxies) != 0 {
+		t.Fatalf("default salah: %d %d %v", cfg.RateLimitAdminReadPerMinute, cfg.RateLimitAdminWritePerMinute, cfg.TrustedProxies)
+	}
+	m := dasarDev()
+	m["RATE_LIMIT_ADMIN_READ_PER_MINUTE"] = "7"
+	m["RATE_LIMIT_ADMIN_WRITE_PER_MINUTE"] = "4"
+	m["TRUSTED_PROXIES"] = " 10.0.0.0/8, 192.168.1.5 ,::1 "
+	cfg, err = Load(lookupDari(m))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.RateLimitAdminReadPerMinute != 7 || cfg.RateLimitAdminWritePerMinute != 4 {
+		t.Errorf("batas admin: %d %d", cfg.RateLimitAdminReadPerMinute, cfg.RateLimitAdminWritePerMinute)
+	}
+	var got []string
+	for _, p := range cfg.TrustedProxies {
+		got = append(got, p.String())
+	}
+	if len(got) != 3 || got[0] != "10.0.0.0/8" || got[1] != "192.168.1.5/32" || got[2] != "::1/128" {
+		t.Errorf("proxy tepercaya: %v", got)
+	}
+	m["TRUSTED_PROXIES"] = "10.0.0.0/8, bukan-ip, 300.1.1.1"
+	if _, err := Load(lookupDari(m)); err == nil || !strings.Contains(err.Error(), "TRUSTED_PROXIES") {
+		t.Errorf("proxy tidak valid harus ditolak: %v", err)
+	}
+	m["TRUSTED_PROXIES"] = ""
+	m["RATE_LIMIT_ADMIN_WRITE_PER_MINUTE"] = "0"
+	if _, err := Load(lookupDari(m)); err == nil || !strings.Contains(err.Error(), "RATE_LIMIT_ADMIN_WRITE_PER_MINUTE") {
+		t.Errorf("batas tulis nol harus ditolak: %v", err)
 	}
 }

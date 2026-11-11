@@ -5,9 +5,11 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/netip"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -20,6 +22,17 @@ const (
 
 	portDefault          = 8080
 	namaCookieDevDefault = "session"
+
+	idleTTLDefaultDetik     = 3600  // 1 jam
+	absoluteTTLDefaultDetik = 28800 // 8 jam
+	batasLoginDefault       = 10
+	batasAdminBacaDefault   = 180  // docs/security.md §6: per user ID
+	batasAdminTulisDefault  = 30   // termasuk heartbeat lock
+	batasPublikMissDefault  = 300  // docs/stack.md §6: baca publik per IP, hanya saat cache miss
+	cacheTTLDefaultDetik    = 1200 // 20 menit (docs/database.md §7)
+
+	uploadMaxMBDefault = 2  // docs/database.md §3.1
+	uploadMaxMBBatas   = 20 // pagar pengaman terhadap salah ketik
 )
 
 // Config adalah konfigurasi runtime backend.
@@ -34,6 +47,24 @@ type Config struct {
 
 	SessionCookieName   string
 	SessionCookieSecure bool
+	// Idle diperpanjang tiap request; batas mutlak tidak pernah dilewati (security.md §2).
+	SessionIdleTTL     time.Duration
+	SessionAbsoluteTTL time.Duration
+
+	// Batas request ke endpoint login per IP per menit (security.md §6).
+	RateLimitLoginPerMinute int
+	// Batas request baca publik per IP per menit; hanya dihitung saat cache miss.
+	RateLimitPublicMissPerMinute int
+
+	// Batas request admin per user ID per menit (docs/security.md §6).
+	RateLimitAdminReadPerMinute  int
+	RateLimitAdminWritePerMinute int
+
+	// Proxy tepercaya (RP-03): X-Forwarded-For hanya dipercaya bila RemoteAddr ada di daftar ini. Kosong = diabaikan.
+	TrustedProxies []netip.Prefix
+
+	// Masa hidup entri cache konten publik di Redis.
+	CacheTTL time.Duration
 
 	// Login development (password) hanya aktif bila APP_ENV=development (security.md §1).
 	DevLoginAktif bool
@@ -43,6 +74,9 @@ type Config struct {
 	RustFSAccessKey string
 	RustFSSecretKey string
 	RustFSBucket    string
+
+	// Batas ukuran satu gambar unggahan (docs: 2 MB; bisa disesuaikan lewat UPLOAD_MAX_MB).
+	UploadMaxBytes int64
 }
 
 // Lookup meniru os.LookupEnv; nilai kosong dianggap tidak di-set.
@@ -88,6 +122,83 @@ func Load(lookup Lookup) (Config, error) {
 	if cfg.DatabaseURL == "" {
 		errs = append(errs, errors.New("DATABASE_URL wajib diisi"))
 	}
+	if cfg.RedisURL == "" {
+		errs = append(errs, errors.New("REDIS_URL wajib diisi"))
+	} else if u, perr := url.Parse(cfg.RedisURL); perr != nil || (u.Scheme != "redis" && u.Scheme != "rediss") || u.Host == "" {
+		errs = append(errs, errors.New("REDIS_URL harus berbentuk redis://[:password@]host:port[/db]"))
+	}
+
+	for _, w := range []struct{ nama, nilai string }{
+		{"RUSTFS_ENDPOINT", cfg.RustFSEndpoint},
+		{"RUSTFS_ACCESS_KEY", cfg.RustFSAccessKey},
+		{"RUSTFS_SECRET_KEY", cfg.RustFSSecretKey},
+		{"RUSTFS_BUCKET", cfg.RustFSBucket},
+	} {
+		if w.nilai == "" {
+			errs = append(errs, fmt.Errorf("%s wajib diisi", w.nama))
+		}
+	}
+	if cfg.RustFSEndpoint != "" {
+		if err := validasiOrigin("RUSTFS_ENDPOINT", strings.TrimRight(cfg.RustFSEndpoint, "/")); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	uploadMB, err := parsePositifInt("UPLOAD_MAX_MB", get("UPLOAD_MAX_MB"), uploadMaxMBDefault)
+	if err != nil {
+		errs = append(errs, err)
+	} else if uploadMB > uploadMaxMBBatas {
+		errs = append(errs, fmt.Errorf("UPLOAD_MAX_MB %d terlalu besar (maksimum %d)", uploadMB, uploadMaxMBBatas))
+	}
+	cfg.UploadMaxBytes = int64(uploadMB) << 20
+
+	idle, err := parsePositifInt("SESSION_IDLE_TTL_SECONDS", get("SESSION_IDLE_TTL_SECONDS"), idleTTLDefaultDetik)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	mutlak, err := parsePositifInt("SESSION_ABSOLUTE_TTL_SECONDS", get("SESSION_ABSOLUTE_TTL_SECONDS"), absoluteTTLDefaultDetik)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	if idle > mutlak {
+		errs = append(errs, errors.New("SESSION_IDLE_TTL_SECONDS tidak boleh lebih besar dari SESSION_ABSOLUTE_TTL_SECONDS"))
+	}
+	cfg.SessionIdleTTL = time.Duration(idle) * time.Second
+	cfg.SessionAbsoluteTTL = time.Duration(mutlak) * time.Second
+
+	batasLogin, err := parsePositifInt("RATE_LIMIT_LOGIN_PER_MINUTE", get("RATE_LIMIT_LOGIN_PER_MINUTE"), batasLoginDefault)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	cfg.RateLimitLoginPerMinute = batasLogin
+
+	batasMiss, err := parsePositifInt("RATE_LIMIT_PUBLIC_MISS_PER_MINUTE", get("RATE_LIMIT_PUBLIC_MISS_PER_MINUTE"), batasPublikMissDefault)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	cfg.RateLimitPublicMissPerMinute = batasMiss
+
+	baca, err := parsePositifInt("RATE_LIMIT_ADMIN_READ_PER_MINUTE", get("RATE_LIMIT_ADMIN_READ_PER_MINUTE"), batasAdminBacaDefault)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	cfg.RateLimitAdminReadPerMinute = baca
+	tulis, err := parsePositifInt("RATE_LIMIT_ADMIN_WRITE_PER_MINUTE", get("RATE_LIMIT_ADMIN_WRITE_PER_MINUTE"), batasAdminTulisDefault)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	cfg.RateLimitAdminWritePerMinute = tulis
+
+	proxies, err := parseProxies(get("TRUSTED_PROXIES"))
+	if err != nil {
+		errs = append(errs, err)
+	}
+	cfg.TrustedProxies = proxies
+
+	cacheTTL, err := parsePositifInt("CACHE_TTL_SECONDS", get("CACHE_TTL_SECONDS"), cacheTTLDefaultDetik)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	cfg.CacheTTL = time.Duration(cacheTTL) * time.Second
 
 	cfg.PublicBaseURL = strings.TrimRight(get("PUBLIC_BASE_URL"), "/")
 	if cfg.PublicBaseURL == "" {
@@ -149,6 +260,17 @@ func Load(lookup Lookup) (Config, error) {
 	return cfg, nil
 }
 
+func parsePositifInt(nama, raw string, def int) (int, error) {
+	if raw == "" {
+		return def, nil
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < 1 {
+		return def, fmt.Errorf("%s %q harus bilangan bulat minimal 1", nama, raw)
+	}
+	return n, nil
+}
+
 func parsePort(raw string) (int, error) {
 	if raw == "" {
 		return portDefault, nil
@@ -187,4 +309,29 @@ func validasiOrigin(nama, nilai string) error {
 		return fmt.Errorf("%s: %q bukan origin http(s)://host[:port]", nama, nilai)
 	}
 	return nil
+}
+
+// parseProxies membaca daftar CIDR atau IP tunggal dipisah koma (mis. "10.0.0.0/8, 192.168.1.5").
+// Kosong berarti tidak ada proxy tepercaya.
+func parseProxies(raw string) ([]netip.Prefix, error) {
+	var out []netip.Prefix
+	var errs []error
+	for _, bagian := range strings.Split(raw, ",") {
+		bagian = strings.TrimSpace(bagian)
+		if bagian == "" {
+			continue
+		}
+		if p, err := netip.ParsePrefix(bagian); err == nil {
+			out = append(out, p.Masked())
+			continue
+		}
+		a, err := netip.ParseAddr(bagian)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("TRUSTED_PROXIES: %q bukan CIDR atau alamat IP yang valid", bagian))
+			continue
+		}
+		a = a.Unmap()
+		out = append(out, netip.PrefixFrom(a, a.BitLen()))
+	}
+	return out, errors.Join(errs...)
 }

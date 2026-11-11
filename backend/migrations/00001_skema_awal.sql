@@ -1,5 +1,6 @@
 -- Skema awal sesuai docs/database.md §3-§4 dan keputusan sesi desain (lihat docs/backend/perubahan-kode.md).
 -- Nilai `status` mengikuti docs: 'draft' / 'posted'. Hanya 00001 yang dipakai sampai ada data nyata.
+-- Kolom key gambar (berita.gambar, dokumentasi_gambar.key, testimoni.foto, tim.foto) UNIQUE: satu key hanya boleh dipakai satu baris.
 
 -- +goose Up
 -- +goose StatementBegin
@@ -15,7 +16,7 @@ CREATE TABLE berita (
     ringkasan         text        GENERATED ALWAYS AS (left(split_part(isi, E'\n\n', 1), 200)) STORED,
     isi               text        NOT NULL,
     tanggal_publikasi date        NOT NULL,
-    gambar            text        NOT NULL,
+    gambar            text        NOT NULL UNIQUE,
     status            text        NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'posted')),
     version           integer     NOT NULL DEFAULT 1 CHECK (version >= 1),
     created_at        timestamptz NOT NULL DEFAULT now(),
@@ -40,7 +41,7 @@ CREATE TABLE dokumentasi (
 CREATE TABLE dokumentasi_gambar (
     id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     dokumentasi_id bigint   NOT NULL REFERENCES dokumentasi (id) ON DELETE CASCADE,
-    key            text     NOT NULL,
+    key            text     NOT NULL UNIQUE,
     urutan         smallint NOT NULL CHECK (urutan BETWEEN 1 AND 6),
     -- Teks alternatif; NULL = frontend memakai judul dokumentasi sebagai cadangan. Caption belum dibuat.
     alt            text,
@@ -54,7 +55,7 @@ CREATE TABLE testimoni (
     nama       text        NOT NULL,
     teks       text        NOT NULL,
     posisi     text        NOT NULL,
-    foto       text,
+    foto       text        UNIQUE,
     status     text        NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'posted')),
     version    integer     NOT NULL DEFAULT 1 CHECK (version >= 1),
     created_at timestamptz NOT NULL DEFAULT now(),
@@ -69,7 +70,7 @@ CREATE TABLE tim (
     nama         text        NOT NULL,
     posisi       text        NOT NULL,
     bidang_riset text        NOT NULL,
-    foto         text        NOT NULL,
+    foto         text        NOT NULL UNIQUE,
     urutan       integer     NOT NULL,
     version      integer     NOT NULL DEFAULT 1 CHECK (version >= 1),
     created_at   timestamptz NOT NULL DEFAULT now(),
