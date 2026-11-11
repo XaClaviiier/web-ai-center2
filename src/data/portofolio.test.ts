@@ -25,7 +25,7 @@ describe('data portofolio (migrasi situs lama)', () => {
 
   it('semua gambar dirujuk ada di public/ (cegah broken image)', () => {
     for (const karya of portofolioDummy) {
-      expect(karya.gambar).toMatch(/^\/portofolio\/[a-z0-9-]+\.jpg$/);
+      expect(karya.gambar).toMatch(/^\/portofolio\/[a-z0-9-]+\.(jpg|svg)$/);
       const path = join(process.cwd(), 'public', karya.gambar);
       expect(existsSync(path), `hilang: ${karya.gambar}`).toBe(true);
     }

@@ -1,6 +1,12 @@
-# Stack — AI Center UBAYA CMS
+# Stack — UBAYA AI Center CMS
 
-Dilebur dari `docs/_arsip/00-detail-rencana-web.md` dan `docs/_arsip/01-kontrak-api.md`.
+## Log Aktivitas — tambahan 11 November 2026
+
+Prototype menyediakan `api.adminLog({ page, username, jenis, dari, sampai })`, respons `{ items, page, limit: 10, total, usernames }`. Filter tanggal memakai YYYY-MM-DD dan hari Asia/Jakarta secara inklusif. Urutan terbaru lalu ID menurun; page dibatasi ke halaman tersedia. `usernames` berisi username yang pernah tercatat pada instance halaman untuk pilihan filter. Akses lewat akun aktif simulasi yang memiliki role. Data kosong saat halaman baru/refresh; panel Simulasi tetap mendukung loading/kosong/error/429/401. Tidak menambah dependency atau menghubungkan backend lama.
+
+Kontrak produksi yang direncanakan, **belum tersedia**: `GET /api/admin/log-aktivitas?page=1&limit=10&username=...&jenis=...&dari=YYYY-MM-DD&sampai=YYYY-MM-DD`, respons pagination sesuai §9.2; daftar username untuk filter perlu disertakan sebagai metadata. Field entri produksi camelCase (`terjadiPada`, `penggunaSub`, `itemId`, `labelItem`), timestamp UTC, tanggal filter Jakarta. Endpoint spesifik ini didaftarkan sebelum rute dinamis `:sumber`. Tidak menyediakan POST/PUT/PATCH/DELETE log. Sesi dan `/api/auth/me` perlu memuat username terverifikasi selain nama/role. Rancangan transaksi dan akses: lihat bagian Log Aktivitas di `database.md` dan `security.md`.
+
+Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`).
 
 ## 1. Alur fase kerja
 
@@ -19,7 +25,8 @@ Kriteria selesai per fase: \[Lihat requirement.md §8\].
 * GSAP dan motion.dev: animasi.  
 * Embla-carousel: Library Carousel  
 * TanStack Query: pengambilan data server dan cache di browser.  
-* Bun: tooling dependency, build, dan pengujian frontend.
+* Bun: tooling dependency, build, dan pengujian frontend.  
+* Pemilih tanggal \[terbuka\]: belum ditentukan apakah komponen kalender shadcn/ui memenuhi semua aturan (format `DD-MM-YYYY`, bahasa Indonesia, minggu mulai Senin, tanggal setelah hari ini nonaktif) atau `prototype/assets/js/kalender.js` diterjemahkan langsung.
 
 ## 3. Backend
 
@@ -111,9 +118,9 @@ Hanya mengembalikan data berstatus posted.
 | GET | `/api/dokumentasi` | Daftar dokumentasi; parameter `page`, `limit`, `q` (pencarian judul, minimal 2 karakter) |
 | GET | `/api/dokumentasi/:slug` | Detail dokumentasi |
 | GET | `/api/testimoni` | Daftar testimoni |
-| GET | `/api/tim` | Daftar tim |
+| GET | `/api/tim` | Daftar tim; tanpa parameter `q`. Pencarian di prototype dilakukan di browser pada nama, jabatan, dan bidang riset \[terbuka: tetap di browser atau pindah ke server\] |
 
-Layanan (Pelatihan, Inference and Solutions) tidak punya endpoint; isinya hardcode di frontend.
+Layanan (Pelatihan, Inference and Solutions) tidak punya endpoint; isinya hardcode di frontend. Demo JejakAlumni, Perencanaan Implan Gigi, dan DocNext juga tidak punya endpoint: direncanakan sebagai halaman Astro statis dengan island, memakai data lokal \[Lihat requirement.md §4.3\].
 
 ### 9.5 Endpoint admin
 
@@ -143,7 +150,7 @@ Endpoint autentikasi \[menunggu konfirmasi Keycloak\]:
 | GET | `/api/auth/callback` | Terima kode OIDC, buat session |
 | POST | `/api/auth/logout` | Hapus session |
 | GET | `/api/auth/me` | Info pengguna (nama \+ role) |
-| \[diisi\] | \[diisi\] | Login development (hanya `APP_ENV=development`) \[Lihat security.md §1\] |
+| \[diisi\] | \[diisi\] | Login development (hanya `APP_ENV=development`) \[Lihat security.md §1; KONFLIK belum diputuskan\] |
 
 ### 9.6 Skema JSON per entitas
 
@@ -182,3 +189,36 @@ Nama final \[diisi\] untuk daftar yang sudah disebut di rencana:
 * Autentikasi, session, CSRF: \[Lihat security.md §1–§3\]  
 * Rate limit dan `429`: \[Lihat security.md §6\]  
 * Cache konten: \[Lihat database.md §7\]
+
+## 10. Prototype
+
+Prototype adalah acuan visual dan alur, bukan basis kode implementasi \[Lihat §1 dan §4\].
+
+**Cara membuka:** tanpa server, lewat `file://`. Publik: `prototype/public/index.html`. Admin: `prototype/admin/index.html`, lalu tombol Masuk. Tombol Simulasi di pojok kanan bawah memicu keadaan loading, kosong, error, 429, 401, 409, heartbeat gagal, dan item dikunci. Peta di footer butuh internet.
+
+**Struktur `prototype/`:**
+
+| Lokasi | Isi | Saat implementasi |
+|---|---|---|
+| `public/` | Halaman publik | Acuan visual dan alur |
+| `admin/index.html` | Admin, rute hash | Acuan visual dan alur |
+| `assets/css/` | Token, komponen, dan gaya per halaman | Acuan token dan komponen |
+| `assets/js/` | Perilaku halaman, komponen bersama, animasi hero, kalender, dan demo portofolio | Acuan perilaku |
+| `assets/mock-data.js` | Semua data dummy | Dibuang, kecuali isi `konten` (konten hardcode tetap dipakai) |
+| `assets/fonts`, `assets/img` | Salinan dari `public/` | Foto contoh dibuang |
+| `simulasi/` | Tiruan API, panel, layar Keycloak, dan `buat-ilustrasi-implan.cjs` (penulis HTML dan SVG demo implan, tidak dimuat halaman; ubah ilustrasi di sana lalu jalankan ulang) | Dibuang |
+
+**Yang disimulasikan:**
+
+* Login: `simulasi/keycloak.html` menggantikan redirect Keycloak. Tidak ada cookie, session, atau CSRF sungguhan.
+* API: jeda 300 ms dan galat tiruan.
+* Penyimpanan: hanya di memori. Refresh mengembalikan data awal, dan perubahan di admin tidak terlihat di publik.
+* Lock: kunci pengguna lain berasal dari data awal, bukan Redis. Heartbeat berjalan tiap 60 detik tetapi hanya memanggil tiruan.
+* Konflik 409, 429, dan 401: dipicu dari panel, tanpa menghitung request.
+* Slug: dibuat dari judul hanya untuk simulasi. Aturannya masih `[terbuka]` \[Lihat database.md §3.3\].
+* Upload: gambar tidak dikirim ke mana pun. Validasi isi file dan batas 2 MB berjalan di browser.
+* Validasi server (mis. batas judul 70 karakter) ditiru di `simulasi/api-simulasi.js`.
+
+**Tidak disimulasikan:** penghapusan otomatis trash setelah 30 hari, pembersihan file yatim, cache, dan ETag.
+
+**Batas `file://`:** prototype memakai `?slug=` pada halaman detail, sedangkan rute akhir adalah `/berita/:slug` dan `/dokumentasi/:slug` \[Lihat §3\]. Halaman 404 hanya tampil di sisi client; status HTTP 404 tidak bisa ditiru.

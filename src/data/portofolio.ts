@@ -25,10 +25,10 @@ export const portofolioDummy: Karya[] = [
     judul: 'Rekomendasi Implan Gigi Otomatis',
     deskripsi:
       'Menganalisis citra CBCT 3D untuk merekomendasikan ukuran, posisi, dan sudut implan gigi secara otomatis.',
-    gambar: '/portofolio/implan-gigi.jpg',
+    gambar: '/portofolio/implan-gigi-konseptual.svg',
     alt: 'Aplikasi rekomendasi implan gigi otomatis',
-    lebar: 900,
-    tinggi: 514,
+    lebar: 960,
+    tinggi: 600,
   },
   {
     slug: 'algae-finder',

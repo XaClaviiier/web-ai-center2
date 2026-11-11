@@ -1,6 +1,14 @@
-# Security — AI Center UBAYA CMS
+# Security — UBAYA AI Center CMS
 
-Dilebur dari `docs/_arsip/00-detail-rencana-web.md`. Peran pengguna: \[Lihat requirement.md §6\]. Audit `created_by` / `updated_by`: \[Lihat database.md §3.6\].
+## Log Aktivitas — batas simulasi dan rancangan keamanan produksi
+
+Disetujui 11 November 2026. Prototype hanya menawarkan pembacaan log lewat `api.adminLog`; penulisan dilakukan helper privat dari callback mutasi setelah berhasil. Admin API memeriksa akun aktif dan role, selain skenario 401/error/429. Hapus Tim dan hapus permanen memeriksa keberadaan item terlebih dahulu agar tidak mencatat sukses palsu. Respons akun/log berupa salinan sehingga perubahan objek respons tidak mengubah penyimpanan internal.
+
+Ini **bukan batas keamanan server**: akun dipilih melalui URL, data berada di browser, dan jam perangkat bisa dimanipulasi. Label Simulasi tetap ada. Tidak ada klaim persistensi atau audit terpercaya. localStorage/sessionStorage tidak digunakan untuk log. Judul/nama ditampilkan sebagai teks melalui helper DOM, bukan HTML; payload lengkap tidak disalin. Judul/nama sendiri tetap harus bebas rahasia karena dapat menjadi label log.
+
+Rencana produksi (belum diterapkan): ambil `sub` dan username dari sesi server yang diverifikasi; tambahkan snapshot username pada sesi dan respons identitas (`/api/auth/me`). Sumber claim username Keycloak perlu dikonfirmasi saat integrasi, tidak menerima username dari body mutasi. Timestamp berasal dari server/database. Penulisan log menyatu dengan transaksi perubahan data; gagal menulis log menggagalkan perubahan. Endpoint baca wajib autentikasi dan role CMS yang diizinkan, tanpa endpoint tulis/edit/hapus log untuk admin. Role database runtime hanya diberi SELECT/INSERT pada log, tanpa UPDATE/DELETE; pengelolaan retensi memakai akses operasional terpisah. Jangan mencatat password, cookie, token Keycloak/CSRF, atau payload form. Log admin tidak boleh terpapar endpoint publik atau cache publik.
+
+Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Peran pengguna: \[Lihat requirement.md §6\]. Audit `created_by` / `updated_by`: \[Lihat database.md §3.6\].
 
 ## 1. Akses dan login
 
@@ -11,6 +19,8 @@ Keycloak mengelola pengguna dan role; aplikasi tidak punya manajemen role sendir
 Endpoint auth: \[Lihat stack.md §9.5\]. \[menunggu konfirmasi Keycloak\]
 
 **Login development (sebelum Keycloak siap):** backend Go menyediakan login password yang mengikuti logika mekanisme login yang ada saat ini, tetapi hasilnya adalah cookie session yang sama dengan alur Keycloak (bukan Bearer token), sehingga frontend admin hanya punya satu cara autentikasi. Login ini hanya aktif bila `APP_ENV=development`; server menolak start bila login ini aktif di luar development. Saat Keycloak siap, hanya endpoint login yang diganti.
+
+\[KONFLIK, belum diputuskan\] Catatan prototype menyebut keputusan terbaru bahwa aplikasi tidak memiliki halaman login sendiri, sedangkan paragraf Login development di atas mendefinisikan login password. Tentukan mana yang berlaku sebelum fase backend. Sampai itu jelas, paragraf tersebut tidak dihapus \[Lihat juga stack.md §9.5\].
 
 ## 2. Session
 
@@ -41,6 +51,9 @@ Cache konten (TTL dan invalidasi): \[Lihat database.md §7\].
 * Query database: selalu berparameter (tidak menyambung string SQL dari input user) untuk mencegah SQL injection.  
 * Search box: (sarankan review security audit).  
 * Parameter request dipastikan bertipe benar, `page` minimal 1, `limit` dibatasi maksimum, dan nilai yang tidak valid ditolak dengan `400`.  
+* `tanggal_publikasi` harus berformat `DD-MM-YYYY`, ada di kalender, dan tidak boleh setelah hari ini. Judul Berita dan Dokumentasi maksimal 70 karakter. Pelanggaran ditolak dengan `400` \[Lihat database.md §2\].  
 * Konten teks (judul, `isi`): disimpan sebagai teks biasa. Format paragraf dan potongan kartu: \[Lihat database.md §3.1\]. Backend melakukan trim, membatasi panjang, dan membuang karakter kontrol. Pencegahan XSS dilakukan saat ditampilkan: frontend merender konten sebagai teks (bukan HTML mentah), dan tidak boleh memakai `innerHTML` atau `set:html` untuk konten ini.  
 * Upload file ke RustFS: tipe file dicek dari isi file (bukan hanya ekstensi), ukuran dibatasi, dan nama file diganti dengan nama acak agar tidak terjadi path traversal atau tabrakan nama.  
+* Aset medis publik, termasuk tangkapan layar aplikasi riset: wajib diperiksa manual agar tidak memuat nama, identitas pasien, atau citra medis nyata tanpa izin. Pemeriksaan otomatis tidak dapat membaca teks di dalam gambar.  
+* Dokumen pada demo portofolio: wajib sintetis, tanpa rekening, data pribadi, atau catatan bisnis nyata. Tidak ada unggah atau pengiriman dokumen ke layanan eksternal. Pertimbangan keamanan untuk penerapan nyata (akses, retensi, audit, jaringan, hosting model) disampaikan sebagai pertimbangan, bukan fitur demo, dan tanpa klaim sertifikasi atau keamanan absolut.  
 * Respons error: tidak menampilkan detail internal (stack trace, query, struktur database) ke client; detailnya hanya dicatat di log. \[RP-06\]
