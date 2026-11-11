@@ -127,7 +127,7 @@ func (h testimoniAdminHandler) detail(w http.ResponseWriter, r *http.Request) {
 		h.galat(w, r, err)
 		return
 	}
-	tulisJSON(w, http.StatusOK, bentukTestimoniAdmin(t))
+	tulisDetailAdmin(w, r, bentukTestimoniAdmin(t))
 }
 
 func (h testimoniAdminHandler) buat(w http.ResponseWriter, r *http.Request) {

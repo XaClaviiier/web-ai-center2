@@ -12,6 +12,7 @@ import (
 
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/cache"
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/konten"
+	"github.com/XaClaviiier/web-ai-center2/backend/internal/lock"
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/media"
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/ratelimit"
 )
@@ -42,6 +43,13 @@ type Deps struct {
 	BatasAdminBaca  int
 	BatasAdminTulis int
 	ProxyTepercaya  []netip.Prefix
+
+	// Soft lock edit (docs/database.md section 4); nil = dimatikan. LockHeartbeatDetik disarankan ke klien.
+	Lock               *lock.Lock
+	LockHeartbeatDetik int
+
+	// Halaman detail ber-SEO, sitemap.xml, dan robots.txt; nil = tidak dipasang.
+	SEO *DepsSEO
 }
 
 // DepsAdmin adalah layanan penulisan konten oleh admin.
@@ -88,12 +96,21 @@ func NewRouter(d Deps) http.Handler {
 		api.Route("/admin", func(adm chi.Router) {
 			adm.Use(noStore, cekOrigin(d.Auth.AllowedOrigins), ah.wajibLogin, batasAdmin(d.Auth.Limiter, d.BatasAdminBaca, d.BatasAdminTulis, d.Log), wajibCSRF)
 			adm.Post("/upload", mh.upload)
-			adm.Route("/berita", denganBatalCache(d.Cache, cache.Berita, false, d.Log, beritaAdminHandler{log: d.Log, svc: d.Admin.Berita}.routerBerita))
-			adm.Route("/dokumentasi", denganBatalCache(d.Cache, cache.Dokumentasi, false, d.Log, dokumentasiAdminHandler{log: d.Log, svc: d.Admin.Dokumentasi}.routerDokumentasi))
-			adm.Route("/testimoni", denganBatalCache(d.Cache, cache.Testimoni, false, d.Log, testimoniAdminHandler{log: d.Log, svc: d.Admin.Testimoni}.routerTestimoni))
-			adm.Route("/tim", denganBatalCache(d.Cache, cache.Tim, true, d.Log, timAdminHandler{log: d.Log, svc: d.Admin.Tim}.routerTim))
+			adm.Route("/berita", denganBatalCache(d.Cache, []string{cache.Berita, cache.Sitemap}, false, d.Log, denganLock(d.lockBerita(), beritaAdminHandler{log: d.Log, svc: d.Admin.Berita}.routerBerita)))
+			adm.Route("/dokumentasi", denganBatalCache(d.Cache, []string{cache.Dokumentasi, cache.Sitemap}, false, d.Log, denganLock(d.lockDokumentasi(), dokumentasiAdminHandler{log: d.Log, svc: d.Admin.Dokumentasi}.routerDokumentasi)))
+			adm.Route("/testimoni", denganBatalCache(d.Cache, []string{cache.Testimoni}, false, d.Log, denganLock(d.lockTestimoni(), testimoniAdminHandler{log: d.Log, svc: d.Admin.Testimoni}.routerTestimoni)))
+			adm.Route("/tim", denganBatalCache(d.Cache, []string{cache.Tim}, true, d.Log, denganLock(d.lockTim(), timAdminHandler{log: d.Log, svc: d.Admin.Tim}.routerTim)))
 		})
 	})
+
+	// HTML detail ber-SEO (kerangka Astro + meta), sitemap.xml, robots.txt: dilayani Go (RP-12).
+	if d.SEO != nil {
+		sh := seoHandler{publik: pub, s: *d.SEO}
+		r.Get("/berita/{slug}", sh.berita)
+		r.Get("/dokumentasi/{slug}", sh.dokumentasi)
+		r.Get("/sitemap.xml", sh.sitemap)
+		r.Get("/robots.txt", sh.robots)
+	}
 
 	// Gambar disajikan di luar /api (URL publik /media/{key}); GET/HEAD saja, tanpa login.
 	r.Get("/media/*", mh.sajikan)

@@ -244,3 +244,105 @@ func TestLoadLimiterAdminDanProxyTepercaya(t *testing.T) {
 		t.Errorf("batas tulis nol harus ditolak: %v", err)
 	}
 }
+
+func TestLoadLockDanAkunDevKedua(t *testing.T) {
+	cfg, err := Load(lookupDari(dasarDev()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.LockTTL != 5*time.Minute || cfg.LockHeartbeat != time.Minute || cfg.AdminPassword2 != "" {
+		t.Fatalf("default salah: %v %v %q", cfg.LockTTL, cfg.LockHeartbeat, cfg.AdminPassword2)
+	}
+	m := dasarDev()
+	m["LOCK_TTL_SECONDS"] = "120"
+	m["LOCK_HEARTBEAT_SECONDS"] = "30"
+	m["ADMIN_PASSWORD_2"] = "beda-dengan-pertama"
+	cfg, err = Load(lookupDari(m))
+	if err != nil || cfg.LockTTL != 2*time.Minute || cfg.LockHeartbeat != 30*time.Second || cfg.AdminPassword2 != "beda-dengan-pertama" {
+		t.Fatalf("nilai env: %+v %v", cfg, err)
+	}
+
+	galat := func(ubah func(map[string]string), mau string) {
+		t.Helper()
+		m := dasarDev()
+		ubah(m)
+		if _, err := Load(lookupDari(m)); err == nil || !strings.Contains(err.Error(), mau) {
+			t.Errorf("mau galat memuat %q, dapat %v", mau, err)
+		}
+	}
+	galat(func(m map[string]string) { m["LOCK_HEARTBEAT_SECONDS"] = "300" }, "LOCK_HEARTBEAT_SECONDS harus lebih kecil")
+	galat(func(m map[string]string) { m["LOCK_TTL_SECONDS"] = "0" }, "LOCK_TTL_SECONDS")
+	galat(func(m map[string]string) { m["ADMIN_PASSWORD_2"] = m["ADMIN_PASSWORD"] }, "ADMIN_PASSWORD_2 harus berbeda")
+}
+
+func TestLoadSEODefaultDanEnv(t *testing.T) {
+	cfg, err := Load(lookupDari(dasarDev()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.StaticDir != "../web/dist" || cfg.SiteName != "AI Center" {
+		t.Errorf("default salah: %q %q", cfg.StaticDir, cfg.SiteName)
+	}
+	if cfg.PublicBaseURL != "http://localhost:8080" {
+		t.Errorf("development tanpa PUBLIC_BASE_URL harus memakai localhost:{PORT}, dapat %q", cfg.PublicBaseURL)
+	}
+	m := dasarDev()
+	m["STATIC_DIR"] = "/srv/web"
+	m["SITE_NAME"] = "Pusat AI"
+	m["PORT"] = "9090"
+	cfg, err = Load(lookupDari(m))
+	if err != nil || cfg.StaticDir != "/srv/web" || cfg.SiteName != "Pusat AI" || cfg.PublicBaseURL != "http://localhost:9090" {
+		t.Errorf("env tidak terbaca: %+v %v", cfg, err)
+	}
+	m["PUBLIC_BASE_URL"] = "https://situs.example.com/"
+	if cfg, _ = Load(lookupDari(m)); cfg.PublicBaseURL != "https://situs.example.com" {
+		t.Errorf("PUBLIC_BASE_URL eksplisit harus menang: %q", cfg.PublicBaseURL)
+	}
+}
+
+func TestLoadJobDefaultDanEnv(t *testing.T) {
+	dev, err := Load(lookupDari(dasarDev()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dev.JobsEnabled || dev.JobsDryRun {
+		t.Error("job harus nonaktif secara default di development (melindungi bucket dev)")
+	}
+	if dev.JobInterval != time.Hour || dev.JobLockTTL != 30*time.Minute || dev.TrashRetentionDays != 30 ||
+		dev.OrphanMinAge != 24*time.Hour || dev.OrphanMaxDelete != 200 {
+		t.Errorf("default salah: %+v", dev)
+	}
+	prod, err := Load(lookupDari(dasarProd()))
+	if err != nil || !prod.JobsEnabled || prod.JobsDryRun {
+		t.Errorf("production: job aktif secara default, dry-run mati: %+v %v", prod.JobsEnabled, err)
+	}
+
+	m := dasarDev()
+	m["JOBS_ENABLED"] = "true"
+	m["JOBS_DRY_RUN"] = "true"
+	m["JOB_INTERVAL_MINUTES"] = "5"
+	m["JOB_LOCK_TTL_SECONDS"] = "120"
+	m["TRASH_RETENTION_DAYS"] = "7"
+	m["ORPHAN_MIN_AGE_HOURS"] = "48"
+	m["ORPHAN_MAX_DELETE_PER_RUN"] = "10"
+	cfg, err := Load(lookupDari(m))
+	if err != nil || !cfg.JobsEnabled || !cfg.JobsDryRun || cfg.JobInterval != 5*time.Minute || cfg.JobLockTTL != 2*time.Minute ||
+		cfg.TrashRetentionDays != 7 || cfg.OrphanMinAge != 48*time.Hour || cfg.OrphanMaxDelete != 10 {
+		t.Errorf("env tidak terbaca: %+v %v", cfg, err)
+	}
+
+	mati := dasarProd()
+	mati["JOBS_ENABLED"] = "false"
+	if cfg, err := Load(lookupDari(mati)); err != nil || cfg.JobsEnabled {
+		t.Errorf("production boleh mematikan job: %v %v", cfg.JobsEnabled, err)
+	}
+
+	for _, kv := range [][2]string{{"JOBS_ENABLED", "mungkin"}, {"JOBS_DRY_RUN", "x"}, {"JOB_INTERVAL_MINUTES", "0"},
+		{"TRASH_RETENTION_DAYS", "-1"}, {"ORPHAN_MIN_AGE_HOURS", "abc"}, {"ORPHAN_MAX_DELETE_PER_RUN", "0"}, {"JOB_LOCK_TTL_SECONDS", "0"}} {
+		m := dasarDev()
+		m[kv[0]] = kv[1]
+		if _, err := Load(lookupDari(m)); err == nil || !strings.Contains(err.Error(), kv[0]) {
+			t.Errorf("%s=%s harus ditolak: %v", kv[0], kv[1], err)
+		}
+	}
+}

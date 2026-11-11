@@ -21,7 +21,7 @@ const batasWaktuBatalCache = 3 * time.Second
 //
 // Pembatalan dijalankan SEBELUM header respons terkirim (setelah perubahan tersimpan di database), jadi begitu
 // admin menerima sukses, permintaan publik berikutnya sudah membaca data baru (Retract langsung 404).
-func denganBatalCache(c *cache.Cache, jenis string, semuaMutasi bool, log *slog.Logger, router func(chi.Router)) func(chi.Router) {
+func denganBatalCache(c *cache.Cache, jenis []string, semuaMutasi bool, log *slog.Logger, router func(chi.Router)) func(chi.Router) {
 	return func(r chi.Router) {
 		if c != nil {
 			r.Use(func(next http.Handler) http.Handler {
@@ -31,14 +31,16 @@ func denganBatalCache(c *cache.Cache, jenis string, semuaMutasi bool, log *slog.
 						return
 					}
 					pw := &penulisBatal{ResponseWriter: w, sebelum: func(status int) {
-						if status < 200 || status > 299 || !(semuaMutasi || aksiPublikasi(req.URL.Path)) {
+						if status < 200 || status > 299 || !(semuaMutasi || aksiPublikasi(req.URL.Path)) || strings.HasSuffix(req.URL.Path, "/lock") {
 							return
 						}
 						ctx, batal := context.WithTimeout(context.WithoutCancel(req.Context()), batasWaktuBatalCache)
 						defer batal()
-						if err := c.Batalkan(ctx, jenis); err != nil {
-							// Perubahan sudah tersimpan; data lama paling lama bertahan sampai TTL cache.
-							log.Error("gagal membatalkan cache publik", "jenis", jenis, "err", err, "path", req.URL.Path, "request_id", middleware.GetReqID(req.Context()))
+						for _, j := range jenis {
+							if err := c.Batalkan(ctx, j); err != nil {
+								// Perubahan sudah tersimpan; data lama paling lama bertahan sampai TTL cache.
+								log.Error("gagal membatalkan cache publik", "jenis", j, "err", err, "path", req.URL.Path, "request_id", middleware.GetReqID(req.Context()))
+							}
 						}
 					}}
 					next.ServeHTTP(pw, req)

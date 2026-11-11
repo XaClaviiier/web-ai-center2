@@ -167,7 +167,7 @@ func (h dokumentasiAdminHandler) detail(w http.ResponseWriter, r *http.Request) 
 		h.galat(w, r, err)
 		return
 	}
-	tulisJSON(w, http.StatusOK, bentukDokumentasiAdmin(d))
+	tulisDetailAdmin(w, r, bentukDokumentasiAdmin(d))
 }
 
 func (h dokumentasiAdminHandler) buat(w http.ResponseWriter, r *http.Request) {

@@ -47,6 +47,31 @@ func bolehSimpanDaftar(q daftarQuery, jumlah int) bool {
 // -> muat dari database (satu pemuat per key) -> simpan -> kirim. sub kosong = tidak di-cache.
 // Redis yang bermasalah tidak pernah menjatuhkan situs publik: cache dan limiter gagal terbuka (dicatat di log).
 func (h publik) layani(w http.ResponseWriter, r *http.Request, jenis, sub string, muat muatFn) {
+	h.layaniBytes(w, r, jenis, sub, tipeJSON, tulisTidakDitemukan, func(ctx context.Context) ([]byte, bool, error) {
+		payload, simpan, err := muat(ctx)
+		if err != nil {
+			return nil, false, err
+		}
+		b, err := json.Marshal(payload)
+		if err != nil {
+			return nil, false, fmt.Errorf("encode respons: %w", err)
+		}
+		return append(b, '\n'), simpan, nil
+	})
+}
+
+const (
+	tipeJSON = "application/json; charset=utf-8"
+	tipeHTML = "text/html; charset=utf-8"
+	tipeXML  = "application/xml; charset=utf-8"
+)
+
+// muatBytesFn memuat body final (JSON/HTML/XML). Hasil kedua: boleh disimpan di cache.
+type muatBytesFn func(ctx context.Context) (body []byte, simpan bool, err error)
+
+// layaniBytes adalah inti layani: sama untuk JSON, HTML, dan XML. tidakAda dipanggil bila muat mengembalikan
+// konten.ErrTidakDitemukan (JSON untuk API, halaman 404 untuk HTML).
+func (h publik) layaniBytes(w http.ResponseWriter, r *http.Request, jenis, sub, tipe string, tidakAda func(http.ResponseWriter), muat muatBytesFn) {
 	ctx := r.Context()
 	var kunci cache.Kunci
 	pakaiCache := h.cache != nil && sub != ""
@@ -56,7 +81,7 @@ func (h publik) layani(w http.ResponseWriter, r *http.Request, jenis, sub string
 			kunci = k
 			body, ada, err := h.cache.Ambil(ctx, k)
 			if err == nil && ada {
-				kirimJSONPublik(w, r, body)
+				kirimPublik(w, r, tipe, body)
 				return
 			}
 			if err != nil {
@@ -88,15 +113,10 @@ func (h publik) layani(w http.ResponseWriter, r *http.Request, jenis, sub string
 		muatCtx = c
 	}
 	jalankan := func() ([]byte, error) {
-		payload, simpan, err := muat(muatCtx)
+		b, simpan, err := muat(muatCtx)
 		if err != nil {
 			return nil, err
 		}
-		b, err := json.Marshal(payload)
-		if err != nil {
-			return nil, fmt.Errorf("encode respons: %w", err)
-		}
-		b = append(b, '\n')
 		if pakaiCache && simpan {
 			if err := h.cache.Simpan(muatCtx, kunci, b); err != nil {
 				h.catatRedis("tulis cache", err, r)
@@ -115,21 +135,21 @@ func (h publik) layani(w http.ResponseWriter, r *http.Request, jenis, sub string
 	}
 	if err != nil {
 		if errors.Is(err, konten.ErrTidakDitemukan) {
-			tulisTidakDitemukan(w)
+			tidakAda(w)
 			return
 		}
 		h.galatInternal(w, r, err)
 		return
 	}
-	kirimJSONPublik(w, r, body)
+	kirimPublik(w, r, tipe, body)
 }
 
 func (h publik) catatRedis(apa string, err error, r *http.Request) {
 	h.log.Error("redis bermasalah, dilewati", "op", apa, "err", err, "path", r.URL.Path, "request_id", middleware.GetReqID(r.Context()))
 }
 
-// kirimJSONPublik membalas 200 dengan ETag kuat (hash isi), atau 304 tanpa body bila If-None-Match cocok.
-func kirimJSONPublik(w http.ResponseWriter, r *http.Request, body []byte) {
+// kirimPublik membalas 200 dengan ETag kuat (hash isi), atau 304 tanpa body bila If-None-Match cocok.
+func kirimPublik(w http.ResponseWriter, r *http.Request, tipe string, body []byte) {
 	sum := sha256.Sum256(body)
 	etag := `"` + hex.EncodeToString(sum[:16]) + `"`
 	h := w.Header()
@@ -139,7 +159,7 @@ func kirimJSONPublik(w http.ResponseWriter, r *http.Request, body []byte) {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
-	h.Set("Content-Type", "application/json; charset=utf-8")
+	h.Set("Content-Type", tipe)
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(body)
 }

@@ -49,7 +49,9 @@ type DepsAuth struct {
 
 	DevLoginAktif bool // hanya true bila APP_ENV=development
 	AdminPassword string
-	BatasLogin    int // request per menit per IP
+	// Akun dev kedua (opsional; kosong = nonaktif), identitasnya dev-admin-2.
+	AdminPassword2 string
+	BatasLogin     int // request per menit per IP
 
 	CookieName   string
 	CookieSecure bool
@@ -60,6 +62,9 @@ type DepsAuth struct {
 
 // identitasDev adalah pengguna tunggal login development (semua pengguna sama haknya; role hanya label).
 var identitasDev = auth.Identitas{Sub: "dev-admin", Nama: "Admin Dev", Role: "pegawai"}
+
+// identitasDev2 adalah akun dev kedua agar fitur dua-admin (mis. soft lock) bisa dicoba di development.
+var identitasDev2 = auth.Identitas{Sub: "dev-admin-2", Nama: "Admin Dev 2", Role: "pegawai"}
 
 type ctxKey int
 
@@ -117,7 +122,15 @@ func (h authHandler) devLogin(w http.ResponseWriter, r *http.Request) {
 		tulisGalat(w, http.StatusBadRequest, kodeRequestTidakSah, "Body harus JSON berisi password")
 		return
 	}
-	if !passwordCocok(body.Password, h.AdminPassword) {
+	// Kedua perbandingan selalu dijalankan (waktu konstan, tidak membocorkan akun mana yang cocok).
+	cocok1 := passwordCocok(body.Password, h.AdminPassword)
+	cocok2 := h.AdminPassword2 != "" && passwordCocok(body.Password, h.AdminPassword2)
+	ident := identitasDev
+	switch {
+	case cocok1:
+	case cocok2:
+		ident = identitasDev2
+	default:
 		tulisGalat(w, http.StatusUnauthorized, kodePasswordSalah, "Password salah")
 		return
 	}
@@ -128,7 +141,7 @@ func (h authHandler) devLogin(w http.ResponseWriter, r *http.Request) {
 			h.log.Warn("gagal menghapus session lama", "err", err)
 		}
 	}
-	id, sess, err := h.Sesi.Buat(r.Context(), identitasDev)
+	id, sess, err := h.Sesi.Buat(r.Context(), ident)
 	if err != nil {
 		h.galatSession(w, r, err)
 		return

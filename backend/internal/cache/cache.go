@@ -21,6 +21,7 @@ const (
 	Dokumentasi = "dokumentasi"
 	Testimoni   = "testimoni"
 	Tim         = "tim"
+	Sitemap     = "sitemap" // dibatalkan bersama berita dan dokumentasi
 )
 
 // Cache adalah cache body JSON di Redis. Semua metode aman dipanggil bersamaan.

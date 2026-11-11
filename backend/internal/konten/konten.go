@@ -88,3 +88,15 @@ type BacaPublik interface {
 	ListTestimoni(ctx context.Context) ([]Testimoni, error)
 	ListTim(ctx context.Context) ([]AnggotaTim, error)
 }
+
+// EntriSitemap adalah satu URL konten untuk sitemap.xml.
+type EntriSitemap struct {
+	Slug    string
+	Tanggal string // tanggal publikasi, YYYY-MM-DD
+}
+
+// BacaSitemap membaca slug item posted dan belum di-trash, terbaru dulu, paling banyak batas entri.
+type BacaSitemap interface {
+	SitemapBerita(ctx context.Context, batas int32) ([]EntriSitemap, error)
+	SitemapDokumentasi(ctx context.Context, batas int32) ([]EntriSitemap, error)
+}
