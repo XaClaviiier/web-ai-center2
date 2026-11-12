@@ -73,7 +73,7 @@ const (
 func contohDokumentasi() admin.Dokumentasi {
 	return admin.Dokumentasi{
 		ID: 12, Slug: "kegiatan-dua", Judul: "Kegiatan Dua", TanggalPublikasi: "2026-11-09",
-		Gambar: []admin.GambarDokumentasi{{Key: keyDok1, Alt: "Foto utama"}, {Key: keyDok2}},
+		Gambar: []admin.GambarDokumentasi{{Key: keyDok1}, {Key: keyDok2}},
 		Status: "draft", Version: 4, DibuatPada: waktuUji, DibuatOleh: "dev-admin", DiubahOleh: "editor-2",
 	}
 }
@@ -90,7 +90,7 @@ func siapkanDokHTTP(t *testing.T) lingkunganDokHTTP {
 	return lingkunganDokHTTP{lingkunganAuth: e, svc: svc}
 }
 
-const badanDokOK = `"judul":"Kegiatan Dua","tanggalPublikasi":"2026-11-09","gambar":[{"key":"` + keyDok1 + `","alt":"Foto utama"},{"key":"` + keyDok2 + `"}]`
+const badanDokOK = `"judul":"Kegiatan Dua","tanggalPublikasi":"2026-11-09","gambar":[{"key":"` + keyDok1 + `"},{"key":"` + keyDok2 + `"}]`
 
 func TestAdminDokumentasiButuhLoginCSRFDanOrigin(t *testing.T) {
 	e := siapkanDokHTTP(t)
@@ -153,12 +153,12 @@ func TestAdminDokumentasiDaftar(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d: %s", rec.Code, rec.Body)
 	}
-	if p := e.svc.param; p.Filter != "semua" || p.Batas != 20 || p.Geser != 0 || p.Pola != "" {
+	if p := e.svc.param; p.Filter != "semua" || p.Batas != limitDaftarAdminDefault || p.Geser != 0 || p.Pola != "" {
 		t.Errorf("default salah: %+v", p)
 	}
 	var m map[string]any
 	_ = json.Unmarshal(rec.Body.Bytes(), &m)
-	if m["total"].(float64) != 42 || m["page"].(float64) != 1 || m["limit"].(float64) != 20 {
+	if m["total"].(float64) != 42 || m["page"].(float64) != 1 || m["limit"].(float64) != limitDaftarAdminDefault {
 		t.Errorf("meta: %v", m)
 	}
 	items := m["items"].([]any)
@@ -206,11 +206,11 @@ func TestAdminDokumentasiDetailMemuatGambarBerurutan(t *testing.T) {
 	_ = json.Unmarshal(rec.Body.Bytes(), &m)
 	g := m["gambar"].([]any)
 	g0, g1 := g[0].(map[string]any), g[1].(map[string]any)
-	if len(g) != 2 || g0["key"] != keyDok1 || g0["url"] != "/media/"+keyDok1 || g0["alt"] != "Foto utama" || g1["key"] != keyDok2 {
+	if len(g) != 2 || g0["key"] != keyDok1 || g0["url"] != "/media/"+keyDok1 || g1["key"] != keyDok2 {
 		t.Errorf("gambar salah: %v", g)
 	}
-	if _, ada := g1["alt"]; ada {
-		t.Errorf("alt kosong harus dihilangkan: %v", g1)
+	if _, ada := g0["alt"]; ada {
+		t.Errorf("field alt sudah dihapus: %v", g0)
 	}
 	if _, ada := m["gambarUtama"]; ada {
 		t.Errorf("detail tidak memakai gambarUtama: %v", m)
@@ -234,7 +234,7 @@ func TestAdminDokumentasiBuatMeneruskanDaftarGambarBerurutan(t *testing.T) {
 	if e.svc.aksi != "buat" || m.Judul != "Kegiatan Dua" || m.TanggalPublikasi != "2026-11-09" || e.svc.oleh != "dev-admin" {
 		t.Errorf("argumen: %+v", e.svc)
 	}
-	if len(m.Gambar) != 2 || m.Gambar[0].Key != keyDok1 || m.Gambar[0].Alt != "Foto utama" || m.Gambar[1].Key != keyDok2 || m.Gambar[1].Alt != "" {
+	if len(m.Gambar) != 2 || m.Gambar[0].Key != keyDok1 || m.Gambar[1].Key != keyDok2 {
 		t.Errorf("daftar gambar harus diteruskan berurutan: %+v", m.Gambar)
 	}
 }
@@ -249,7 +249,7 @@ func TestAdminDokumentasiBodyJSONKetat(t *testing.T) {
 		"gambar bukan array":        `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":"k"}`,
 		"gambar array string":       `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":["k"]}`,
 		"item gambar key bukan str": `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":[{"key":1}]}`,
-		"alt bukan string":          `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":[{"key":"k","alt":5}]}`,
+		"alt tidak dikenal lagi":    `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":[{"key":"k","alt":"x"}]}`,
 		"bukan JSON":                `x`,
 	}
 	for nama, body := range kasus {

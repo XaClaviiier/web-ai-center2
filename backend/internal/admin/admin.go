@@ -53,7 +53,7 @@ type ParamDaftar struct {
 
 // Batas panjang teks (karakter, setelah dirapikan). Satu tempat agar mudah disesuaikan (keputusan pengguna).
 const (
-	BatasJudul = 200
+	BatasJudul = 70 // docs/requirement.md; frontend (MAKS_JUDUL) memakai angka sama. Semua judul lebih panjang ditolak.
 	BatasIsi   = 20000
 	BatasSlug  = 120
 )

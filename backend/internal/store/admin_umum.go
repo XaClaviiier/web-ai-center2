@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/admin"
+	"github.com/XaClaviiier/web-ai-center2/backend/internal/auth"
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/store/db"
 )
 
@@ -59,9 +60,6 @@ func putuskanKlasifikasi(a aturan, dihapus bool, status string, versiBaris, vers
 // fotoPg mengubah key menjadi kolom nullable; string kosong menjadi NULL.
 func fotoPg(key string) pgtype.Text { return pgtype.Text{String: key, Valid: key != ""} }
 
-// altPg mengubah alt menjadi kolom nullable; string kosong menjadi NULL.
-func altPg(s string) pgtype.Text { return fotoPg(s) }
-
 // dalamTx menjalankan f dalam satu transaksi: commit bila f sukses, rollback bila galat (atau panic). Galat dari f
 // dikembalikan apa adanya (dibungkus bila commit gagal) sehingga pemanggil tetap dapat mengenali galat PostgreSQL.
 func (s *Store) dalamTx(ctx context.Context, f func(q *db.Queries) error) error {
@@ -70,6 +68,11 @@ func (s *Store) dalamTx(ctx context.Context, f func(q *db.Queries) error) error 
 		return fmt.Errorf("memulai transaksi: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }() // tidak berefek setelah Commit
+	if a, ok := auth.AktorDariContext(ctx); ok {
+		if err := setAktor(ctx, tx, a); err != nil { // trigger log aktivitas memakai aktor ini
+			return err
+		}
+	}
 	if err := f(s.Q.WithTx(tx)); err != nil {
 		return err
 	}

@@ -21,12 +21,13 @@ type sessionJSON struct {
 	Sub    string    `json:"sub"`
 	Nama   string    `json:"nama"`
 	Role   string    `json:"role"`
+	Uname  string    `json:"username,omitempty"`
 	CSRF   string    `json:"csrf"`
 	Dibuat time.Time `json:"dibuat"`
 }
 
 func (r RedisStore) Simpan(ctx context.Context, id string, s Session, ttl time.Duration) error {
-	b, err := json.Marshal(sessionJSON{Sub: s.Sub, Nama: s.Nama, Role: s.Role, CSRF: s.CSRFToken, Dibuat: s.DibuatPada})
+	b, err := json.Marshal(sessionJSON{Sub: s.Sub, Nama: s.Nama, Role: s.Role, Uname: s.Username, CSRF: s.CSRFToken, Dibuat: s.DibuatPada})
 	if err != nil {
 		return err
 	}
@@ -49,7 +50,7 @@ func (r RedisStore) Ambil(ctx context.Context, id string) (Session, error) {
 		// Isi rusak diperlakukan sebagai tidak ada supaya pengguna login ulang, bukan terkunci.
 		return Session{}, ErrTidakAda
 	}
-	return Session{Identitas: Identitas{Sub: j.Sub, Nama: j.Nama, Role: j.Role}, CSRFToken: j.CSRF, DibuatPada: j.Dibuat}, nil
+	return Session{Identitas: Identitas{Sub: j.Sub, Nama: j.Nama, Role: j.Role, Username: j.Uname}, CSRFToken: j.CSRF, DibuatPada: j.Dibuat}, nil
 }
 
 func (r RedisStore) Perpanjang(ctx context.Context, id string, ttl time.Duration) error {

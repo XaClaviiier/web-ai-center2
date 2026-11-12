@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -129,6 +130,10 @@ func (p *pengelolaLock) lepas(w http.ResponseWriter, r *http.Request) {
 func (p *pengelolaLock) penegak(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id, ekor, ok := p.idDariURL(r)
+		if !ok && r.Method == http.MethodGet && strings.TrimRight(r.URL.Path, "/") == "/api/admin/"+p.jenis {
+			p.layaniDaftar(w, r, next) // daftar: tambahkan dikunciOleh per baris
+			return
+		}
 		if !ok || ekor == "lock" {
 			next.ServeHTTP(w, r)
 			return
@@ -329,4 +334,71 @@ func (d Deps) lockTim() *pengelolaLock {
 		_, err := svc.Detail(ctx, id)
 		return err
 	})
+}
+
+// penyanggaRespons menampung respons handler agar badan JSON daftar dapat diperkaya sebelum dikirim.
+type penyanggaRespons struct {
+	header http.Header
+	status int
+	badan  bytes.Buffer
+}
+
+func (b *penyanggaRespons) Header() http.Header         { return b.header }
+func (b *penyanggaRespons) WriteHeader(s int)           { b.status = s }
+func (b *penyanggaRespons) Write(d []byte) (int, error) { return b.badan.Write(d) }
+
+// layaniDaftar menjalankan handler daftar lalu menambahkan "dikunciOleh" (nama pemegang) pada setiap item yang
+// sedang dikunci ORANG LAIN, sehingga UI dapat menonaktifkan aksi dan menampilkan "Sedang diedit oleh ...".
+// Kunci milik pemanggil sendiri tidak ditandai. Redis bermasalah: gagal tertutup (503), sama seperti detail.
+func (p *pengelolaLock) layaniDaftar(w http.ResponseWriter, r *http.Request, next http.Handler) {
+	buf := &penyanggaRespons{header: http.Header{}, status: http.StatusOK}
+	next.ServeHTTP(buf, r)
+
+	salin := func(badan []byte) {
+		for k, v := range buf.header {
+			w.Header()[k] = v
+		}
+		w.WriteHeader(buf.status)
+		_, _ = w.Write(badan)
+	}
+	var peta map[string]json.RawMessage
+	if buf.status != http.StatusOK || json.Unmarshal(buf.badan.Bytes(), &peta) != nil || peta["items"] == nil {
+		salin(buf.badan.Bytes())
+		return
+	}
+	var items []map[string]json.RawMessage
+	if json.Unmarshal(peta["items"], &items) != nil {
+		salin(buf.badan.Bytes())
+		return
+	}
+	ids := make([]int64, 0, len(items))
+	for _, it := range items {
+		var id int64
+		if json.Unmarshal(it["id"], &id) == nil && id > 0 {
+			ids = append(ids, id)
+		}
+	}
+	kunci, err := p.l.BacaBanyak(r.Context(), p.jenis, ids)
+	if err != nil {
+		p.galatRedis(w, r, err)
+		return
+	}
+	sess, _ := SessionDariContext(r.Context())
+	for _, it := range items {
+		var id int64
+		if json.Unmarshal(it["id"], &id) != nil {
+			continue
+		}
+		if pm, ada := kunci[id]; ada && pm.Sub != sess.Sub {
+			it["dikunciOleh"], _ = json.Marshal(potongNama(pm.Nama))
+		}
+	}
+	peta["items"], _ = json.Marshal(items)
+	badan, err := json.Marshal(peta)
+	if err != nil {
+		salin(buf.badan.Bytes())
+		return
+	}
+	buf.header.Del("Content-Length")
+	salin(append(badan, '\n'))
 }

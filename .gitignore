@@ -1,9 +1,7 @@
-# deps / build
+# deps
 node_modules/
-dist/
-dist-ssr/
-*.local
 
+# rahasia lokal (backend/.env); contoh yang boleh ikut repo: backend/.env.example
 .env
 .env.*
 !.env.example
@@ -16,26 +14,16 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
-docker-compose.production.yml
-deploy/
 
 # test / coverage
 coverage/
+# referensi skema/kontrak lama, hanya lokal
 docs/backend/01-kontrak-api.md
 docs/backend/Schema.md
-
-# data DB dev (PGlite) — lokal saja
-.pglite/
-
-# file unggahan admin (lokal saja, bukan bagian repo)
-uploads/
-server/uploads/
 
 # laporan lighthouse hanya lokal, tidak ikut repo
 lighthouse_report/
 
-# artefak tool lokal (opencode + cache TS), bukan bagian proyek
+# artefak tool lokal (opencode), bukan bagian proyek
 .agents/
 skills-lock.json
-tsconfig.tsbuildinfo
-

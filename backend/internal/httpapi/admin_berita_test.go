@@ -187,13 +187,18 @@ func TestAdminBeritaDaftar(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d: %s", rec.Code, rec.Body)
 	}
-	if e.svc.param.Filter != "semua" || e.svc.param.Batas != 20 || e.svc.param.Geser != 0 || e.svc.param.Pola != "" {
+	if e.svc.param.Filter != "semua" || e.svc.param.Batas != limitDaftarAdminDefault || e.svc.param.Geser != 0 || e.svc.param.Pola != "" {
 		t.Errorf("default salah: %+v", e.svc.param)
 	}
 	var m map[string]any
 	_ = json.Unmarshal(rec.Body.Bytes(), &m)
-	if m["total"].(float64) != 42 || m["page"].(float64) != 1 || m["limit"].(float64) != 20 {
+	if m["total"].(float64) != 42 || m["page"].(float64) != 1 || m["limit"].(float64) != limitDaftarAdminDefault {
 		t.Errorf("meta salah: %v", m)
+	}
+	// pagination tetap tersedia bila diminta eksplisit
+	e.kirimJSON(t, id, "", "GET", "/api/admin/berita?page=3&limit=20", "")
+	if e.svc.param.Batas != 20 || e.svc.param.Geser != 40 {
+		t.Errorf("page=3&limit=20 -> %+v", e.svc.param)
 	}
 	items := m["items"].([]any)
 	i0, i1 := items[0].(map[string]any), items[1].(map[string]any)

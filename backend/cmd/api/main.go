@@ -100,6 +100,7 @@ func jalankan() error {
 
 	handler := httpapi.NewRouter(httpapi.Deps{
 		SEO:                seoDeps,
+		Static:             &httpapi.DepsStatic{Dir: cfg.StaticDir, DevLoginAktif: cfg.DevLoginAktif, Halaman404: seoDeps.Halaman404, NamaSitus: cfg.SiteName},
 		Log:                log,
 		DB:                 st,
 		Konten:             st,
@@ -113,7 +114,7 @@ func jalankan() error {
 		ProxyTepercaya:     cfg.TrustedProxies,
 		Lock:               &lock.Lock{C: rdb, TTL: cfg.LockTTL},
 		LockHeartbeatDetik: int(cfg.LockHeartbeat.Seconds()),
-		Admin:              httpapi.DepsAdmin{Berita: layananBerita, Dokumentasi: layananDokumentasi, Testimoni: layananTestimoni, Tim: layananTim},
+		Admin:              httpapi.DepsAdmin{Berita: layananBerita, Dokumentasi: layananDokumentasi, Testimoni: layananTestimoni, Tim: layananTim, Log: admin.LogLayanan{Repo: st.AdminLog()}},
 		Auth: httpapi.DepsAuth{
 			Sesi:           auth.NewManager(auth.RedisStore{C: rdb}, cfg.SessionIdleTTL, cfg.SessionAbsoluteTTL),
 			Limiter:        ratelimit.Redis{C: rdb, Jendela: time.Minute},

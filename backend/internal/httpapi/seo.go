@@ -37,16 +37,7 @@ type seoHandler struct {
 }
 
 func (h seoHandler) tulis404(w http.ResponseWriter) {
-	isi := h.s.Halaman404
-	if isi == nil {
-		isi = seo.Halaman404Bawaan(h.s.NamaSitus)
-	}
-	hd := w.Header()
-	hd.Set("Content-Type", tipeHTML)
-	hd.Set("X-Robots-Tag", "noindex")
-	hd.Set("Cache-Control", "no-cache")
-	w.WriteHeader(http.StatusNotFound)
-	_, _ = w.Write(isi)
+	tulis404HTML(w, h.s.Halaman404, h.s.NamaSitus)
 }
 
 func (h seoHandler) berita(w http.ResponseWriter, r *http.Request) {
@@ -104,8 +95,8 @@ func (h seoHandler) dokumentasi(w http.ResponseWriter, r *http.Request) {
 		isiGambar := make([]seo.Gambar, 0, len(d.Gambar))
 		urlGambar := make([]string, 0, len(d.Gambar))
 		for _, g := range d.Gambar {
-			jsonGambar = append(jsonGambar, gambarDokumentasiJSON{URL: urlMedia(g.Key), Alt: g.Alt})
-			isiGambar = append(isiGambar, seo.Gambar{URL: urlMedia(g.Key), Alt: g.Alt})
+			jsonGambar = append(jsonGambar, gambarDokumentasiJSON{URL: urlMedia(g.Key)})
+			isiGambar = append(isiGambar, seo.Gambar{URL: urlMedia(g.Key)})
 			urlGambar = append(urlGambar, h.urlAbsolut(g.Key))
 		}
 		data, err := json.Marshal(dokumentasiDetailJSON{

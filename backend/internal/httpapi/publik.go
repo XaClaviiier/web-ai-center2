@@ -53,11 +53,11 @@ type dokumentasiRingkasJSON struct {
 	Judul            string `json:"judul"`
 	TanggalPublikasi string `json:"tanggalPublikasi"`
 	GambarUtama      string `json:"gambarUtama,omitempty"`
+	JumlahGambar     int    `json:"jumlahGambar"`
 }
 
 type gambarDokumentasiJSON struct {
 	URL string `json:"url"`
-	Alt string `json:"alt,omitempty"`
 }
 
 type dokumentasiDetailJSON struct {
@@ -150,7 +150,7 @@ func (h publik) daftarDokumentasi(w http.ResponseWriter, r *http.Request) {
 		for _, d := range items {
 			out = append(out, dokumentasiRingkasJSON{
 				ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: d.TanggalPublikasi,
-				GambarUtama: urlMedia(d.GambarUtamaKey),
+				GambarUtama: urlMedia(d.GambarUtamaKey), JumlahGambar: d.JumlahGambar,
 			})
 		}
 		return daftarJSON{Items: out, Page: q.Page, Limit: q.Limit, Total: total}, bolehSimpanDaftar(q, len(items)), nil
@@ -170,7 +170,7 @@ func (h publik) detailDokumentasi(w http.ResponseWriter, r *http.Request) {
 		}
 		gambar := make([]gambarDokumentasiJSON, 0, len(d.Gambar))
 		for _, g := range d.Gambar {
-			gambar = append(gambar, gambarDokumentasiJSON{URL: urlMedia(g.Key), Alt: g.Alt})
+			gambar = append(gambar, gambarDokumentasiJSON{URL: urlMedia(g.Key)})
 		}
 		return dokumentasiDetailJSON{
 			ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: d.TanggalPublikasi, Gambar: gambar,

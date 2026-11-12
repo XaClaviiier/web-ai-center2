@@ -15,16 +15,11 @@ func keysDariGambar(t *testing.T, m map[string]any) string {
 	return strings.Join(out, ",")
 }
 
-// daftarGambar membuat JSON array gambar [{"key":..,"alt":..}] dari pasangan key[:alt].
-func daftarGambar(pasangan ...string) string {
+// daftarGambar membuat JSON array gambar [{"key":..}] dari daftar key.
+func daftarGambar(keys ...string) string {
 	var out []string
-	for _, p := range pasangan {
-		key, alt, _ := strings.Cut(p, "|")
-		item := `{"key":"` + key + `"`
-		if alt != "" {
-			item += `,"alt":"` + alt + `"`
-		}
-		out = append(out, item+`}`)
+	for _, key := range keys {
+		out = append(out, `{"key":"`+key+`"}`)
 	}
 	return `[` + strings.Join(out, ",") + `]`
 }
@@ -35,15 +30,16 @@ func TestE2EAdminDokumentasiSiklusPenuh(t *testing.T) {
 		return `{"judul":"` + judul + `","tanggalPublikasi":"2026-11-09","gambar":` + gambar + `}`
 	}
 
-	// 1. buat dengan tiga gambar (alt pada yang pertama)
+	// 1. buat dengan tiga gambar
 	k := []string{a.unggah("dokumentasi"), a.unggah("dokumentasi"), a.unggah("dokumentasi"), a.unggah("dokumentasi")}
-	d := a.harus(a.panggil("POST", "/api/admin/dokumentasi", badan("Pelatihan AI", daftarGambar(k[0]+"|Foto utama", k[1], k[2]))), 201, "buat")
+	d := a.harus(a.panggil("POST", "/api/admin/dokumentasi", badan("Pelatihan AI", daftarGambar(k[0], k[1], k[2]))), 201, "buat")
 	if d["slug"] != "pelatihan-ai" || d["status"] != "draft" || d["version"].(float64) != 1 || d["dibuatOleh"] != "dev-admin" || keysDariGambar(t, d) != strings.Join(k[:3], ",") {
 		t.Fatalf("hasil buat salah: %v", d)
 	}
-	if d["gambar"].([]any)[0].(map[string]any)["alt"] != "Foto utama" {
-		t.Errorf("alt hilang: %v", d["gambar"])
+	if _, ada := d["gambar"].([]any)[0].(map[string]any)["alt"]; ada {
+		t.Errorf("field alt sudah dihapus: %v", d["gambar"])
 	}
+	a.harus(a.panggil("POST", "/api/admin/dokumentasi", badan("Dengan Alt", `[{"key":"`+k[3]+`","alt":"x"}]`)), 400, "alt tidak dikenal lagi")
 	path := "/api/admin/dokumentasi/" + itoaID(int64(d["id"].(float64)))
 
 	// 2. draft tidak tampil di publik; judul sama -> slug diberi akhiran
@@ -78,7 +74,7 @@ func TestE2EAdminDokumentasiSiklusPenuh(t *testing.T) {
 
 	// 4. Simpan version basi: 409, file baru dihapus kembali, data tidak berubah
 	n1 := a.unggah("dokumentasi")
-	a.harus(a.panggil("PUT", path, `{"judul":"Baru","tanggalPublikasi":"2026-12-01","gambar":`+daftarGambar(k[0], n1)+`,"version":99}`), 409, "version basi")
+	a.harus(a.panggil("PUT", path, `{"judul":"Baru","tanggalPublikasi":"2026-11-10","gambar":`+daftarGambar(k[0], n1)+`,"version":99}`), 409, "version basi")
 	if a.ada(n1) {
 		t.Error("file baru yang gagal disimpan harus dihapus kembali")
 	}
@@ -86,13 +82,10 @@ func TestE2EAdminDokumentasiSiklusPenuh(t *testing.T) {
 		t.Fatalf("data berubah padahal gagal: %v", cur)
 	}
 
-	// 5. ganti urutan + ubah alt: tidak ada file yang dihapus
-	u := a.harus(a.panggil("PUT", path, `{"judul":"Pelatihan AI","tanggalPublikasi":"2026-11-09","gambar":`+daftarGambar(k[2], k[0]+"|Alt baru", k[1])+`,"version":1}`), 200, "urutan")
+	// 5. ganti urutan: tidak ada file yang dihapus
+	u := a.harus(a.panggil("PUT", path, `{"judul":"Pelatihan AI","tanggalPublikasi":"2026-11-09","gambar":`+daftarGambar(k[2], k[0], k[1])+`,"version":1}`), 200, "urutan")
 	if keysDariGambar(t, u) != k[2]+","+k[0]+","+k[1] || u["version"].(float64) != 2 {
 		t.Fatalf("urutan: %v", u)
-	}
-	if u["gambar"].([]any)[1].(map[string]any)["alt"] != "Alt baru" {
-		t.Errorf("alt baru hilang: %v", u["gambar"])
 	}
 	for _, key := range k[:3] {
 		if !a.ada(key) {

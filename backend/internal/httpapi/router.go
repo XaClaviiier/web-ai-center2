@@ -50,6 +50,9 @@ type Deps struct {
 
 	// Halaman detail ber-SEO, sitemap.xml, dan robots.txt; nil = tidak dipasang.
 	SEO *DepsSEO
+
+	// Frontend statis (web/): halaman publik, /assets, /admin, 404 HTML; nil = tidak dipasang (404 selalu JSON).
+	Static *DepsStatic
 }
 
 // DepsAdmin adalah layanan penulisan konten oleh admin.
@@ -58,6 +61,7 @@ type DepsAdmin struct {
 	Dokumentasi LayananDokumentasi
 	Testimoni   LayananTestimoni
 	Tim         LayananTim
+	Log         LayananLog // log aktivitas (baca-saja); nil = rute tidak dipasang
 }
 
 // NewRouter menyusun handler utama. Semua endpoint API berada di bawah /api.
@@ -96,6 +100,9 @@ func NewRouter(d Deps) http.Handler {
 		api.Route("/admin", func(adm chi.Router) {
 			adm.Use(noStore, cekOrigin(d.Auth.AllowedOrigins), ah.wajibLogin, batasAdmin(d.Auth.Limiter, d.BatasAdminBaca, d.BatasAdminTulis, d.Log), wajibCSRF)
 			adm.Post("/upload", mh.upload)
+			if d.Admin.Log != nil {
+				adm.Get("/log-aktivitas", logAdminHandler{log: d.Log, svc: d.Admin.Log}.daftar)
+			}
 			adm.Route("/berita", denganBatalCache(d.Cache, []string{cache.Berita, cache.Sitemap}, false, d.Log, denganLock(d.lockBerita(), beritaAdminHandler{log: d.Log, svc: d.Admin.Berita}.routerBerita)))
 			adm.Route("/dokumentasi", denganBatalCache(d.Cache, []string{cache.Dokumentasi, cache.Sitemap}, false, d.Log, denganLock(d.lockDokumentasi(), dokumentasiAdminHandler{log: d.Log, svc: d.Admin.Dokumentasi}.routerDokumentasi)))
 			adm.Route("/testimoni", denganBatalCache(d.Cache, []string{cache.Testimoni}, false, d.Log, denganLock(d.lockTestimoni(), testimoniAdminHandler{log: d.Log, svc: d.Admin.Testimoni}.routerTestimoni)))
@@ -106,10 +113,21 @@ func NewRouter(d Deps) http.Handler {
 	// HTML detail ber-SEO (kerangka Astro + meta), sitemap.xml, robots.txt: dilayani Go (RP-12).
 	if d.SEO != nil {
 		sh := seoHandler{publik: pub, s: *d.SEO}
-		r.Get("/berita/{slug}", sh.berita)
-		r.Get("/dokumentasi/{slug}", sh.dokumentasi)
-		r.Get("/sitemap.xml", sh.sitemap)
-		r.Get("/robots.txt", sh.robots)
+		// GET dan HEAD (crawler/pemeriksa tautan memakai HEAD); server Go membuang badan untuk HEAD.
+		for _, rute := range []struct {
+			pola string
+			h    http.HandlerFunc
+		}{{"/berita/{slug}", sh.berita}, {"/dokumentasi/{slug}", sh.dokumentasi}, {"/sitemap.xml", sh.sitemap}, {"/robots.txt", sh.robots}} {
+			r.Get(rute.pola, rute.h)
+			r.Head(rute.pola, rute.h)
+		}
+	}
+
+	// Frontend statis (web/) dan 404 HTML untuk path di luar /api. Dipasang setelah rute SEO agar
+	// /berita (daftar, statis) dan /berita/{slug} (SEO) hidup berdampingan.
+	if d.Static != nil {
+		pasangStatic(r, *d.Static)
+		r.NotFound(staticHandler{d: *d.Static}.tidakDitemukan)
 	}
 
 	// Gambar disajikan di luar /api (URL publik /media/{key}); GET/HEAD saja, tanpa login.

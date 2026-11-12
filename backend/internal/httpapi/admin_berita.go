@@ -12,7 +12,9 @@ import (
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/admin"
 )
 
-const limitDaftarAdminDefault = 20
+// limitDaftarAdminDefault: tanpa parameter page/limit daftar admin berisi SEMUA item (desain admin memuat seluruh daftar
+// tanpa kontrol halaman). page dan limit (maks 50) tetap didukung untuk klien yang memintanya.
+const limitDaftarAdminDefault = 100000
 
 // LayananBerita adalah aturan bisnis berita untuk admin (diimplementasikan admin.BeritaLayanan; palsu di tes).
 type LayananBerita interface {

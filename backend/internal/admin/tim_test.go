@@ -13,7 +13,7 @@ import (
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/media"
 )
 
-// repoTimPalsu meniru aturan SQL tim (urutan otomatis, version, foto unik) di memori.
+// repoTimPalsu meniru aturan SQL tim (urutan dari klien, version, foto unik) di memori.
 type repoTimPalsu struct {
 	baris   map[int64]*Tim
 	urut    int64
@@ -50,12 +50,8 @@ func (r *repoTimPalsu) Buat(_ context.Context, in InputTim, oleh string) (Tim, e
 	if _, ada := r.dipakai[in.Foto]; ada {
 		return Tim{}, ErrGambarDipakai
 	}
-	var maks int32
-	for _, t := range r.baris {
-		maks = max(maks, t.Urutan)
-	}
 	r.urut++
-	t := &Tim{ID: r.urut, Nama: in.Nama, Posisi: in.Posisi, BidangRiset: in.BidangRiset, FotoKey: in.Foto, Urutan: maks + 1,
+	t := &Tim{ID: r.urut, Nama: in.Nama, Posisi: in.Posisi, BidangRiset: in.BidangRiset, FotoKey: in.Foto, Urutan: in.Urutan,
 		Version: 1, DibuatPada: time.Now(), DibuatOleh: oleh, DiubahOleh: oleh}
 	r.baris[t.ID] = t
 	r.dipakai[in.Foto] = t.ID
@@ -75,7 +71,7 @@ func (r *repoTimPalsu) Ubah(_ context.Context, id int64, version int32, in Input
 	}
 	delete(r.dipakai, t.FotoKey)
 	r.dipakai[in.Foto] = id
-	t.Nama, t.Posisi, t.BidangRiset, t.FotoKey, t.DiubahOleh = in.Nama, in.Posisi, in.BidangRiset, in.Foto, oleh
+	t.Nama, t.Posisi, t.BidangRiset, t.FotoKey, t.Urutan, t.DiubahOleh = in.Nama, in.Posisi, in.BidangRiset, in.Foto, in.Urutan, oleh
 	t.Version++
 	return *t, nil
 }
@@ -134,18 +130,23 @@ func adaKey(t *testing.T, mem *media.Memori, key string) bool {
 
 func (l lingkunganTim) mentah(t *testing.T, nama string) MentahTim {
 	t.Helper()
-	return MentahTim{Nama: nama, Posisi: "Peneliti", BidangRiset: "Pemrosesan Bahasa Alami", Foto: unggahKey(t, l.mem, media.SumberTim)}
+	return MentahTim{Nama: nama, Posisi: "Peneliti", BidangRiset: "Pemrosesan Bahasa Alami", Foto: unggahKey(t, l.mem, media.SumberTim), Urutan: urut(1)}
 }
 
-func TestTimBuatBerurutanDiAkhir(t *testing.T) {
+// urut membuat penunjuk urutan untuk MentahTim.
+func urut(n int64) *int64 { return &n }
+
+// Urutan tampil dipilih admin: daftar mengikuti angka urutan, bukan urutan pembuatan.
+func TestTimBuatMemakaiUrutanDariKlien(t *testing.T) {
 	l := siapkanTim(t)
 	for i, nama := range []string{"Ani", "Budi", "Cici"} {
 		m := l.mentah(t, nama)
+		m.Urutan = urut([]int64{3, 1, 2}[i])
 		tm, err := l.svc.Buat(ctx, m, "dev-admin")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if tm.Urutan != int32(i+1) || tm.Version != 1 || tm.DibuatOleh != "dev-admin" || tm.FotoKey != m.Foto {
+		if tm.Urutan != int32([]int64{3, 1, 2}[i]) || tm.Version != 1 || tm.DibuatOleh != "dev-admin" || tm.FotoKey != m.Foto {
 			t.Errorf("%s: %+v", nama, tm)
 		}
 		if !adaKey(t, l.mem, m.Foto) {
@@ -157,13 +158,13 @@ func TestTimBuatBerurutanDiAkhir(t *testing.T) {
 	for _, d := range daftar {
 		nama = append(nama, d.Nama)
 	}
-	if strings.Join(nama, ",") != "Ani,Budi,Cici" {
+	if strings.Join(nama, ",") != "Budi,Cici,Ani" {
 		t.Errorf("urutan daftar: %v", nama)
 	}
 }
 
 func TestTimValidasi(t *testing.T) {
-	ok := MentahTim{Nama: "  Dr.   Ani ", Posisi: "Ketua", BidangRiset: "NLP", Foto: "tim/x.png"}
+	ok := MentahTim{Nama: "  Dr.   Ani ", Posisi: "Ketua", BidangRiset: "NLP", Foto: "tim/x.png", Urutan: urut(1)}
 	in, err := ValidasiTim(ok)
 	if err != nil || in.Nama != "Dr. Ani" {
 		t.Fatalf("perapian: %+v %v", in, err)
@@ -177,6 +178,10 @@ func TestTimValidasi(t *testing.T) {
 		"bidang terlalu panjang": func(m *MentahTim) { m.BidangRiset = strings.Repeat("a", BatasBidangRiset+1) },
 		"foto kosong":            func(m *MentahTim) { m.Foto = "" },
 		"karakter kontrol":       func(m *MentahTim) { m.Nama = "a\x00b" },
+		"urutan tidak dikirim":   func(m *MentahTim) { m.Urutan = nil },
+		"urutan nol":             func(m *MentahTim) { m.Urutan = urut(0) },
+		"urutan negatif":         func(m *MentahTim) { m.Urutan = urut(-3) },
+		"urutan di atas int32":   func(m *MentahTim) { m.Urutan = urut(1 << 31) },
 	}
 	for nama, f := range kasus {
 		m := ok
@@ -189,8 +194,9 @@ func TestTimValidasi(t *testing.T) {
 	}
 	m := ok
 	m.BidangRiset = strings.Repeat("a", BatasBidangRiset)
-	if _, err := ValidasiTim(m); err != nil {
-		t.Errorf("tepat di batas harus diterima: %v", err)
+	m.Urutan = urut(1<<31 - 1) // batas atas kolom integer
+	if in, err := ValidasiTim(m); err != nil || in.Urutan != 1<<31-1 {
+		t.Errorf("tepat di batas harus diterima: %+v %v", in, err)
 	}
 }
 
@@ -202,7 +208,7 @@ func TestTimBuatKeyDitolakDanFileBaruDihapusKembali(t *testing.T) {
 		"key sembarang":        "foto.png",
 		"bentuk sah tak ada":   "tim/3f9c2a10-7b4e-4c6d-9a1f-0123456789ab.png",
 	} {
-		m := MentahTim{Nama: "A", Posisi: "B", BidangRiset: "C", Foto: key}
+		m := MentahTim{Nama: "A", Posisi: "B", BidangRiset: "C", Foto: key, Urutan: urut(1)}
 		_, err := l.svc.Buat(ctx, m, "u")
 		var e *ErrInput
 		if !errors.As(err, &e) {
@@ -228,7 +234,7 @@ func TestTimBuatKeyDitolakDanFileBaruDihapusKembali(t *testing.T) {
 func TestTimFotoKembarDitolakTanpaMenghapusMilikOrangLain(t *testing.T) {
 	l := siapkanTim(t)
 	a, _ := l.svc.Buat(ctx, l.mentah(t, "A"), "u")
-	_, err := l.svc.Buat(ctx, MentahTim{Nama: "B", Posisi: "p", BidangRiset: "b", Foto: a.FotoKey}, "u")
+	_, err := l.svc.Buat(ctx, MentahTim{Nama: "B", Posisi: "p", BidangRiset: "b", Foto: a.FotoKey, Urutan: urut(2)}, "u")
 	var e *ErrInput
 	if !errors.As(err, &e) || !strings.Contains(e.Pesan, "sudah dipakai") {
 		t.Fatalf("diharapkan ErrInput 'sudah dipakai', dapat %v", err)
@@ -257,7 +263,7 @@ func TestTimUbah(t *testing.T) {
 	}
 
 	// tanpa ganti foto: tidak ada file yang dihapus
-	u2, err := l.svc.Ubah(ctx, a.ID, MentahTim{Nama: "Ani L.", Posisi: "p", BidangRiset: "b", Foto: baru.Foto}, 2, "u")
+	u2, err := l.svc.Ubah(ctx, a.ID, MentahTim{Nama: "Ani L.", Posisi: "p", BidangRiset: "b", Foto: baru.Foto, Urutan: urut(5)}, 2, "u")
 	if err != nil || !adaKey(t, l.mem, baru.Foto) || u2.Version != 3 {
 		t.Fatalf("tanpa ganti foto: %+v %v", u2, err)
 	}
@@ -280,7 +286,7 @@ func TestTimUbahGagalMenghapusFileBaruTapiMenjagaLama(t *testing.T) {
 		t.Error("foto lama tidak boleh tersentuh")
 	}
 	// memakai foto milik anggota lain
-	_, err := l.svc.Ubah(ctx, a.ID, MentahTim{Nama: "x", Posisi: "p", BidangRiset: "b", Foto: b.FotoKey}, 1, "u")
+	_, err := l.svc.Ubah(ctx, a.ID, MentahTim{Nama: "x", Posisi: "p", BidangRiset: "b", Foto: b.FotoKey, Urutan: urut(1)}, 1, "u")
 	perluErrInput(t, err, "sudah dipakai")
 	if !adaKey(t, l.mem, b.FotoKey) {
 		t.Error("foto milik anggota lain tidak boleh terhapus")

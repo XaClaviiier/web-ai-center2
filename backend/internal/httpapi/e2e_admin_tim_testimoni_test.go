@@ -53,13 +53,14 @@ func siapkanE2EAdmin(t *testing.T) *e2eAdmin {
 	})
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	a.e = siapkanAuthDenganMedia(t, nil, s3, func(d *Deps) {
+	a.e = siapkanAuthDenganMedia(t, func(d *DepsAuth) { d.AdminPassword2 = passDev2 }, s3, func(d *Deps) {
 		d.DB, d.Konten = st, st
 		d.Admin = DepsAdmin{
 			Berita:      admin.BeritaLayanan{Repo: st.AdminBerita(), Media: s3, Log: log},
 			Dokumentasi: admin.DokumentasiLayanan{Repo: st.AdminDokumentasi(), Media: s3, Log: log},
 			Testimoni:   admin.TestimoniLayanan{Repo: st.AdminTestimoni(), Media: s3, Log: log},
 			Tim:         admin.TimLayanan{Repo: st.AdminTim(), Media: s3, Log: log},
+			Log:         admin.LogLayanan{Repo: st.AdminLog()},
 		}
 	})
 	a.id, a.csrf = loginBerhasil(t, a.e)
@@ -123,14 +124,14 @@ func namaDari(items []any) string {
 
 func TestE2EAdminTimSiklusPenuh(t *testing.T) {
 	a := siapkanE2EAdmin(t)
-	badan := func(nama, foto string) string {
-		return `{"nama":"` + nama + `","posisi":"Peneliti","bidangRiset":"NLP","foto":"` + foto + `"}`
+	badan := func(nama, foto string, urutan int) string {
+		return `{"nama":"` + nama + `","posisi":"Peneliti","bidangRiset":"NLP","foto":"` + foto + `","urutan":` + itoaID(int64(urutan)) + `}`
 	}
 
-	// 1. buat dua anggota: urutan otomatis di akhir, langsung tampil di publik (tim tanpa status)
+	// 1. buat dua anggota dengan urutan pilihan admin, langsung tampil di publik (tim tanpa status)
 	foto1, foto2 := a.unggah("tim"), a.unggah("tim")
-	t1 := a.harus(a.panggil("POST", "/api/admin/tim", badan("Ani", foto1)), 201, "buat Ani")
-	t2 := a.harus(a.panggil("POST", "/api/admin/tim", badan("Budi", foto2)), 201, "buat Budi")
+	t1 := a.harus(a.panggil("POST", "/api/admin/tim", badan("Ani", foto1, 1)), 201, "buat Ani")
+	t2 := a.harus(a.panggil("POST", "/api/admin/tim", badan("Budi", foto2, 2)), 201, "buat Budi")
 	if t1["urutan"].(float64) != 1 || t2["urutan"].(float64) != 2 || t1["version"].(float64) != 1 || t1["dibuatOleh"] != "dev-admin" {
 		t.Fatalf("urutan/version/audit salah: %v %v", t1, t2)
 	}
@@ -142,14 +143,14 @@ func TestE2EAdminTimSiklusPenuh(t *testing.T) {
 	pathBudi := "/api/admin/tim/" + itoaID(int64(t2["id"].(float64)))
 
 	// 2. foto yang sama dipakai anggota lain ditolak, dan foto milik Ani TIDAK terhapus
-	a.harus(a.panggil("POST", "/api/admin/tim", badan("Kembar", foto1)), 400, "foto kembar")
+	a.harus(a.panggil("POST", "/api/admin/tim", badan("Kembar", foto1, 3)), 400, "foto kembar")
 	if !a.ada(foto1) {
 		t.Fatal("foto milik anggota lain terhapus oleh request yang gagal")
 	}
 
 	// 3. Simpan version basi: 409 dan file baru dihapus kembali
 	fotoBaru := a.unggah("tim")
-	e409 := a.harus(a.panggil("PUT", pathAni, `{"nama":"Ani Lestari","posisi":"Ketua","bidangRiset":"NLP","foto":"`+fotoBaru+`","version":99}`), 409, "version basi")
+	e409 := a.harus(a.panggil("PUT", pathAni, `{"nama":"Ani Lestari","posisi":"Ketua","bidangRiset":"NLP","foto":"`+fotoBaru+`","urutan":1,"version":99}`), 409, "version basi")
 	if e409["error"].(map[string]any)["code"] != "version_conflict" {
 		t.Errorf("kode salah: %v", e409)
 	}
@@ -159,7 +160,7 @@ func TestE2EAdminTimSiklusPenuh(t *testing.T) {
 
 	// 4. Simpan benar dengan foto baru: foto lama dihapus setelah commit, urutan tetap
 	fotoBaru = a.unggah("tim")
-	u := a.harus(a.panggil("PUT", pathAni, `{"nama":"Ani Lestari","posisi":"Ketua","bidangRiset":"NLP","foto":"`+fotoBaru+`","version":1}`), 200, "simpan")
+	u := a.harus(a.panggil("PUT", pathAni, `{"nama":"Ani Lestari","posisi":"Ketua","bidangRiset":"NLP","foto":"`+fotoBaru+`","urutan":1,"version":1}`), 200, "simpan")
 	if u["nama"] != "Ani Lestari" || u["version"].(float64) != 2 || u["urutan"].(float64) != 1 || u["diubahOleh"] != "dev-admin" {
 		t.Fatalf("hasil simpan: %v", u)
 	}
@@ -192,10 +193,32 @@ func TestE2EAdminTimSiklusPenuh(t *testing.T) {
 		t.Errorf("daftar admin: %v", adm)
 	}
 
-	// 7. anggota baru setelah ada yang dihapus tetap di urutan akhir (maksimum + 1)
-	t3 := a.harus(a.panggil("POST", "/api/admin/tim", badan("Cici", a.unggah("tim"))), 201, "buat Cici")
-	if t3["urutan"].(float64) != 3 {
-		t.Errorf("urutan harus 3 (maksimum + 1): %v", t3["urutan"])
+	// 7. urutan dipilih admin: Cici (urutan 1) tampil sebelum Budi (urutan 2); Simpan boleh mengubah urutan
+	t3 := a.harus(a.panggil("POST", "/api/admin/tim", badan("Cici", a.unggah("tim"), 1)), 201, "buat Cici")
+	if t3["urutan"].(float64) != 1 {
+		t.Errorf("urutan harus mengikuti klien (1): %v", t3["urutan"])
+	}
+	pub = a.harus(a.publik("/api/tim"), 200, "publik urutan")["items"].([]any)
+	if namaDari(pub) != "Cici,Budi" {
+		t.Errorf("urutan publik harus Cici,Budi: %s", namaDari(pub))
+	}
+	pathCici := "/api/admin/tim/" + itoaID(int64(t3["id"].(float64)))
+	cici := a.harus(a.panggil("PUT", pathCici, `{"nama":"Cici","posisi":"Peneliti","bidangRiset":"NLP","foto":"`+t3["foto"].(map[string]any)["key"].(string)+`","urutan":9,"version":1}`), 200, "ubah urutan Cici")
+	if cici["urutan"].(float64) != 9 {
+		t.Errorf("urutan baru 9: %v", cici["urutan"])
+	}
+	pub = a.harus(a.publik("/api/tim"), 200, "publik setelah ubah urutan")["items"].([]any)
+	if namaDari(pub) != "Budi,Cici" {
+		t.Errorf("setelah urutan Cici=9 harus Budi,Cici: %s", namaDari(pub))
+	}
+	// urutan wajib dan harus bilangan bulat >= 1
+	foto := a.unggah("tim")
+	for nama, body := range map[string]string{
+		"tanpa urutan": `{"nama":"X","posisi":"p","bidangRiset":"b","foto":"` + foto + `"}`,
+		"urutan nol":   badan("X", foto, 0),
+		"urutan minus": badan("X", foto, -4),
+	} {
+		a.harus(a.panggil("POST", "/api/admin/tim", body), 400, nama)
 	}
 	_ = pathBudi
 }

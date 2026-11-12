@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,6 +34,20 @@ func barisSatu(nama, s string, maks int) (string, error) {
 
 var barisKosongBerlebih = regexp.MustCompile(`\n{3,}`)
 
+// judulBoleh merapikan judul dan menegakkan BatasJudul, KECUALI saat Simpan (judulLama != "") dan judul tidak diubah:
+// data lama yang sudah melebihi batas tetap boleh disimpan selama judulnya tidak berubah (desain admin). Judul baru
+// atau yang diubah tetap wajib memenuhi batas; pembuatan memanggil ini dengan judulLama kosong.
+func judulBoleh(nama, s, judulLama string) (string, error) {
+	judul, err := barisSatu(nama, s, BatasJudul)
+	if err == nil || judulLama == "" {
+		return judul, err
+	}
+	if rapi, err2 := barisSatu(nama, s, math.MaxInt32); err2 == nil && rapi == judulLama {
+		return rapi, nil
+	}
+	return "", err
+}
+
 // banyakBaris merapikan teks berparagraf: \r\n dan \r menjadi \n, paragraf dipisah tepat satu baris kosong (\n\n),
 // tab diperbolehkan, karakter kontrol lain ditolak, spasi di awal/akhir dibuang.
 func banyakBaris(nama, s string, maks int) (string, error) {
@@ -56,7 +71,14 @@ func banyakBaris(nama, s string, maks int) (string, error) {
 	return s, nil
 }
 
-// tanggal memvalidasi YYYY-MM-DD (tanggal kalender yang sah).
+// zonaWIB adalah zona waktu acuan "hari ini" (Asia/Jakarta, UTC+7, tanpa DST). FixedZone dipakai agar tidak
+// bergantung pada database zona waktu sistem (mis. Windows tanpa tzdata).
+var zonaWIB = time.FixedZone("WIB", 7*60*60)
+
+// sekarang dapat diganti di tes.
+var sekarang = time.Now
+
+// tanggal memvalidasi YYYY-MM-DD (tanggal kalender yang sah) dan menolak tanggal setelah hari ini (WIB).
 func tanggal(nama, s string) (string, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
@@ -65,6 +87,9 @@ func tanggal(nama, s string) (string, error) {
 	t, err := time.Parse("2006-01-02", s)
 	if err != nil {
 		return "", salah("Field " + nama + " harus tanggal valid berformat YYYY-MM-DD")
+	}
+	if hariIni := sekarang().In(zonaWIB).Format("2006-01-02"); t.Format("2006-01-02") > hariIni {
+		return "", salah("Field " + nama + " tidak boleh setelah hari ini")
 	}
 	return t.Format("2006-01-02"), nil
 }

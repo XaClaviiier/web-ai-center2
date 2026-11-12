@@ -182,11 +182,11 @@ func TestDevLoginBerhasil(t *testing.T) {
 	}
 	var m map[string]any
 	_ = json.Unmarshal(rec.Body.Bytes(), &m)
-	if m["nama"] != "Admin Dev" || m["role"] != "pegawai" || m["csrfToken"] == "" || m["csrfToken"] == nil {
+	if m["nama"] != "Admin Dev" || m["username"] != "admin.dev" || m["role"] != "pegawai" || m["csrfToken"] == "" || m["csrfToken"] == nil {
 		t.Fatalf("isi salah: %v", m)
 	}
-	if _, bocor := m["sub"]; bocor || len(m) != 3 {
-		t.Errorf("hanya nama, role, csrfToken yang boleh dikirim: %v", m)
+	if _, bocor := m["sub"]; bocor || len(m) != 4 {
+		t.Errorf("hanya nama, username, role, csrfToken yang boleh dikirim: %v", m)
 	}
 	if rec.Header().Get("Cache-Control") != "no-store" {
 		t.Errorf("Cache-Control harus no-store, dapat %q", rec.Header().Get("Cache-Control"))
@@ -315,7 +315,7 @@ func TestMe(t *testing.T) {
 	}
 	var m map[string]any
 	_ = json.Unmarshal(rec.Body.Bytes(), &m)
-	if m["nama"] != "Admin Dev" || m["role"] != "pegawai" || m["csrfToken"] != csrf || len(m) != 3 {
+	if m["nama"] != "Admin Dev" || m["username"] != "admin.dev" || m["role"] != "pegawai" || m["csrfToken"] != csrf || len(m) != 4 {
 		t.Errorf("isi me salah: %v", m)
 	}
 	if rec.Header().Get("Cache-Control") != "no-store" {

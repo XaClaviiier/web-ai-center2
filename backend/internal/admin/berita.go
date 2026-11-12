@@ -34,8 +34,11 @@ type BeritaLayanan struct {
 }
 
 // ValidasiBerita memvalidasi dan merapikan isi berita dari klien (tanpa memeriksa key gambar ke storage).
-func ValidasiBerita(m MentahBerita) (InputBerita, error) {
-	judul, err := barisSatu("judul", m.Judul, BatasJudul)
+func ValidasiBerita(m MentahBerita) (InputBerita, error) { return validasiBerita(m, "") }
+
+// validasiBerita seperti ValidasiBerita; judulLama (Simpan) mengizinkan judul lama >BatasJudul yang tidak diubah.
+func validasiBerita(m MentahBerita, judulLama string) (InputBerita, error) {
+	judul, err := judulBoleh("judul", m.Judul, judulLama)
 	if err != nil {
 		return InputBerita{}, err
 	}
@@ -135,7 +138,7 @@ func (s BeritaLayanan) Ubah(ctx context.Context, id int64, m MentahBerita, versi
 	if cur.Version != version {
 		return Berita{}, ErrVersiBentrok
 	}
-	in, err := ValidasiBerita(m)
+	in, err := validasiBerita(m, cur.Judul)
 	if err != nil {
 		return Berita{}, err
 	}

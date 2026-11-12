@@ -50,7 +50,7 @@ func (s RepoTim) Detail(ctx context.Context, id int64) (admin.Tim, error) {
 }
 
 func (s RepoTim) Buat(ctx context.Context, in admin.InputTim, oleh string) (admin.Tim, error) {
-	r, err := s.Q.BuatTim(ctx, db.BuatTimParams{Nama: in.Nama, Posisi: in.Posisi, BidangRiset: in.BidangRiset, Foto: in.Foto, Oleh: oleh})
+	r, err := s.Q.BuatTim(ctx, db.BuatTimParams{Nama: in.Nama, Posisi: in.Posisi, BidangRiset: in.BidangRiset, Foto: in.Foto, Urutan: in.Urutan, Oleh: oleh})
 	if adalahUnik(err, "tim_foto_key") {
 		return admin.Tim{}, admin.ErrGambarDipakai
 	}
@@ -62,7 +62,7 @@ func (s RepoTim) Buat(ctx context.Context, in admin.InputTim, oleh string) (admi
 
 func (s RepoTim) Ubah(ctx context.Context, id int64, version int32, in admin.InputTim, oleh string) (admin.Tim, error) {
 	r, err := s.Q.UbahTim(ctx, db.UbahTimParams{
-		Nama: in.Nama, Posisi: in.Posisi, BidangRiset: in.BidangRiset, Foto: in.Foto, Oleh: oleh, ID: id, Version: version,
+		Nama: in.Nama, Posisi: in.Posisi, BidangRiset: in.BidangRiset, Foto: in.Foto, Urutan: in.Urutan, Oleh: oleh, ID: id, Version: version,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		cur, gerr := s.Q.GetTimAdmin(ctx, id)

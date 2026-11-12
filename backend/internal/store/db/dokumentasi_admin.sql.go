@@ -244,25 +244,19 @@ func (q *Queries) ListDokumentasiAdmin(ctx context.Context, arg ListDokumentasiA
 
 const perbaruiGambarDokumentasi = `-- name: PerbaruiGambarDokumentasi :execrows
 UPDATE dokumentasi_gambar
-SET urutan = $1, alt = $2::text
-WHERE dokumentasi_id = $3 AND key = $4
+SET urutan = $1
+WHERE dokumentasi_id = $2 AND key = $3
 `
 
 type PerbaruiGambarDokumentasiParams struct {
 	Urutan        int16
-	Alt           pgtype.Text
 	DokumentasiID int64
 	Key           string
 }
 
-// Perbarui urutan dan alt gambar yang sudah ada milik dokumentasi ini; 0 baris berarti key baru (pemanggil menyisipkannya).
+// Perbarui urutan gambar yang sudah ada milik dokumentasi ini; 0 baris berarti key baru (pemanggil menyisipkannya).
 func (q *Queries) PerbaruiGambarDokumentasi(ctx context.Context, arg PerbaruiGambarDokumentasiParams) (int64, error) {
-	result, err := q.db.Exec(ctx, perbaruiGambarDokumentasi,
-		arg.Urutan,
-		arg.Alt,
-		arg.DokumentasiID,
-		arg.Key,
-	)
+	result, err := q.db.Exec(ctx, perbaruiGambarDokumentasi, arg.Urutan, arg.DokumentasiID, arg.Key)
 	if err != nil {
 		return 0, err
 	}
@@ -362,24 +356,18 @@ func (q *Queries) RetractDokumentasi(ctx context.Context, arg RetractDokumentasi
 }
 
 const tambahGambarDokumentasi = `-- name: TambahGambarDokumentasi :exec
-INSERT INTO dokumentasi_gambar (dokumentasi_id, key, urutan, alt)
-VALUES ($1, $2, $3, $4::text)
+INSERT INTO dokumentasi_gambar (dokumentasi_id, key, urutan)
+VALUES ($1, $2, $3)
 `
 
 type TambahGambarDokumentasiParams struct {
 	DokumentasiID int64
 	Key           string
 	Urutan        int16
-	Alt           pgtype.Text
 }
 
 func (q *Queries) TambahGambarDokumentasi(ctx context.Context, arg TambahGambarDokumentasiParams) error {
-	_, err := q.db.Exec(ctx, tambahGambarDokumentasi,
-		arg.DokumentasiID,
-		arg.Key,
-		arg.Urutan,
-		arg.Alt,
-	)
+	_, err := q.db.Exec(ctx, tambahGambarDokumentasi, arg.DokumentasiID, arg.Key, arg.Urutan)
 	return err
 }
 

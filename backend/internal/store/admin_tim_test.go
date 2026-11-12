@@ -10,7 +10,7 @@ import (
 )
 
 func inputTim(nama, foto string) admin.InputTim {
-	return admin.InputTim{Nama: nama, Posisi: "Peneliti", BidangRiset: "NLP", Foto: foto}
+	return admin.InputTim{Nama: nama, Posisi: "Peneliti", BidangRiset: "NLP", Foto: foto, Urutan: 1}
 }
 
 func buatTim(t *testing.T, s *Store, ctx context.Context, nama string) admin.Tim {
@@ -30,28 +30,48 @@ func namaTim(items []admin.Tim) string {
 	return strings.Join(out, ",")
 }
 
-func TestAdminTimBuatUrutanOtomatisDiAkhir(t *testing.T) {
+// buatTimUrutan membuat anggota dengan urutan pilihan admin.
+func buatTimUrutan(t *testing.T, s *Store, ctx context.Context, nama string, urutan int32) admin.Tim {
+	t.Helper()
+	in := inputTim(nama, "tim/"+strings.ToLower(nama)+".png")
+	in.Urutan = urutan
+	tm, err := s.AdminTim().Buat(ctx, in, "dev-admin")
+	if err != nil {
+		t.Fatalf("Buat %s: %v", nama, err)
+	}
+	return tm
+}
+
+func TestAdminTimUrutanDariKlien(t *testing.T) {
 	s, ctx := bukaStoreTes(t)
-	a := buatTim(t, s, ctx, "Ani")
-	b := buatTim(t, s, ctx, "Budi")
-	c := buatTim(t, s, ctx, "Cici")
-	if a.Urutan != 1 || b.Urutan != 2 || c.Urutan != 3 {
-		t.Fatalf("urutan harus 1,2,3: %d %d %d", a.Urutan, b.Urutan, c.Urutan)
+	a := buatTimUrutan(t, s, ctx, "Ani", 3)
+	b := buatTimUrutan(t, s, ctx, "Budi", 1)
+	c := buatTimUrutan(t, s, ctx, "Cici", 2)
+	if a.Urutan != 3 || b.Urutan != 1 || c.Urutan != 2 {
+		t.Fatalf("urutan harus mengikuti klien (3,1,2): %d %d %d", a.Urutan, b.Urutan, c.Urutan)
+	}
+	if items, _ := s.AdminTim().Daftar(ctx); namaTim(items) != "Budi,Cici,Ani" {
+		t.Fatalf("daftar mengikuti urutan: %s", namaTim(items))
+	}
+	// Simpan boleh mengubah urutan
+	in := inputTim("Ani", a.FotoKey)
+	in.Urutan = 1
+	u, err := s.AdminTim().Ubah(ctx, a.ID, a.Version, in, "editor")
+	if err != nil || u.Urutan != 1 {
+		t.Fatalf("ubah urutan: %+v %v", u, err)
+	}
+	// urutan sama dengan Budi (1): pemutus seri id, Budi dibuat lebih dulu? Ani lebih kecil id, jadi lebih dulu
+	if items, _ := s.AdminTim().Daftar(ctx); namaTim(items) != "Ani,Budi,Cici" {
+		t.Fatalf("setelah ubah urutan: %s", namaTim(items))
 	}
 	if a.Version != 1 || a.DibuatOleh != "dev-admin" || a.DiubahOleh != "dev-admin" || a.FotoKey != "tim/ani.png" || a.DibuatPada.IsZero() {
 		t.Errorf("nilai awal salah: %+v", a)
 	}
-	// hapus yang tengah: anggota baru tetap di akhir (maksimum + 1), tidak mengisi lubang
 	if _, err := s.AdminTim().Hapus(ctx, b.ID); err != nil {
 		t.Fatal(err)
 	}
-	d := buatTim(t, s, ctx, "Dedi")
-	if d.Urutan != 4 {
-		t.Errorf("anggota baru harus urutan 4, dapat %d", d.Urutan)
-	}
-	items, _ := s.AdminTim().Daftar(ctx)
-	if namaTim(items) != "Ani,Cici,Dedi" {
-		t.Errorf("daftar: %s", namaTim(items))
+	if items, _ := s.AdminTim().Daftar(ctx); namaTim(items) != "Ani,Cici" {
+		t.Errorf("daftar setelah hapus: %s", namaTim(items))
 	}
 }
 

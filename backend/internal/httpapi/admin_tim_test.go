@@ -184,20 +184,21 @@ func TestAdminTimDetailDanIdTidakSah(t *testing.T) {
 func TestAdminTimBuatDanJSONKetat(t *testing.T) {
 	e := siapkanTimHTTP(t)
 	id, csrf := loginBerhasil(t, e.lingkunganAuth)
-	ok := `"nama":"Dr. Ani","posisi":"Ketua","bidangRiset":"NLP","foto":"tim/k.png"`
+	ok := `"nama":"Dr. Ani","posisi":"Ketua","bidangRiset":"NLP","foto":"tim/k.png","urutan":2`
 
 	rec := kirimAdmin(t, e.h, id, csrf, "POST", "/api/admin/tim", `{`+ok+`}`)
 	if rec.Code != http.StatusCreated || rec.Header().Get("Location") != "/api/admin/tim/4" {
 		t.Fatalf("buat: %d %q %s", rec.Code, rec.Header().Get("Location"), rec.Body)
 	}
 	m := e.svc.mentah
-	if e.svc.aksi != "buat" || m.Nama != "Dr. Ani" || m.Posisi != "Ketua" || m.BidangRiset != "NLP" || m.Foto != "tim/k.png" || e.svc.oleh != "dev-admin" {
+	if e.svc.aksi != "buat" || m.Nama != "Dr. Ani" || m.Posisi != "Ketua" || m.BidangRiset != "NLP" || m.Foto != "tim/k.png" || m.Urutan == nil || *m.Urutan != 2 || e.svc.oleh != "dev-admin" {
 		t.Errorf("argumen ke layanan salah: %+v oleh=%q", m, e.svc.oleh)
 	}
 
 	e.svc.aksi = ""
 	kasus := map[string]string{
-		"urutan tidak boleh dikirim": `{` + ok + `,"urutan":1}`,
+		"urutan pecahan":            `{"nama":"A","posisi":"B","bidangRiset":"C","foto":"tim/k.png","urutan":1.5}`,
+		"urutan teks":               `{"nama":"A","posisi":"B","bidangRiset":"C","foto":"tim/k.png","urutan":"1"}`,
 		"POST tidak boleh version":   `{` + ok + `,"version":1}`,
 		"field tak dikenal":          `{` + ok + `,"status":"posted"}`,
 		"bukan JSON":                 `x`,
@@ -226,7 +227,7 @@ func TestAdminTimBuatDanJSONKetat(t *testing.T) {
 func TestAdminTimUbahWajibVersion(t *testing.T) {
 	e := siapkanTimHTTP(t)
 	id, csrf := loginBerhasil(t, e.lingkunganAuth)
-	ok := `"nama":"A","posisi":"B","bidangRiset":"C","foto":"tim/k.png"`
+	ok := `"nama":"A","posisi":"B","bidangRiset":"C","foto":"tim/k.png","urutan":3`
 	for _, body := range []string{`{` + ok + `}`, `{` + ok + `,"version":0}`, `{` + ok + `,"version":"1"}`, `{` + ok + `,"version":null}`} {
 		if rec := kirimAdmin(t, e.h, id, csrf, "PUT", "/api/admin/tim/4", body); rec.Code != http.StatusBadRequest {
 			t.Errorf("%s: %d", body, rec.Code)
@@ -271,7 +272,7 @@ func TestAdminTimPemetaanGalat(t *testing.T) {
 		{fmt.Errorf("%w: rustfs mati access_key=RAHASIA", admin.ErrStorage), 503, kodeStorageBermasalah},
 		{errors.New("pq: koneksi putus password=RAHASIA"), 500, kodeInternal},
 	}
-	ok := `"nama":"A","posisi":"B","bidangRiset":"C","foto":"tim/k.png"`
+	ok := `"nama":"A","posisi":"B","bidangRiset":"C","foto":"tim/k.png","urutan":3`
 	aksi := []struct{ metode, path, body string }{
 		{"POST", "/api/admin/tim", `{` + ok + `}`},
 		{"PUT", "/api/admin/tim/4", `{` + ok + `,"version":1}`},

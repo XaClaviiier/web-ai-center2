@@ -42,12 +42,12 @@ type DokumentasiRingkas struct {
 	Judul            string
 	TanggalPublikasi string // YYYY-MM-DD
 	GambarUtamaKey   string // kosong bila tidak ada gambar urutan 1
+	JumlahGambar     int    // semua gambar milik dokumentasi
 }
 
 // GambarDokumentasi adalah satu gambar dokumentasi (berurutan).
 type GambarDokumentasi struct {
 	Key string
-	Alt string // kosong = frontend memakai judul dokumentasi
 }
 
 // DokumentasiDetail adalah satu dokumentasi lengkap dengan seluruh gambarnya.

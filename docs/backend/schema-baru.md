@@ -1,7 +1,7 @@
 # DB Schema Baru: web-ai-center2 (backend Go)
 
 ## Meta
-engine: PostgreSQL 15 | database: `ai_center` (dev), `ai_center_test` (tes) | migrasi: goose v3.29.0 (`backend/migrations/00001_skema_awal.sql`, versi 1; hanya 00001 yang dipakai sampai ada data nyata) | ekstensi: `pg_trgm` 1.6 | akses data: pgx + sqlc (query publik dan admin berita) | tables: 5 (+ `goose_db_version`) | tanggal: 2026-11-09
+engine: PostgreSQL 15 | database: `ai_center` (dev), `ai_center_test` (tes) | migrasi: goose v3.29.0 (`backend/migrations/00001_skema_awal.sql` versi 1 dan `00002_hapus_alt_gambar_dokumentasi.sql` versi 2, dan `00003_log_aktivitas.sql` versi 3; database dev dan tes sudah di versi 3) | ekstensi: `pg_trgm` 1.6 | akses data: pgx + sqlc (query publik dan admin berita) | tables: 6 (+ `goose_db_version`) | tanggal: 2026-11-12
 Rancangan: `docs/database.md` §3-§4 plus keputusan sesi desain (dicatat di `perubahan-kode.md`). Isi di bawah dicocokkan dengan database yang terbentuk (`information_schema`, `pg_constraint`, `pg_indexes`), bukan hanya dengan berkas migrasi.
 Skema BARU, terpisah dari skema lama (`Schema.md`, database `mydb`, tidak disentuh).
 
@@ -28,14 +28,13 @@ PK=PRIMARY KEY | FK=FOREIGN KEY | NN=NOT NULL | UQ=UNIQUE | DEF=DEFAULT | "gen"=
 
 **dokumentasi**: kolom sama seperti berita, kecuali tidak ada `ringkasan`, `isi`, dan `gambar` (gambar ada di `dokumentasi_gambar`). `judul` = judul kegiatan. `tanggal_publikasi` juga date, NN, dipilih editor (`requirement.md` §5.2).
 
-**dokumentasi_gambar**
+**dokumentasi_gambar** (kolom `alt` dihapus oleh migrasi 00002; teks alt halaman publik = judul dokumentasi. Caption belum dibuat)
 | Kolom | Tipe | Aturan | Catatan |
 | ----- | ---- | ------ | ------- |
 | `id` | bigint | PK, identity | |
 | `dokumentasi_id` | bigint | NN, FK → `dokumentasi.id` ON DELETE CASCADE | |
 | `key` | text | NN, UQ | key RustFS `dokumentasi/{uuid}.ext` |
 | `urutan` | smallint | NN, CHECK `1..6` | 1 = headline |
-| `alt` | text | null | NULL: frontend memakai judul dokumentasi. Caption belum dibuat |
 | | | UQ (`dokumentasi_id`, `urutan`) `DEFERRABLE INITIALLY DEFERRED` | `urutan` bisa dirapikan 1..n dalam satu transaksi |
 
 **testimoni**
@@ -52,10 +51,25 @@ PK=PRIMARY KEY | FK=FOREIGN KEY | NN=NOT NULL | UQ=UNIQUE | DEF=DEFAULT | "gen"=
 | `id` | bigint | PK, identity | |
 | `nama`, `posisi`, `bidang_riset` | text | NN | |
 | `foto` | text | NN, UQ | key RustFS `tim/{uuid}.ext` |
-| `urutan` | integer | NN | urutan tampil manual |
+| `urutan` | integer | NN | urutan tampil: diisi admin (angka bulat >= 1; kecil tampil lebih dulu), tanpa UNIQUE dan tanpa geser otomatis; urutan sama dipecah oleh `id` |
 | `version` | integer | NN, DEF `1`, CHECK `>= 1` | |
 | `created_at` | timestamptz | NN, DEF `now()` | |
 | `created_by`, `updated_by` | text | NN | |
+
+**log_aktivitas** (migrasi 00003; baca-saja dari aplikasi, ditulis TRIGGER `catat_aktivitas` di transaksi yang sama dengan perubahan data)
+| Kolom | Tipe | Aturan | Catatan |
+| ----- | ---- | ------ | ------- |
+| `id` | bigint | PK, identity | tidak dipakai ulang |
+| `terjadi_pada` | timestamptz | NN, DEF `now()` | jam database (server), UTC |
+| `pengguna_sub` | text | NN | `sub` dari sesi server terverifikasi (bukan dari body request) |
+| `username` | text | NN | snapshot username sesi saat kejadian; sesi lama tanpa username memakai `sub` |
+| `jenis` | text | NN, CHECK | `tambah` / `ubah` / `hapus` |
+| `aksi` | text | NN, CHECK | `tambah`, `ubah`, `post`, `retract`, `restore`, `hapus`, `hapus_permanen` |
+| `modul` | text | NN, CHECK | `berita` / `dokumentasi` / `testimoni` / `tim` |
+| `item_id` | bigint | NN | tanpa FK (log bertahan setelah item dihapus) |
+| `label_item` | text | NN | snapshot judul/nama, maks 140 karakter; tanpa payload, isi, password, atau token |
+
+Pemetaan trigger: INSERT = `tambah`; UPDATE yang mengisi `deleted_at` = `hapus` (ke trash), mengosongkannya = `restore`, `status` draft->posted = `post`, posted->draft = `retract`, selain itu `ubah`; DELETE = `hapus_permanen` (termasuk hapus tim). `jenis`: tambah -> tambah; hapus dan hapus_permanen -> hapus; lainnya -> ubah. Trigger terpasang di `berita`, `dokumentasi`, `testimoni`, `tim` (perubahan `dokumentasi_gambar` tidak dicatat sendiri; Simpan dokumentasi menyentuh baris induk). Aktor dikirim aplikasi lewat `set_config('app.sub'/'app.username', ..., true)` lokal-transaksi; tanpa aktor (job purge trash, tes, impor) tidak ada baris log.
 
 ## Index (selain PK)
 | Index | Tabel | Definisi | Untuk |
@@ -68,6 +82,8 @@ PK=PRIMARY KEY | FK=FOREIGN KEY | NN=NOT NULL | UQ=UNIQUE | DEF=DEFAULT | "gen"=
 | `tim_foto_key` | tim | UNIQUE (`foto`) | satu key foto hanya dipakai satu anggota tim |
 | `berita_terbit_idx`, `dokumentasi_terbit_idx` | berita, dokumentasi | (`tanggal_publikasi` DESC, `created_at` DESC) WHERE `status='posted' AND deleted_at IS NULL` (parsial) | daftar publik terbaru |
 | `berita_judul_trgm_idx`, `dokumentasi_judul_trgm_idx` | berita, dokumentasi | GIN (`judul` `gin_trgm_ops`) | pencarian `ILIKE '%q%'` |
+| `log_aktivitas_urut_idx` | log_aktivitas | (`terjadi_pada` DESC, `id` DESC) | daftar log terbaru dulu |
+| `log_aktivitas_username_idx` | log_aktivitas | (`username`, `terjadi_pada` DESC, `id` DESC) | filter username |
 | `berita_trash_idx`, `dokumentasi_trash_idx`, `testimoni_trash_idx` | berita, dokumentasi, testimoni | (`deleted_at`) WHERE `deleted_at IS NOT NULL` (parsial) | job hapus otomatis trash 30 hari |
 
 Ditunda: index untuk daftar admin (mis. `(status, created_at DESC)`), sampai terbukti perlu. Keputusan index mengikuti `database.md` §9 (masih `[diisi]` di docs; usulan pengguna dan penyesuaian sesi desain).
@@ -102,6 +118,8 @@ Catatan key gambar (2026-11-09): format key adalah `{sumber}/{uuid-v4}.{jpg|png|
 - `dokumentasi`: `deskripsi`, `kategori`, `gambar` dihapus; gambar pindah ke `dokumentasi_gambar`.
 - `testimoni`: `kutipan` menjadi `teks`, `peran` menjadi `posisi`; `urutan` dihapus.
 - `tim`: `peran` menjadi `posisi`, `kredensial` menjadi `bidang_riset`.
+- `log_aktivitas` + trigger `catat_aktivitas` (00003, 2026-11-12) sesuai rancangan `docs/database.md` bagian Log Aktivitas.
+- `dokumentasi_gambar.alt` (ada di 00001) dihapus di 00002 (2026-11-12, keputusan pengguna: form admin tidak punya input alt).
 - Baru: `status`, `version`, `created_by`, `updated_by`, `deleted_at` (berita, dokumentasi, testimoni; `tim` hanya `version`, `created_by`, `updated_by`), sesuai `database.md` §3; `id` dari `serial` menjadi `bigint identity`; waktu dari `timestamp` menjadi `timestamptz`.
 
 ## Gaps (belum diputuskan atau perlu disesuaikan di `docs/`)
@@ -109,4 +127,7 @@ Catatan key gambar (2026-11-09): format key adalah `{sumber}/{uuid-v4}.{jpg|png|
 - ? Batas panjang teks tidak diberi CHECK di DB; divalidasi di aplikasi (angka dicatat di `perubahan-kode.md`).
 - ? Aturan "gambar dokumentasi minimal 1" ditegakkan di aplikasi, bukan constraint DB.
 - ? Pola key tanpa `{id}` menyimpang dari `database.md` §5 (lihat catatan key gambar di atas).
+- ? `docs/database.md` §3.2 masih menandai "keterangan / alt gambar" sebagai `[terbuka]`; diputuskan: tidak ada alt (dihapus di 00002), alt publik = judul.
+- ? Log Aktivitas: `docs/database.md` meminta role database runtime hanya SELECT/INSERT pada log (tanpa UPDATE/DELETE) dan kebijakan retensi/akses operasional sebelum implementasi. Belum diterapkan: aplikasi memakai satu role database dan belum ada retensi; tidak ada kode aplikasi yang meng-UPDATE/DELETE log. Perlu keputusan pengguna sebelum production.
+- ? `tim.urutan`: batas atas hanya rentang `integer` (docs tidak menyebut); urutan yang sama untuk dua anggota diperbolehkan.
 - ? Tidak ada `updated_at` dan `deleted_by` (mengikuti docs). Bila ETag/`lastmod` sitemap atau audit penghapusan membutuhkannya kelak, perlu diputuskan lagi (ETag bisa memakai `version`).

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Masuk (development) | UBAYA AI Center</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <style>
+    body { min-height: 100dvh; display: grid; place-items: center; padding: var(--jarak-5); background: var(--warna-langit-muda); }
+    main { width: min(100%, 28rem); display: grid; gap: var(--jarak-4); padding: var(--jarak-6); background: var(--warna-putih); border: 2px dashed var(--warna-navy); border-radius: var(--radius-besar); }
+    h1 { font-size: var(--judul-3); }
+    .label-sim { font-family: var(--font-data); font-size: var(--teks-kecil); padding: var(--jarak-1) var(--jarak-3); background: var(--warna-kuning); border-radius: var(--radius-kecil); justify-self: start; }
+    ul { display: grid; gap: var(--jarak-3); }
+    .tombol { width: 100%; justify-content: flex-start; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="label-sim">Hanya untuk development</p>
+    <h1>Masuk ke admin</h1>
+    <p class="teks-sekunder">Halaman ini hanya tersedia saat server berjalan dalam mode development. Di produksi, langkah ini adalah login Keycloak.</p>
+    <form id="form-masuk" novalidate>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <p id="galat-masuk" role="alert" hidden></p>
+      <button class="tombol tombol--utama" type="submit">Masuk</button>
+    </form>
+    <a href="/admin/">Batal</a>
+  </main>
+  <script src="/assets/js/masuk.js"></script>
+</body>
+</html>

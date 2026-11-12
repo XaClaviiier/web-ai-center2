@@ -2,13 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status repo: kode lama vs rencana baru
+## Status repo
 
-Repo ini punya dua lapisan yang berbeda. Baca `docs/stack.md` §4–§5 sebelum mengubah apa pun.
+Baca `docs/stack.md` dan `docs/backend/PLAN-MERGE-FULLSTACK.md` sebelum mengubah apa pun.
 
-- **Kode di `src/` dan `server/` adalah implementasi lama** (React + Vite, Bun + Elysia, PGlite/Postgres, login password). Menurut `docs/stack.md`, kode ini **bukan basis implementasi**, hanya referensi konten.
-- **Rencana target** (belum ada kodenya): halaman publik Astro (statis, data lewat island + TanStack Query), dashboard admin React + Vite, backend Go + Chi di folder baru `/backend`, PostgreSQL, RustFS, Redis, Keycloak (OIDC), semuanya satu origin. Alur kerja: planning, lalu prototipe HTML/CSS/JS saja, baru implementasi stack final setelah prototipe dinyatakan selesai.
-- Jangan memperluas kode lama (mis. menambah fitur di `server/`) kecuali diminta. Tanyakan dulu bila tugas ambigu antara memperbaiki kode lama dan mengerjakan rencana baru.
+- **Folder aktif:** `backend/` (Go + Chi, PostgreSQL, Redis, RustFS), `web/` (frontend yang disajikan Go; HASIL BUILD dari `prototype/`), `prototype/` (sumber desain frontend HTML/CSS/JS dan tesnya), `scripts/` (pembangun `web/` dan tes Node), `docs/`.
+- **Frontend:** `prototype/` adalah sumber desain dan **tidak boleh diubah desainnya**; penyesuaian ke backend dilakukan di `scripts/bangun-web.cjs` (patch) dan `scripts/tambahan-web/` (mis. `api.js`), lalu `node scripts/bangun-web.cjs` menulis ulang `web/` seluruhnya. Jangan menyunting `web/` dengan tangan. Bila backend belum menangani sesuatu yang dibutuhkan desain, backend yang disesuaikan. Tes: `node scripts/tests/web.test.cjs`, `node scripts/tests/api.test.cjs`, `prototype/tests/*.test.cjs` (butuh `jsdom` dari `node_modules` di root); uji manual terhadap server nyata: `scripts/tests/e2e-server.cjs` (lihat komentar di berkasnya).
+- **Kode lama (React + Vite, Bun + Elysia) sudah dihapus** (`src/`, `server/`, `public/`, `deploy/`, `docker-compose.production.yml`, berkas Vite/Bun di root). Masih ada di riwayat git bila perlu dilihat sebagai referensi konten. `package.json` dan `package-lock.json` di root masih berisi dependensi lama; hanya `jsdom` yang dipakai tes. Berkas deploy baru belum dibuat.
+- Rencana akhir di `docs/stack.md` (Astro + React admin + Keycloak) belum dikerjakan; frontend sekarang = prototipe yang disajikan Go (keputusan pengguna, dicatat di `docs/backend/perubahan-kode.md`).
 
 ## Dokumen perencanaan (`docs/`, bahasa Indonesia)
 
@@ -52,45 +53,12 @@ Auth admin (sementara, sampai Keycloak siap): `POST /api/auth/dev-login` (hanya 
 
 Gambar: `POST /api/admin/upload` (multipart `sumber` + `gambar`, tipe dicek dari isi, batas `UPLOAD_MAX_MB` default 2) menyimpan ke RustFS dengan key `{sumber}/{uuid}.{ext}` dan mengembalikan `{key,url}`; `GET/HEAD /media/{key}` melayani publik lewat Go (bucket privat). Key dari klien saat Simpan WAJIB divalidasi (`media.SumberDariKey` + sumber cocok + `media.Ada`) dan satu key tidak boleh dipakai dua baris. Tes RustFS hanya memakai bucket `ai-center-test`. **Jangan pernah mendaftar-lalu-menghapus isi bucket `RUSTFS_BUCKET` (dev) untuk membersihkan; hapus hanya key yang Anda buat sendiri.**
 
-Admin konten (berita, dokumentasi, testimoni, dan tim sudah selesai): `/api/admin/dokumentasi` memakai pola status yang sama dengan berita, tetapi gambarnya dinyatakan sebagai KEADAAN AKHIR `gambar:[{key,alt?}]` (1-6 item berurutan; server menurunkan sendiri replace/hapus/tambah/ganti urutan dalam satu transaksi, constraint urutan DEFERRED; file yang dibuang dihapus setelah commit; hapus permanen menghapus semua file; Post memeriksa semua gambar). `/api/admin/berita` dan `/api/admin/testimoni` (daftar `?status=semua|draft|posted|trash`, detail, buat, `PUT` dengan `version`, `post`, `retract`, `restore`, soft delete, `DELETE .../permanen`; daftar testimoni tanpa pagination dan `q`, field `foto` wajib hadir: key atau `null`), `/api/admin/tim` (tanpa status/trash, `DELETE` langsung permanen tanpa `version`, anggota baru di urutan akhir, daftar tanpa pagination). Kode bersama: `internal/admin/berkas.go` (siklus file gambar), `internal/httpapi/admin_umum.go` (pemetaan galat, `versiWajib`, `filterStatus`), `internal/store/admin_umum.go`; repositori diambil lewat adaptor `st.AdminBerita()/AdminTestimoni()/AdminTim()`. Lapisan: handler `internal/httpapi/admin_berita.go` (tipis) -> aturan bisnis `internal/admin` (validasi, slug, status, siklus file gambar; tanpa HTTP/SQL) -> repositori `internal/store/admin_berita.go` + `queries/berita_admin.sql` (aturan status diterapkan atomik di SQL; galat diklasifikasi dari baris yang ada). Aturan: edit/hapus hanya draft, `version` wajib pada `PUT`/`post`/`retract` (409 `version_conflict`), status salah 409 `status_tidak_valid`, `version` hanya naik pada Simpan/Post/Retract, file gambar lama dihapus SETELAH commit, file baru yang gagal disimpan dihapus kembali hanya bila key sah, tidak dipakai baris mana pun, dan ada di bucket. Dokumentasi, testimoni, tim belum dikerjakan.
+Admin konten (berita, dokumentasi, testimoni, dan tim sudah selesai): `/api/admin/dokumentasi` memakai pola status yang sama dengan berita, tetapi gambarnya dinyatakan sebagai KEADAAN AKHIR `gambar:[{key}]` (1-6 item berurutan; teks alt tidak ada, dihapus oleh migrasi 00002; server menurunkan sendiri replace/hapus/tambah/ganti urutan dalam satu transaksi, constraint urutan DEFERRED; file yang dibuang dihapus setelah commit; hapus permanen menghapus semua file; Post memeriksa semua gambar). `/api/admin/berita` dan `/api/admin/testimoni` (daftar `?status=semua|draft|posted|trash`, detail, buat, `PUT` dengan `version`, `post`, `retract`, `restore`, soft delete, `DELETE .../permanen`; daftar testimoni tanpa pagination dan `q`, field `foto` wajib hadir: key atau `null`), `/api/admin/tim` (tanpa status/trash, `DELETE` langsung permanen tanpa `version`, `urutan` wajib diisi admin pada POST/PUT (bilangan bulat >= 1, urutan sama boleh), daftar tanpa pagination). Kode bersama: `internal/admin/berkas.go` (siklus file gambar), `internal/httpapi/admin_umum.go` (pemetaan galat, `versiWajib`, `filterStatus`), `internal/store/admin_umum.go`; repositori diambil lewat adaptor `st.AdminBerita()/AdminTestimoni()/AdminTim()`. Lapisan: handler `internal/httpapi/admin_berita.go` (tipis) -> aturan bisnis `internal/admin` (validasi, slug, status, siklus file gambar; tanpa HTTP/SQL) -> repositori `internal/store/admin_berita.go` + `queries/berita_admin.sql` (aturan status diterapkan atomik di SQL; galat diklasifikasi dari baris yang ada). Aturan: edit/hapus hanya draft, `version` wajib pada `PUT`/`post`/`retract` (409 `version_conflict`), status salah 409 `status_tidak_valid`, `version` hanya naik pada Simpan/Post/Retract, file gambar lama dihapus SETELAH commit, file baru yang gagal disimpan dihapus kembali hanya bila key sah, tidak dipakai baris mana pun, dan ada di bucket. Daftar admin berita/dokumentasi tanpa `page`/`limit` berisi SEMUA item (desain admin tanpa kontrol halaman); `page`/`limit` (maks 50) tetap didukung bila diminta. Item yang dikunci ORANG LAIN diberi `dikunciOleh` (nama) pada daftar. `PUT` berita/dokumentasi menerima judul lama >70 karakter bila judul tidak diubah (judul baru/berubah wajib <=70). Log Aktivitas: `GET /api/admin/log-aktivitas?page&limit(10, maks 50)&username&jenis&dari&sampai` (baca-saja; `{items,page,limit,total,usernames}`; tanggal YYYY-MM-DD hari Asia/Jakarta inklusif; halaman di luar jangkauan dibatasi ke terakhir); tabel `log_aktivitas` ditulis trigger database di transaksi yang sama dengan perubahan data, aktor dari sesi server lewat `auth.DenganAktor` (context) -> `set_config('app.sub'/'app.username')` di `internal/store/aktor_tx.go`; tanpa aktor (job, tes) tidak dicatat; `/api/auth/me` memuat `username`. Tes yang membersihkan tabel harus ikut mengosongkan `log_aktivitas` (`testutil.BersihkanKonten`).
 
-Struktur: `cmd/api` (entry), `internal/{config,httpapi,store,konten,admin,auth,ratelimit,media,testutil}`, `migrations/` (hanya `00001_skema_awal.sql` dipakai sampai ada data nyata), `queries/` + `sqlc.yaml` (kode di `internal/store/db` adalah hasil generate, jangan diedit). Tahap kerja mengikuti urutan di `docs/backend/perubahan-kode.md`.
-
-## Perintah (kode lama)
-
-Frontend (root, Node >= 20):
-
-```
-npm run dev            # Vite di :5173
-npm run build          # tsc --noEmit && vite build
-npm run typecheck      # sama dengan lint
-npm test               # vitest run (jsdom)
-npx vitest run src/lib/api.test.ts      # satu file test
-npx vitest run -t "nama test"           # satu test menurut nama
-```
-
-Backend lama (`server/`, memakai Bun, bukan Node):
-
-```
-bun install
-bun run dev            # watch, port 3000
-bun test               # bun:test (BUKAN vitest; vitest mengecualikan server/)
-bun test src/lib/tulis.test.ts          # satu file test
-bun run typecheck
-bun run db:migrate / db:seed
-```
-
-Jalankan frontend dan backend sebagai dua proses terpisah. Frontend membaca `VITE_API_BASE_URL` dari `.env` di root (diisi `http://localhost:3000/api`); tanpa itu default-nya `/api` pada origin Vite dan menghasilkan 404 karena `vite.config.ts` tidak punya proxy. `.env` hanya dibaca saat Vite start, jadi restart setelah mengubahnya. Backend butuh `server/.env` (lihat `server/.env.example`); `ADMIN_PASSWORD` adalah password login `/admin`.
-
-## Arsitektur kode lama
-
-- **Frontend (`src/`)**: React 19 + react-router, Tailwind 4. Semua fetch lewat `src/lib/api.ts` (`ambilJson`/`ambilDaftar` jatuh ke data dummy di `src/data/` bila backend gagal; `kirimJsonAdmin`/`kirimFileAdmin` untuk tulis admin justru MELEMPAR `ErrorApi`). Mode `test` tidak pernah fetch, supaya test deterministik. Halaman admin tunggal `src/pages/Admin.tsx` (login, token Bearer di localStorage). Teks UI ada di `src/lib/kamusBahasa.ts`. `vite.config.ts` punya plugin kustom (peta chunk rute, inline CSS saat build).
-- **Backend (`server/src/`)**: Elysia. `index.ts` merakit config, DB, storage RustFS, lalu `createApp` (`app.ts`) yang memasang `@elysia/cors`, penanganan error, dan `registerRoutes` (`routes.ts`, semua route dalam satu file). Akses data lewat interface `Repositories` (`repositories/types.ts`) dengan implementasi Drizzle (`drizzle.ts`) dan mapper baris-ke-respons (`mappers.ts`; kolom NULL dihilangkan dari JSON). Validasi input di `lib/tulis.ts`, query list di `lib/query.ts`, rate-limit in-memory di `lib/rateLimit.ts`, auth token turunan `ADMIN_PASSWORD` di `auth.ts`, gambar di RustFS (`lib/upload.ts`, `lib/orphanUpload.ts`). Skema di `db/schema.ts`. Test memakai repository/storage tiruan.
-- Konvensi respons: daftar `{ items: [...] }`, galat `{ error: "pesan" }`; nama field JSON bahasa Indonesia camelCase.
-- Deploy: `server/DEPLOY.md`, `deploy/` (Dockerfile + nginx), `docker-compose.production.yml`.
+Struktur: `cmd/api` (entry), `internal/{config,httpapi,store,konten,admin,auth,ratelimit,media,testutil}`, `migrations/` (`00001_skema_awal.sql`, `00002_hapus_alt_gambar_dokumentasi.sql`, `00003_log_aktivitas.sql`; database dev/tes sudah di versi 3, jadi perubahan skema berikutnya memakai migrasi baru), `queries/` + `sqlc.yaml` (kode di `internal/store/db` adalah hasil generate, jangan diedit). Tahap kerja mengikuti urutan di `docs/backend/perubahan-kode.md`.
 
 ## Catatan kerja
 
 - Semua komentar kode dan dokumen berbahasa Indonesia; ikuti gaya itu.
-- Bila ada dua salinan repo (mis. di `Isolated_web_test\...` dan `orca\workspaces\...`), `.env` dan `node_modules` tidak ikut tersalin; pastikan dev server dijalankan dari folder yang punya `.env`.
+- Bila ada dua salinan repo (mis. di `Isolated_web_test\...` dan `orca\workspaces\...`), `backend/.env` dan `node_modules` tidak ikut tersalin; pastikan server dijalankan dari folder yang punya `backend/.env`.
 - `README.md` di root kosong.

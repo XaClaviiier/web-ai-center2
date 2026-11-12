@@ -369,7 +369,7 @@ func TestUbahBerhasilDanGantiGambar(t *testing.T) {
 func TestUbahTanpaGantiGambarTidakMenghapusApaPun(t *testing.T) {
 	l := siapkan(t)
 	b, _ := l.svc.Buat(ctx, l.mentah(t, "Judul"), "u")
-	m := MentahBerita{Judul: "Judul Diedit", Isi: "isi baru", TanggalPublikasi: "2026-12-01", Gambar: b.GambarKey}
+	m := MentahBerita{Judul: "Judul Diedit", Isi: "isi baru", TanggalPublikasi: "2026-11-10", Gambar: b.GambarKey}
 	u, err := l.svc.Ubah(ctx, b.ID, m, b.Version, "u")
 	if err != nil {
 		t.Fatal(err)
@@ -524,5 +524,30 @@ func TestHapusPermanenTetapSuksesBilaFileGagalDihapus(t *testing.T) {
 func TestWaktuOperasiFileDipakai(t *testing.T) {
 	if waktuOperasiFile <= 0 {
 		t.Fatal(fmt.Sprint("waktuOperasiFile harus positif: ", waktuOperasiFile))
+	}
+}
+
+// Data lama berjudul >70 karakter (dibuat sebelum batas 70) boleh disimpan selama judulnya tidak diubah.
+func TestUbahJudulLamaDiAtasBatas(t *testing.T) {
+	l := siapkan(t)
+	b, err := l.svc.Buat(ctx, l.mentah(t, "Judul Awal"), "u")
+	if err != nil {
+		t.Fatal(err)
+	}
+	panjang := strings.Repeat("L", 100)
+	l.repo.baris[b.ID].Judul = panjang // data lama yang lolos batas lama (200)
+
+	m := MentahBerita{Judul: panjang, Isi: "isi baru", TanggalPublikasi: "2026-11-09", Gambar: b.GambarKey}
+	u, err := l.svc.Ubah(ctx, b.ID, m, b.Version, "u")
+	if err != nil || u.Judul != panjang || u.Isi != "isi baru" {
+		t.Fatalf("judul lama tidak diubah harus lolos: %+v %v", u, err)
+	}
+	m.Judul = panjang + "!"
+	if _, err := l.svc.Ubah(ctx, b.ID, m, u.Version, "u"); err == nil {
+		t.Error("judul panjang yang diubah harus ditolak")
+	}
+	m.Judul = strings.Repeat("p", 70)
+	if _, err := l.svc.Ubah(ctx, b.ID, m, u.Version, "u"); err != nil {
+		t.Errorf("judul dipendekkan harus lolos: %v", err)
 	}
 }

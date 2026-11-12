@@ -1,3 +1,0 @@
-# Aturan crawl berlaku pada root domain produksi.
-User-agent: *
-Allow: /

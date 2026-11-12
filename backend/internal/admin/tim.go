@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/media"
@@ -16,7 +17,7 @@ type Tim struct {
 	Posisi      string
 	BidangRiset string
 	FotoKey     string
-	Urutan      int32 // urutan tampil; anggota baru ditaruh paling akhir
+	Urutan      int32 // urutan tampil: diisi admin, angka kecil tampil lebih dulu
 	Version     int32
 	DibuatPada  time.Time
 	DibuatOleh  string
@@ -29,6 +30,7 @@ type MentahTim struct {
 	Posisi      string
 	BidangRiset string
 	Foto        string // key RustFS; wajib
+	Urutan      *int64 // wajib (nil = tidak dikirim); angka bulat >= 1
 }
 
 // InputTim adalah isi yang sudah divalidasi dan dirapikan.
@@ -37,13 +39,14 @@ type InputTim struct {
 	Posisi      string
 	BidangRiset string
 	Foto        string
+	Urutan      int32
 }
 
 // TimRepo adalah akses data tim untuk admin; galat: ErrTidakDitemukan, ErrVersiBentrok, ErrGambarDipakai.
 type TimRepo interface {
 	Daftar(ctx context.Context) ([]Tim, error) // berurutan: urutan, id
 	Detail(ctx context.Context, id int64) (Tim, error)
-	Buat(ctx context.Context, in InputTim, oleh string) (Tim, error) // urutan otomatis (maksimum + 1)
+	Buat(ctx context.Context, in InputTim, oleh string) (Tim, error)
 	Ubah(ctx context.Context, id int64, version int32, in InputTim, oleh string) (Tim, error)
 	Hapus(ctx context.Context, id int64) (fotoKey string, err error) // langsung permanen
 	FotoDipakai(ctx context.Context, key string) (bool, error)
@@ -73,7 +76,14 @@ func ValidasiTim(m MentahTim) (InputTim, error) {
 	if m.Foto == "" {
 		return InputTim{}, salah("Field foto wajib diisi")
 	}
-	return InputTim{Nama: nama, Posisi: posisi, BidangRiset: bidang, Foto: m.Foto}, nil
+	// Urutan tampil: angka bulat >= 1 (docs/requirement.md); batas atas hanya rentang kolom integer.
+	if m.Urutan == nil {
+		return InputTim{}, salah("Field urutan wajib diisi")
+	}
+	if *m.Urutan < 1 || *m.Urutan > math.MaxInt32 {
+		return InputTim{}, salah("Field urutan harus bilangan bulat minimal 1")
+	}
+	return InputTim{Nama: nama, Posisi: posisi, BidangRiset: bidang, Foto: m.Foto, Urutan: int32(*m.Urutan)}, nil
 }
 
 func (s TimLayanan) file() pengelolaFile {
@@ -84,7 +94,7 @@ func (s TimLayanan) Daftar(ctx context.Context) ([]Tim, error) { return s.Repo.D
 
 func (s TimLayanan) Detail(ctx context.Context, id int64) (Tim, error) { return s.Repo.Detail(ctx, id) }
 
-// Buat menambah anggota tim baru di urutan paling akhir.
+// Buat menambah anggota tim baru dengan urutan tampil pilihan admin.
 func (s TimLayanan) Buat(ctx context.Context, m MentahTim, oleh string) (hasil Tim, err error) {
 	berhasil := false
 	defer func() {

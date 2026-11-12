@@ -11,8 +11,7 @@ import (
 
 const buatTim = `-- name: BuatTim :one
 INSERT INTO tim (nama, posisi, bidang_riset, foto, urutan, created_by, updated_by)
-SELECT $1, $2, $3, $4, COALESCE(MAX(urutan), 0) + 1, $5, $5
-FROM tim
+VALUES ($1, $2, $3, $4, $5, $6, $6)
 RETURNING id, nama, posisi, bidang_riset, foto, urutan, version, created_at, created_by, updated_by
 `
 
@@ -21,6 +20,7 @@ type BuatTimParams struct {
 	Posisi      string
 	BidangRiset string
 	Foto        string
+	Urutan      int32
 	Oleh        string
 }
 
@@ -30,6 +30,7 @@ func (q *Queries) BuatTim(ctx context.Context, arg BuatTimParams) (Tim, error) {
 		arg.Posisi,
 		arg.BidangRiset,
 		arg.Foto,
+		arg.Urutan,
 		arg.Oleh,
 	)
 	var i Tim
@@ -98,7 +99,7 @@ SELECT id, nama, posisi, bidang_riset, foto, urutan, version, created_at, create
 `
 
 // Query admin tim. Tim tidak punya status dan trash: hapus langsung permanen (database.md §6).
-// urutan tampil manual; anggota baru ditaruh paling akhir (maksimum + 1). Dua pembuatan serentak bisa berurutan sama; pemutus seri id.
+// urutan tampil manual: diisi admin (angka bulat >= 1, kecil tampil lebih dulu). Urutan sama diperbolehkan; pemutus seri id.
 func (q *Queries) ListTimAdmin(ctx context.Context) ([]Tim, error) {
 	rows, err := q.db.Query(ctx, listTimAdmin)
 	if err != nil {
@@ -132,9 +133,9 @@ func (q *Queries) ListTimAdmin(ctx context.Context) ([]Tim, error) {
 
 const ubahTim = `-- name: UbahTim :one
 UPDATE tim
-SET nama = $1, posisi = $2, bidang_riset = $3, foto = $4,
-    version = version + 1, updated_by = $5
-WHERE id = $6 AND version = $7
+SET nama = $1, posisi = $2, bidang_riset = $3, foto = $4, urutan = $5,
+    version = version + 1, updated_by = $6
+WHERE id = $7 AND version = $8
 RETURNING id, nama, posisi, bidang_riset, foto, urutan, version, created_at, created_by, updated_by
 `
 
@@ -143,6 +144,7 @@ type UbahTimParams struct {
 	Posisi      string
 	BidangRiset string
 	Foto        string
+	Urutan      int32
 	Oleh        string
 	ID          int64
 	Version     int32
@@ -154,6 +156,7 @@ func (q *Queries) UbahTim(ctx context.Context, arg UbahTimParams) (Tim, error) {
 		arg.Posisi,
 		arg.BidangRiset,
 		arg.Foto,
+		arg.Urutan,
 		arg.Oleh,
 		arg.ID,
 		arg.Version,

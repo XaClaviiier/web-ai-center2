@@ -136,9 +136,27 @@ func TestLockDetailMenampilkanInfo(t *testing.T) {
 	if la["milikSaya"] != true || lb["milikSaya"] != false || lb["pemegang"].(map[string]any)["nama"] != "Admin Dev" || lb["kedaluwarsaPada"] == nil {
 		t.Errorf("info lock salah: A=%v B=%v", la, lb)
 	}
-	// Daftar tidak memuat info lock.
-	if rec := e.kirim(t, e.b, "GET", "/api/admin/berita", ""); rec.Code != 200 || json.Valid(rec.Body.Bytes()) == false {
-		t.Errorf("daftar: %d", rec.Code)
+	// Daftar: item yang dikunci ORANG LAIN ditandai dikunciOleh; kunci milik sendiri tidak.
+	e.svc.daftar, e.svc.total = []admin.Berita{contohBerita()}, 1
+	daftar := func(s sesiUji) map[string]any {
+		rec := e.kirim(t, s, "GET", "/api/admin/berita", "")
+		if rec.Code != 200 || !json.Valid(rec.Body.Bytes()) {
+			t.Fatalf("daftar: %d %s", rec.Code, rec.Body)
+		}
+		return peta(t, rec)["items"].([]any)[0].(map[string]any)
+	}
+	if v, ada := daftar(e.b)["dikunciOleh"]; !ada || v != "Admin Dev" {
+		t.Errorf("B melihat item dikunci A: dikunciOleh=%v ada=%v", v, ada)
+	}
+	if v, ada := daftar(e.a)["dikunciOleh"]; ada {
+		t.Errorf("pemegang kunci sendiri tidak ditandai: %v", v)
+	}
+	if m := peta(t, e.kirim(t, e.b, "GET", "/api/admin/berita", "")); m["total"] == nil || m["page"] == nil {
+		t.Errorf("meta daftar harus utuh: %v", m)
+	}
+	e.kirim(t, e.a, "DELETE", "/api/admin/berita/7/lock", "")
+	if _, ada := daftar(e.b)["dikunciOleh"]; ada {
+		t.Error("setelah kunci dilepas, tanda hilang")
 	}
 }
 
@@ -282,7 +300,7 @@ func TestLockTimTanpaAturanDraftDanTidakMembatalkanCache(t *testing.T) {
 func TestLockGagalTertutupBilaRedisMati(t *testing.T) {
 	mati := redis.NewClient(&redis.Options{Addr: "127.0.0.1:1", DialTimeout: 200 * time.Millisecond, MaxRetries: -1})
 	t.Cleanup(func() { _ = mati.Close() })
-	svc := &layananPalsu{hasil: contohBerita()}
+	svc := &layananPalsu{hasil: contohBerita(), daftar: []admin.Berita{contohBerita()}, total: 1} // daftar berisi item, jadi kunci harus dibaca
 	e := siapkanAuth(t, nil, func(d *Deps) {
 		d.Admin = DepsAdmin{Berita: svc}
 		d.Lock = &lock.Lock{C: mati}
@@ -293,6 +311,7 @@ func TestLockGagalTertutupBilaRedisMati(t *testing.T) {
 		{"PUT", "/api/admin/berita/7/lock", ""},
 		{"PUT", "/api/admin/berita/7", bodyUbahUji},
 		{"GET", "/api/admin/berita/7", ""},
+		{"GET", "/api/admin/berita", ""},
 	} {
 		svc.aksi = ""
 		rec := kirimAdmin(t, e.h, id, csrf, c.metode, c.path, c.body)

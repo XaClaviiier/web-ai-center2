@@ -22,7 +22,7 @@ func Open(ctx context.Context, databaseURL string) (*Store, error) {
 	if err != nil {
 		return nil, fmt.Errorf("membuka pool database: %w", err)
 	}
-	s := &Store{Pool: pool, Q: db.New(pool)}
+	s := &Store{Pool: pool, Q: db.New(dbtxAktor{pool})}
 	if err := s.Ping(ctx); err != nil {
 		pool.Close()
 		return nil, err

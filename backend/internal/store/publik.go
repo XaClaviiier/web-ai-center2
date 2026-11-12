@@ -105,7 +105,7 @@ func (s *Store) ListDokumentasi(ctx context.Context, p konten.ParamDaftar) ([]ko
 	for _, r := range baris {
 		out = append(out, konten.DokumentasiRingkas{
 			ID: r.ID, Slug: r.Slug, Judul: r.Judul,
-			TanggalPublikasi: tanggal(r.TanggalPublikasi), GambarUtamaKey: teks(r.GambarUtama),
+			TanggalPublikasi: tanggal(r.TanggalPublikasi), GambarUtamaKey: teks(r.GambarUtama), JumlahGambar: int(r.JumlahGambar),
 		})
 	}
 	return out, total, nil
@@ -128,7 +128,7 @@ func (s *Store) DokumentasiBySlug(ctx context.Context, slug string) (konten.Doku
 		Gambar: make([]konten.GambarDokumentasi, 0, len(gambar)),
 	}
 	for _, g := range gambar {
-		out.Gambar = append(out.Gambar, konten.GambarDokumentasi{Key: g.Key, Alt: teks(g.Alt)})
+		out.Gambar = append(out.Gambar, konten.GambarDokumentasi{Key: g})
 	}
 	return out, nil
 }

@@ -53,6 +53,7 @@ type bodyBuatTim struct {
 	Posisi      string `json:"posisi"`
 	BidangRiset string `json:"bidangRiset"`
 	Foto        string `json:"foto"`
+	Urutan      *int64 `json:"urutan"` // wajib; angka bulat >= 1
 }
 
 type bodyUbahTim struct {
@@ -61,7 +62,7 @@ type bodyUbahTim struct {
 }
 
 func (b bodyBuatTim) mentah() admin.MentahTim {
-	return admin.MentahTim{Nama: b.Nama, Posisi: b.Posisi, BidangRiset: b.BidangRiset, Foto: b.Foto}
+	return admin.MentahTim{Nama: b.Nama, Posisi: b.Posisi, BidangRiset: b.BidangRiset, Foto: b.Foto, Urutan: b.Urutan}
 }
 
 // routerTim mendaftarkan /api/admin/tim/*. Tim tanpa status dan trash: DELETE langsung permanen.

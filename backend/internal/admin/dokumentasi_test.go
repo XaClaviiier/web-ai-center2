@@ -212,12 +212,12 @@ func keysDok(d Dokumentasi) []string {
 
 func TestValidasiDokumentasi(t *testing.T) {
 	ok := MentahDokumentasi{Judul: "  Kegiatan   Satu ", TanggalPublikasi: "2026-11-09",
-		Gambar: []GambarDokumentasi{{Key: "k1", Alt: "  Foto   utama "}, {Key: "k2"}}}
+		Gambar: []GambarDokumentasi{{Key: "k1"}, {Key: "k2"}}}
 	in, err := ValidasiDokumentasi(ok)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if in.Judul != "Kegiatan Satu" || in.Gambar[0].Alt != "Foto utama" || in.Gambar[1].Alt != "" || len(in.Gambar) != 2 {
+	if in.Judul != "Kegiatan Satu" || len(in.Gambar) != 2 || in.Gambar[0].Key != "k1" {
 		t.Errorf("perapian: %+v", in)
 	}
 	banyak := func(n int) []GambarDokumentasi {
@@ -231,15 +231,12 @@ func TestValidasiDokumentasi(t *testing.T) {
 		"judul kosong":     func(m *MentahDokumentasi) { m.Judul = "" },
 		"judul panjang":    func(m *MentahDokumentasi) { m.Judul = strings.Repeat("a", BatasJudul+1) },
 		"tanggal salah":    func(m *MentahDokumentasi) { m.TanggalPublikasi = "kemarin" },
+		"tanggal masa depan": func(m *MentahDokumentasi) { m.TanggalPublikasi = "2999-01-01" },
 		"tanpa gambar":     func(m *MentahDokumentasi) { m.Gambar = nil },
 		"gambar kosong []": func(m *MentahDokumentasi) { m.Gambar = []GambarDokumentasi{} },
 		"tujuh gambar":     func(m *MentahDokumentasi) { m.Gambar = banyak(7) },
 		"key kosong":       func(m *MentahDokumentasi) { m.Gambar = []GambarDokumentasi{{Key: "a"}, {Key: ""}} },
 		"key kembar":       func(m *MentahDokumentasi) { m.Gambar = []GambarDokumentasi{{Key: "a"}, {Key: "a"}} },
-		"alt terlalu panjang": func(m *MentahDokumentasi) {
-			m.Gambar = []GambarDokumentasi{{Key: "a", Alt: strings.Repeat("a", BatasAlt+1)}}
-		},
-		"alt karakter kontrol": func(m *MentahDokumentasi) { m.Gambar = []GambarDokumentasi{{Key: "a", Alt: "a\x00b"}} },
 	}
 	for nama, f := range kasus {
 		m := ok
@@ -256,11 +253,6 @@ func TestValidasiDokumentasi(t *testing.T) {
 		if _, err := ValidasiDokumentasi(m); err != nil {
 			t.Errorf("%d gambar harus diterima: %v", n, err)
 		}
-	}
-	m := ok
-	m.Gambar = []GambarDokumentasi{{Key: "a", Alt: strings.Repeat("a", BatasAlt)}}
-	if _, err := ValidasiDokumentasi(m); err != nil {
-		t.Errorf("alt tepat di batas harus diterima: %v", err)
 	}
 }
 
@@ -420,12 +412,6 @@ func TestDokUbahSiklusFile(t *testing.T) {
 	r = ubah(append([]GambarDokumentasi{a, baru}, tambah...), 4)
 	if len(r.Gambar) != 4 || !adaKey(t, l.mem, tambah[1].Key) {
 		t.Errorf("tambah: %v", keysDok(r))
-	}
-
-	// 5. alt diperbarui tanpa operasi file
-	r = ubah([]GambarDokumentasi{{Key: a.Key, Alt: "Alt baru"}, baru, tambah[0], tambah[1]}, 5)
-	if r.Gambar[0].Alt != "Alt baru" {
-		t.Errorf("alt: %+v", r.Gambar[0])
 	}
 }
 

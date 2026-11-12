@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -61,10 +62,10 @@ type DepsAuth struct {
 }
 
 // identitasDev adalah pengguna tunggal login development (semua pengguna sama haknya; role hanya label).
-var identitasDev = auth.Identitas{Sub: "dev-admin", Nama: "Admin Dev", Role: "pegawai"}
+var identitasDev = auth.Identitas{Sub: "dev-admin", Nama: "Admin Dev", Role: "pegawai", Username: "admin.dev"}
 
 // identitasDev2 adalah akun dev kedua agar fitur dua-admin (mis. soft lock) bisa dicoba di development.
-var identitasDev2 = auth.Identitas{Sub: "dev-admin-2", Nama: "Admin Dev 2", Role: "pegawai"}
+var identitasDev2 = auth.Identitas{Sub: "dev-admin-2", Nama: "Admin Dev 2", Role: "pegawai", Username: "admin.dev2"}
 
 type ctxKey int
 
@@ -94,12 +95,13 @@ func (h authHandler) routerAuth(r chi.Router) {
 
 type sesiJSON struct {
 	Nama      string `json:"nama"`
+	Username  string `json:"username"`
 	Role      string `json:"role"`
 	CSRFToken string `json:"csrfToken"`
 }
 
 func bentukSesi(s auth.Session) sesiJSON {
-	return sesiJSON{Nama: s.Nama, Role: s.Role, CSRFToken: s.CSRFToken}
+	return sesiJSON{Nama: s.Nama, Username: cmp.Or(s.Username, s.Sub), Role: s.Role, CSRFToken: s.CSRFToken}
 }
 
 func (h authHandler) devLogin(w http.ResponseWriter, r *http.Request) {
@@ -185,7 +187,10 @@ func (h authHandler) wajibLogin(next http.Handler) http.Handler {
 			h.galatSession(w, r, err)
 			return
 		}
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), kunciSession, sess)))
+		ctx := context.WithValue(r.Context(), kunciSession, sess)
+		// Aktor untuk log aktivitas: dari session server, bukan dari body request.
+		ctx = auth.DenganAktor(ctx, auth.Aktor{Sub: sess.Sub, Username: sess.Username})
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

@@ -167,8 +167,8 @@ func TestDokumentasi(t *testing.T) {
 	exec(ins, "d3", "Kegiatan Draft", "2026-04-01", "draft", "2026-04-01T08:00:00Z", false)
 	exec(ins, "d4", "Kegiatan Terhapus", "2026-05-01", "posted", "2026-05-01T08:00:00Z", true)
 	// gambar d1 disisipkan terbalik untuk membuktikan urutan dari kolom urutan
-	exec(`INSERT INTO dokumentasi_gambar (dokumentasi_id, key, urutan, alt) SELECT id, 'dokumentasi/d1/dua.jpg', 2, NULL FROM dokumentasi WHERE slug='d1'`)
-	exec(`INSERT INTO dokumentasi_gambar (dokumentasi_id, key, urutan, alt) SELECT id, 'dokumentasi/d1/satu.jpg', 1, 'Foto utama' FROM dokumentasi WHERE slug='d1'`)
+	exec(`INSERT INTO dokumentasi_gambar (dokumentasi_id, key, urutan) SELECT id, 'dokumentasi/d1/dua.jpg', 2 FROM dokumentasi WHERE slug='d1'`)
+	exec(`INSERT INTO dokumentasi_gambar (dokumentasi_id, key, urutan) SELECT id, 'dokumentasi/d1/satu.jpg', 1 FROM dokumentasi WHERE slug='d1'`)
 
 	items, total, err := s.ListDokumentasi(ctx, konten.ParamDaftar{Batas: 10})
 	if err != nil {
@@ -180,9 +180,13 @@ func TestDokumentasi(t *testing.T) {
 	if items[0].GambarUtamaKey != "" || items[1].GambarUtamaKey != "dokumentasi/d1/satu.jpg" {
 		t.Errorf("gambar utama salah: %+v", items)
 	}
+	// daftar publik memuat jumlah semua gambar (d2 tanpa gambar = 0, d1 = 2), juga pada hasil pencarian
+	if items[0].JumlahGambar != 0 || items[1].JumlahGambar != 2 {
+		t.Errorf("jumlah gambar salah: %+v", items)
+	}
 
 	cari, total, err := s.ListDokumentasi(ctx, konten.ParamDaftar{Pola: "%satu%", Batas: 10})
-	if err != nil || total != 1 || len(cari) != 1 || cari[0].Slug != "d1" {
+	if err != nil || total != 1 || len(cari) != 1 || cari[0].Slug != "d1" || cari[0].JumlahGambar != 2 {
 		t.Fatalf("pencarian salah: %+v total=%d err=%v", cari, total, err)
 	}
 
@@ -190,8 +194,8 @@ func TestDokumentasi(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(d.Gambar) != 2 || d.Gambar[0].Key != "dokumentasi/d1/satu.jpg" || d.Gambar[0].Alt != "Foto utama" ||
-		d.Gambar[1].Key != "dokumentasi/d1/dua.jpg" || d.Gambar[1].Alt != "" {
+	if len(d.Gambar) != 2 || d.Gambar[0].Key != "dokumentasi/d1/satu.jpg" ||
+		d.Gambar[1].Key != "dokumentasi/d1/dua.jpg" {
 		t.Errorf("gambar detail salah: %+v", d.Gambar)
 	}
 	for _, slug := range []string{"d3", "d4", "tidak-ada"} {

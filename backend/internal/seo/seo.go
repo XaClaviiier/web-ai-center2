@@ -158,7 +158,6 @@ func DeskripsiDokumentasi(judul, tanggal string) string {
 // Gambar adalah satu gambar dokumentasi untuk isi awal.
 type Gambar struct {
 	URL string
-	Alt string
 }
 
 // KontenBerita menghasilkan <article> berisi judul dan satu paragraf per blok teks (dipisah baris kosong).
@@ -174,17 +173,13 @@ func KontenBerita(judul, isi string) string {
 	return b.String()
 }
 
-// KontenDokumentasi menghasilkan <article> berisi judul, deskripsi, dan gambar berurutan (alt default = judul).
+// KontenDokumentasi menghasilkan <article> berisi judul, deskripsi, dan gambar berurutan (alt = judul).
 func KontenDokumentasi(judul, deskripsi string, gambar []Gambar) string {
 	e := html.EscapeString
 	var b strings.Builder
 	b.WriteString(`<article id="konten-awal"><h1>` + e(judul) + "</h1><p>" + e(deskripsi) + "</p>")
 	for _, g := range gambar {
-		alt := g.Alt
-		if alt == "" {
-			alt = judul
-		}
-		b.WriteString(`<figure><img src="` + e(g.URL) + `" alt="` + e(alt) + `" loading="lazy"></figure>`)
+		b.WriteString(`<figure><img src="` + e(g.URL) + `" alt="` + e(judul) + `" loading="lazy"></figure>`)
 	}
 	b.WriteString("</article>")
 	return b.String()

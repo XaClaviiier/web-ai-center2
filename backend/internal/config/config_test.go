@@ -280,7 +280,7 @@ func TestLoadSEODefaultDanEnv(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.StaticDir != "../web/dist" || cfg.SiteName != "AI Center" {
+	if cfg.StaticDir != "../web" || cfg.SiteName != "AI Center" {
 		t.Errorf("default salah: %q %q", cfg.StaticDir, cfg.SiteName)
 	}
 	if cfg.PublicBaseURL != "http://localhost:8080" {

@@ -42,7 +42,18 @@ type DokumentasiGambar struct {
 	DokumentasiID int64
 	Key           string
 	Urutan        int16
-	Alt           pgtype.Text
+}
+
+type LogAktivita struct {
+	ID          int64
+	TerjadiPada pgtype.Timestamptz
+	PenggunaSub string
+	Username    string
+	Jenis       string
+	Aksi        string
+	Modul       string
+	ItemID      int64
+	LabelItem   string
 }
 
 type Testimoni struct {

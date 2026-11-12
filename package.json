@@ -2,36 +2,13 @@
   "name": "web-ai-center",
   "private": true,
   "version": "0.1.0",
-  "description": "Frontend CMS AI Center Universitas Surabaya (React + Vite + TS + Tailwind + motion). Data dari backend dengan fallback dummy — lihat TODO_BACKEND.",
-  "type": "module",
+  "description": "UBAYA AI Center. Dependensi di root hanya untuk tes Node (jsdom): prototype/tests dan scripts/tests. Aplikasi: backend/ (Go) dan web/ (hasil scripts/bangun-web.cjs dari prototype/).",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
-  },
-  "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-router-dom": "^7.7.0"
+    "bangun-web": "node scripts/bangun-web.cjs",
+    "test:web": "node scripts/tests/web.test.cjs",
+    "test:api": "node scripts/tests/api.test.cjs"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.11",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.3.0",
-    "@types/node": "^26.6.2",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.6.0",
-    "jsdom": "^26.1.0",
-    "tailwindcss": "^4.1.11",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
-  },
-  "engines": {
-    "node": ">=20"
+    "jsdom": "^26.1.0"
   }
 }

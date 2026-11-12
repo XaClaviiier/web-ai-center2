@@ -60,7 +60,7 @@ func kontenSEO(n *atomic.Int64) kontenHitung {
 	}
 	k.dokumDetail = konten.DokumentasiDetail{
 		ID: 2, Slug: "kegiatan-a", Judul: "Kegiatan A", TanggalPublikasi: "2026-10-01",
-		Gambar: []konten.GambarDokumentasi{{Key: "dokumentasi/utama.png", Alt: "Foto utama"}, {Key: "dokumentasi/kedua.png"}},
+		Gambar: []konten.GambarDokumentasi{{Key: "dokumentasi/utama.png"}, {Key: "dokumentasi/kedua.png"}},
 	}
 	return k
 }
@@ -125,7 +125,7 @@ func TestHTMLDokumentasi(t *testing.T) {
 	for _, mau := range []string{
 		`content="Dokumentasi kegiatan Kegiatan A — 2026-10-01"`,
 		`property="og:image" content="` + baseUji + `/media/dokumentasi/utama.png"`, // headline = urutan 1
-		`"@type":"ImageGallery"`, `alt="Foto utama"`, `alt="Kegiatan A"`, // alt default = judul
+		`"@type":"ImageGallery"`, `alt="Kegiatan A"`, // alt = judul
 		`<title>Kegiatan A | AI Center</title>`,
 	} {
 		if !strings.Contains(html, mau) {
@@ -337,5 +337,20 @@ func TestE2ESEOHTMLSitemapDanRetract(t *testing.T) {
 	}
 	if peta := sm(); strings.Contains(peta, "akan-ditarik") || !strings.Contains(peta, "kegiatan-e2e") {
 		t.Errorf("sitemap harus langsung berubah setelah retract:\n%s", peta)
+	}
+}
+
+// HEAD pada rute SEO dilayani seperti GET (status dan header sama); sebelumnya 405.
+func TestSEOHeadSamaDenganGET(t *testing.T) {
+	var n atomic.Int64
+	h := routerSEO(t, kontenSEO(&n), depsSEOUji(t))
+	for _, p := range []string{"/sitemap.xml", "/robots.txt", "/berita/judul-a", "/dokumentasi/kegiatan-a", "/berita/tidak-ada"} {
+		g, hd := panggil(h, http.MethodGet, p), panggil(h, http.MethodHead, p)
+		if hd.Code != g.Code || hd.Header().Get("Content-Type") != g.Header().Get("Content-Type") {
+			t.Errorf("%s: HEAD %d %q, GET %d %q", p, hd.Code, hd.Header().Get("Content-Type"), g.Code, g.Header().Get("Content-Type"))
+		}
+		if hd.Code == http.StatusMethodNotAllowed {
+			t.Errorf("%s: HEAD tidak boleh 405", p)
+		}
 	}
 }

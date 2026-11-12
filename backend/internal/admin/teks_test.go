@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"time"
 	"errors"
 	"strings"
 	"testing"
@@ -116,6 +117,25 @@ func TestTanggal(t *testing.T) {
 	}
 }
 
+// Batas "hari ini" memakai WIB: 2026-11-12 23:30 UTC sudah 2026-11-13 di Jakarta.
+func TestTanggalBatasHariIniWIB(t *testing.T) {
+	asli := sekarang
+	defer func() { sekarang = asli }()
+	sekarang = func() time.Time { return time.Date(2026, 11, 12, 23, 30, 0, 0, time.UTC) }
+	for _, in := range []string{"2026-11-12", "2026-11-13"} {
+		if _, err := tanggal("t", in); err != nil {
+			t.Errorf("%q harus diterima: %v", in, err)
+		}
+	}
+	if _, err := tanggal("t", "2026-11-14"); err == nil {
+		t.Error("besok (WIB) harus ditolak")
+	}
+	sekarang = func() time.Time { return time.Date(2026, 11, 12, 16, 59, 0, 0, time.UTC) } // 23:59 WIB
+	if _, err := tanggal("t", "2026-11-13"); err == nil {
+		t.Error("2026-11-13 masih besok pada 12 Nov 23:59 WIB, harus ditolak")
+	}
+}
+
 func TestValidasiBerita(t *testing.T) {
 	ok := MentahBerita{Judul: "  Judul   Berita ", Isi: "Paragraf satu.\r\n\r\n\r\nParagraf dua.", TanggalPublikasi: "2026-11-09", Gambar: "berita/x.png"}
 	in, err := ValidasiBerita(ok)
@@ -133,6 +153,7 @@ func TestValidasiBerita(t *testing.T) {
 		"isi terlalu panjang":   func(m *MentahBerita) { m.Isi = strings.Repeat("a", BatasIsi+1) },
 		"tanggal salah":         func(m *MentahBerita) { m.TanggalPublikasi = "besok" },
 		"tanggal kosong":        func(m *MentahBerita) { m.TanggalPublikasi = "" },
+		"tanggal masa depan":    func(m *MentahBerita) { m.TanggalPublikasi = "2999-01-01" },
 		"gambar kosong":         func(m *MentahBerita) { m.Gambar = "" },
 	}
 	for nama, f := range ubah {
@@ -150,5 +171,43 @@ func TestValidasiBerita(t *testing.T) {
 	m.Isi = strings.Repeat("b", BatasIsi)
 	if _, err := ValidasiBerita(m); err != nil {
 		t.Errorf("tepat di batas harus diterima: %v", err)
+	}
+}
+
+// Batas judul 70 (sama dengan frontend). Judul BARU lebih panjang ditolak; judul lama yang tidak diubah boleh tetap
+// (lihat TestUbahJudulLamaDiAtasBatas).
+func TestBatasJudulTujuhPuluh(t *testing.T) {
+	if BatasJudul != 70 {
+		t.Fatalf("BatasJudul = %d, harus 70", BatasJudul)
+	}
+	if _, err := barisSatu("judul", strings.Repeat("a", 70), BatasJudul); err != nil {
+		t.Errorf("70 karakter harus lolos: %v", err)
+	}
+	if _, err := barisSatu("judul", strings.Repeat("a", 71), BatasJudul); err == nil {
+		t.Error("71 karakter harus ditolak")
+	}
+}
+
+func TestJudulBoleh(t *testing.T) {
+	lama := strings.Repeat("l", 90)
+	kasus := []struct {
+		nama, judul, judulLama string
+		ok                     bool
+	}{
+		{"buat: 70 lolos", strings.Repeat("a", 70), "", true},
+		{"buat: 71 ditolak", strings.Repeat("a", 71), "", false},
+		{"simpan: judul lama panjang tidak diubah", lama, lama, true},
+		{"simpan: lama + spasi berlebih (dirapikan sama)", "  " + lama + "  ", lama, true},
+		{"simpan: judul panjang diubah ditolak", lama + "x", lama, false},
+		{"simpan: panjang lain ditolak", strings.Repeat("m", 91), lama, false},
+		{"simpan: dipendekkan lolos", strings.Repeat("a", 70), lama, true},
+		{"simpan: kosong ditolak", "  ", lama, false},
+		{"simpan: karakter kontrol ditolak", lama[:10] + "\x00", lama, false},
+	}
+	for _, k := range kasus {
+		_, err := judulBoleh("judul", k.judul, k.judulLama)
+		if (err == nil) != k.ok {
+			t.Errorf("%s: ok=%v err=%v", k.nama, k.ok, err)
+		}
 	}
 }

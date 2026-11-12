@@ -74,15 +74,15 @@ RETURNING id;
 DELETE FROM dokumentasi_gambar
 WHERE dokumentasi_id = sqlc.arg(dokumentasi_id) AND NOT (key = ANY(sqlc.arg(dipertahankan)::text[]));
 
--- Perbarui urutan dan alt gambar yang sudah ada milik dokumentasi ini; 0 baris berarti key baru (pemanggil menyisipkannya).
+-- Perbarui urutan gambar yang sudah ada milik dokumentasi ini; 0 baris berarti key baru (pemanggil menyisipkannya).
 -- name: PerbaruiGambarDokumentasi :execrows
 UPDATE dokumentasi_gambar
-SET urutan = sqlc.arg(urutan), alt = sqlc.narg(alt)::text
+SET urutan = sqlc.arg(urutan)
 WHERE dokumentasi_id = sqlc.arg(dokumentasi_id) AND key = sqlc.arg(key);
 
 -- name: TambahGambarDokumentasi :exec
-INSERT INTO dokumentasi_gambar (dokumentasi_id, key, urutan, alt)
-VALUES (sqlc.arg(dokumentasi_id), sqlc.arg(key), sqlc.arg(urutan), sqlc.narg(alt)::text);
+INSERT INTO dokumentasi_gambar (dokumentasi_id, key, urutan)
+VALUES (sqlc.arg(dokumentasi_id), sqlc.arg(key), sqlc.arg(urutan));
 
 -- Apakah key dipakai baris gambar dokumentasi mana pun (aman-hapus file baru yang gagal disimpan).
 -- name: GambarDokumentasiDipakai :one

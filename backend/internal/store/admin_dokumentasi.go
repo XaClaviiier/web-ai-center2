@@ -21,7 +21,7 @@ func (s *Store) AdminDokumentasi() RepoDokumentasi { return RepoDokumentasi{s} }
 
 const constraintKeyGambarDok = "dokumentasi_gambar_key_key"
 
-func dokumentasiAdmin(r db.Dokumentasi, gambar []db.ListGambarDokumentasiRow) admin.Dokumentasi {
+func dokumentasiAdmin(r db.Dokumentasi, gambar []string) admin.Dokumentasi {
 	d := admin.Dokumentasi{
 		ID: r.ID, Slug: r.Slug, Judul: r.Judul, TanggalPublikasi: tanggal(r.TanggalPublikasi), Status: r.Status, Version: r.Version,
 		DibuatPada: r.CreatedAt.Time.UTC(), DibuatOleh: r.CreatedBy, DiubahOleh: r.UpdatedBy,
@@ -32,7 +32,7 @@ func dokumentasiAdmin(r db.Dokumentasi, gambar []db.ListGambarDokumentasiRow) ad
 		d.DihapusPada = &t
 	}
 	for _, g := range gambar {
-		d.Gambar = append(d.Gambar, admin.GambarDokumentasi{Key: g.Key, Alt: teks(g.Alt)})
+		d.Gambar = append(d.Gambar, admin.GambarDokumentasi{Key: g})
 	}
 	return d
 }
@@ -106,7 +106,7 @@ func (s RepoDokumentasi) Buat(ctx context.Context, slug string, in admin.InputDo
 		id, dibuat = r.ID, true
 		for i, g := range in.Gambar {
 			if err := q.TambahGambarDokumentasi(ctx, db.TambahGambarDokumentasiParams{
-				DokumentasiID: r.ID, Key: g.Key, Urutan: int16(i + 1), Alt: altPg(g.Alt),
+				DokumentasiID: r.ID, Key: g.Key, Urutan: int16(i + 1),
 			}); err != nil {
 				return err
 			}
@@ -145,16 +145,16 @@ func (s RepoDokumentasi) Ubah(ctx context.Context, id int64, version int32, in a
 		if err := q.HapusGambarDokumentasiTakDipertahankan(ctx, db.HapusGambarDokumentasiTakDipertahankanParams{DokumentasiID: id, Dipertahankan: keys}); err != nil {
 			return err
 		}
-		// 2. perbarui urutan dan alt gambar yang sudah ada; sisipkan yang baru (urutan = posisi dalam daftar, 1..n).
+		// 2. perbarui urutan gambar yang sudah ada; sisipkan yang baru (urutan = posisi dalam daftar, 1..n).
 		//    UNIQUE (dokumentasi_id, urutan) deferred, jadi pertukaran urutan sah selama hasil akhirnya unik.
 		for i, g := range in.Gambar {
 			urutan := int16(i + 1)
-			n, err := q.PerbaruiGambarDokumentasi(ctx, db.PerbaruiGambarDokumentasiParams{Urutan: urutan, Alt: altPg(g.Alt), DokumentasiID: id, Key: g.Key})
+			n, err := q.PerbaruiGambarDokumentasi(ctx, db.PerbaruiGambarDokumentasiParams{Urutan: urutan, DokumentasiID: id, Key: g.Key})
 			if err != nil {
 				return err
 			}
 			if n == 0 {
-				if err := q.TambahGambarDokumentasi(ctx, db.TambahGambarDokumentasiParams{DokumentasiID: id, Key: g.Key, Urutan: urutan, Alt: altPg(g.Alt)}); err != nil {
+				if err := q.TambahGambarDokumentasi(ctx, db.TambahGambarDokumentasiParams{DokumentasiID: id, Key: g.Key, Urutan: urutan}); err != nil {
 					return err
 				}
 			}
@@ -230,7 +230,7 @@ func (s RepoDokumentasi) HapusPermanen(ctx context.Context, id int64) ([]string,
 		}
 		keys = make([]string, 0, len(gambar))
 		for _, g := range gambar {
-			keys = append(keys, g.Key)
+			keys = append(keys, g)
 		}
 		return nil
 	})

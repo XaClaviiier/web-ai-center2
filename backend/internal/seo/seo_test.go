@@ -148,9 +148,12 @@ func TestKontenBeritaParagrafDanEscape(t *testing.T) {
 	}
 }
 
-func TestKontenDokumentasiAltDefaultJudul(t *testing.T) {
-	got := KontenDokumentasi(`Acara "A"`, "Desk", []Gambar{{URL: "/media/a.png", Alt: "Foto A"}, {URL: "/media/b.png"}})
-	for _, mau := range []string{`alt="Foto A"`, `alt="Acara &#34;A&#34;"`, `src="/media/b.png"`, "<h1>Acara &#34;A&#34;</h1>"} {
+func TestKontenDokumentasiAltSelaluJudul(t *testing.T) {
+	got := KontenDokumentasi(`Acara "A"`, "Desk", []Gambar{{URL: "/media/a.png"}, {URL: "/media/b.png"}})
+	if n := strings.Count(got, `alt="Acara &#34;A&#34;"`); n != 2 {
+		t.Errorf("alt semua gambar harus judul (2x), dapat %d: %s", n, got)
+	}
+	for _, mau := range []string{`src="/media/a.png"`, `src="/media/b.png"`, "<h1>Acara &#34;A&#34;</h1>"} {
 		if !strings.Contains(got, mau) {
 			t.Errorf("tidak memuat %q: %s", mau, got)
 		}

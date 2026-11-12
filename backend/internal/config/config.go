@@ -31,7 +31,7 @@ const (
 	trashRetensiDefaultHari   = 30 // docs/requirement.md bagian 5
 	orphanUmurDefaultJam      = 24 // docs/database.md bagian 5
 	orphanMaksHapusDefault    = 200
-	staticDirDefault          = "../web/dist"
+	staticDirDefault          = "../web"
 	siteNameDefault           = "AI Center"
 	lockTTLDefaultDetik       = 300  // 5 menit (docs/database.md §4)
 	lockHeartbeatDefaultDetik = 60   // 1 menit

@@ -54,7 +54,7 @@ func hitung(t *testing.T, s *Store, ctx context.Context, sql string, args ...any
 
 func TestAdminDokumentasiBuatDenganGambarBerurutan(t *testing.T) {
 	s, ctx := bukaStoreTes(t)
-	in := inputDok("Kegiatan Satu", []admin.GambarDokumentasi{{Key: kunci("a"), Alt: "Foto utama"}, {Key: kunci("b")}, {Key: kunci("c"), Alt: "Penutup"}})
+	in := inputDok("Kegiatan Satu", []admin.GambarDokumentasi{{Key: kunci("a")}, {Key: kunci("b")}, {Key: kunci("c")}})
 	d, dibuat, err := s.AdminDokumentasi().Buat(ctx, "kegiatan-satu", in, "dev-admin")
 	if err != nil || !dibuat {
 		t.Fatalf("Buat: %v %v", dibuat, err)
@@ -62,7 +62,7 @@ func TestAdminDokumentasiBuatDenganGambarBerurutan(t *testing.T) {
 	if d.Status != "draft" || d.Version != 1 || d.Slug != "kegiatan-satu" || d.DibuatOleh != "dev-admin" || d.DihapusPada != nil || d.TanggalPublikasi != "2026-11-09" {
 		t.Errorf("nilai awal salah: %+v", d)
 	}
-	if urutanKey(d) != "a,b,c" || d.Gambar[0].Alt != "Foto utama" || d.Gambar[1].Alt != "" || d.Gambar[2].Alt != "Penutup" {
+	if urutanKey(d) != "a,b,c" {
 		t.Errorf("gambar salah: %+v", d.Gambar)
 	}
 	var urutan []int
@@ -75,8 +75,9 @@ func TestAdminDokumentasiBuatDenganGambarBerurutan(t *testing.T) {
 	if fmt.Sprint(urutan) != "[1 2 3]" {
 		t.Errorf("urutan di database harus 1..3: %v", urutan)
 	}
-	if n := hitung(t, s, ctx, `SELECT count(*) FROM dokumentasi_gambar WHERE dokumentasi_id=$1 AND alt IS NULL`, d.ID); n != 1 {
-		t.Errorf("alt kosong harus NULL: %d", n)
+	// migrasi 00002: kolom alt sudah dihapus
+	if n := hitung(t, s, ctx, `SELECT count(*) FROM information_schema.columns WHERE table_name='dokumentasi_gambar' AND column_name='alt'`); n != 0 {
+		t.Errorf("kolom alt harus tidak ada: %d", n)
 	}
 }
 
@@ -162,22 +163,16 @@ func TestAdminDokumentasiUbahOperasiGambar(t *testing.T) {
 	}
 }
 
-func TestAdminDokumentasiUbahAltDanJudul(t *testing.T) {
+func TestAdminDokumentasiUbahJudulDanTanggal(t *testing.T) {
 	s, ctx := bukaStoreTes(t)
 	d := buatDok(t, s, ctx, "dok", "Dok", "a", "b")
-	in := admin.InputDokumentasi{Judul: "Judul Baru", TanggalPublikasi: "2026-12-31", Gambar: []admin.GambarDokumentasi{{Key: kunci("a"), Alt: "Alt baru"}, {Key: kunci("b"), Alt: ""}}}
+	in := admin.InputDokumentasi{Judul: "Judul Baru", TanggalPublikasi: "2026-12-31", Gambar: []admin.GambarDokumentasi{{Key: kunci("a")}, {Key: kunci("b")}}}
 	u, err := s.AdminDokumentasi().Ubah(ctx, d.ID, 1, in, "u")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if u.Judul != "Judul Baru" || u.TanggalPublikasi != "2026-12-31" || u.Slug != "dok" || u.Gambar[0].Alt != "Alt baru" || u.Gambar[1].Alt != "" {
+	if u.Judul != "Judul Baru" || u.TanggalPublikasi != "2026-12-31" || u.Slug != "dok" || urutanKey(u) != "a,b" {
 		t.Errorf("hasil: %+v", u)
-	}
-	// alt yang dikosongkan kembali menjadi NULL
-	in.Gambar[0].Alt = ""
-	u, _ = s.AdminDokumentasi().Ubah(ctx, d.ID, 2, in, "u")
-	if hitung(t, s, ctx, `SELECT count(*) FROM dokumentasi_gambar WHERE dokumentasi_id=$1 AND alt IS NULL`, d.ID) != 2 {
-		t.Error("alt kosong harus NULL")
 	}
 }
 

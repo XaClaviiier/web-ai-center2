@@ -23,9 +23,10 @@ const (
 
 // Identitas adalah siapa yang login. Sub dipakai untuk audit (created_by/updated_by); Role hanya label tampilan.
 type Identitas struct {
-	Sub  string
-	Nama string
-	Role string
+	Sub      string
+	Nama     string
+	Role     string
+	Username string // snapshot username untuk log aktivitas (mis. claim Keycloak nanti); kosong = pakai Sub
 }
 
 // Session adalah data yang disimpan di Redis pada key session:{id}.

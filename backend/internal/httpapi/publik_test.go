@@ -267,13 +267,13 @@ func TestGalatStoreMenjadi500TanpaBocor(t *testing.T) {
 func TestDokumentasi(t *testing.T) {
 	k := kontenPalsu{
 		dokum: []konten.DokumentasiRingkas{
-			{ID: 1, Slug: "a", Judul: "A", TanggalPublikasi: "2026-02-03", GambarUtamaKey: "dokumentasi/1/h.jpg"},
+			{ID: 1, Slug: "a", Judul: "A", TanggalPublikasi: "2026-02-03", GambarUtamaKey: "dokumentasi/1/h.jpg", JumlahGambar: 2},
 			{ID: 2, Slug: "b", Judul: "B", TanggalPublikasi: "2026-02-02"},
 		},
 		total: 2,
 		dokumDetail: konten.DokumentasiDetail{
 			ID: 1, Slug: "a", Judul: "A", TanggalPublikasi: "2026-02-03",
-			Gambar: []konten.GambarDokumentasi{{Key: "dokumentasi/1/h.jpg", Alt: "Foto utama"}, {Key: "dokumentasi/1/2.jpg"}},
+			Gambar: []konten.GambarDokumentasi{{Key: "dokumentasi/1/h.jpg"}, {Key: "dokumentasi/1/2.jpg"}},
 		},
 	}
 	r := routerKonten(k)
@@ -282,6 +282,10 @@ func TestDokumentasi(t *testing.T) {
 	items := m["items"].([]any)
 	if items[0].(map[string]any)["gambarUtama"] != "/media/dokumentasi/1/h.jpg" {
 		t.Errorf("gambarUtama salah: %v", items[0])
+	}
+	// jumlahGambar selalu hadir (0 bila tanpa gambar) agar frontend dapat menampilkan "N Foto"
+	if items[0].(map[string]any)["jumlahGambar"] != 2.0 || items[1].(map[string]any)["jumlahGambar"] != 0.0 {
+		t.Errorf("jumlahGambar salah: %v %v", items[0], items[1])
 	}
 	if _, ada := items[1].(map[string]any)["gambarUtama"]; ada {
 		t.Errorf("gambarUtama kosong harus dihilangkan: %v", items[1])
@@ -293,11 +297,11 @@ func TestDokumentasi(t *testing.T) {
 	}
 	gambar := decode(t, rec.Body.String())["gambar"].([]any)
 	g0, g1 := gambar[0].(map[string]any), gambar[1].(map[string]any)
-	if len(gambar) != 2 || g0["url"] != "/media/dokumentasi/1/h.jpg" || g0["alt"] != "Foto utama" {
+	if len(gambar) != 2 || g0["url"] != "/media/dokumentasi/1/h.jpg" {
 		t.Errorf("gambar[0] salah: %v", g0)
 	}
 	if _, ada := g1["alt"]; ada || g1["url"] != "/media/dokumentasi/1/2.jpg" {
-		t.Errorf("gambar[1] salah (alt kosong harus dihilangkan): %v", g1)
+		t.Errorf("gambar[1] salah (field alt sudah dihapus): %v", g1)
 	}
 }
 

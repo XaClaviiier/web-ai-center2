@@ -13,7 +13,7 @@ func BersihkanKonten(t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
 	bersih := func() {
 		_, err := pool.Exec(context.Background(),
-			"TRUNCATE berita, dokumentasi, dokumentasi_gambar, testimoni, tim RESTART IDENTITY CASCADE")
+			"TRUNCATE berita, dokumentasi, dokumentasi_gambar, testimoni, tim, log_aktivitas RESTART IDENTITY CASCADE")
 		if err != nil {
 			t.Fatalf("membersihkan tabel tes: %v", err)
 		}

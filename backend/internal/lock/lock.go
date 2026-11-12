@@ -129,6 +129,34 @@ func (l *Lock) Lepas(ctx context.Context, jenis string, id int64, sub string) er
 }
 
 // Baca mengembalikan keadaan kunci, atau nil bila tidak ada.
+// BacaBanyak membaca pemegang kunci banyak item sekaligus (satu MGET). Item tanpa kunci tidak ada di hasil.
+func (l *Lock) BacaBanyak(ctx context.Context, jenis string, ids []int64) (map[int64]Pemegang, error) {
+	hasil := make(map[int64]Pemegang)
+	if len(ids) == 0 {
+		return hasil, nil
+	}
+	kunci := make([]string, len(ids))
+	for i, id := range ids {
+		kunci[i] = key(jenis, id)
+	}
+	nilai, err := l.C.MGet(ctx, kunci...).Result()
+	if err != nil {
+		return nil, fmt.Errorf("lock: baca banyak: %w", err)
+	}
+	for i, v := range nilai {
+		s, ok := v.(string)
+		if !ok {
+			continue // tidak ada kunci
+		}
+		var p Pemegang
+		if err := json.Unmarshal([]byte(s), &p); err != nil {
+			return nil, fmt.Errorf("lock: isi kunci rusak: %w", err)
+		}
+		hasil[ids[i]] = p
+	}
+	return hasil, nil
+}
+
 func (l *Lock) Baca(ctx context.Context, jenis string, id int64) (*Info, error) {
 	var (
 		get  *redis.StringCmd

@@ -140,7 +140,7 @@ func TestE2EAdminBeritaSiklusPenuh(t *testing.T) {
 
 	// 5. Simpan dengan version basi -> 409 dan file baru dihapus kembali (database.md §5)
 	keyBaru := unggahBaru()
-	rec = panggil("PUT", path, `{"judul":"Pelatihan AI Lanjut","isi":"Isi baru","tanggalPublikasi":"2026-12-01","gambar":"`+keyBaru+`","version":99}`)
+	rec = panggil("PUT", path, `{"judul":"Pelatihan AI Lanjut","isi":"Isi baru","tanggalPublikasi":"2026-11-10","gambar":"`+keyBaru+`","version":99}`)
 	e409 := harus(rec, 409, "simpan version basi")
 	if e409["error"].(map[string]any)["code"] != "version_conflict" {
 		t.Errorf("kode salah: %v", e409)
@@ -154,8 +154,8 @@ func TestE2EAdminBeritaSiklusPenuh(t *testing.T) {
 
 	// 6. Simpan dengan version benar dan gambar baru -> gambar lama dihapus setelah commit
 	keyBaru = unggahBaru()
-	u := harus(panggil("PUT", path, `{"judul":"Pelatihan AI Lanjut","isi":"Isi baru","tanggalPublikasi":"2026-12-01","gambar":"`+keyBaru+`","version":1}`), 200, "simpan")
-	if u["judul"] != "Pelatihan AI Lanjut" || u["version"].(float64) != 2 || u["slug"] != "pelatihan-ai" || u["tanggalPublikasi"] != "2026-12-01" {
+	u := harus(panggil("PUT", path, `{"judul":"Pelatihan AI Lanjut","isi":"Isi baru","tanggalPublikasi":"2026-11-10","gambar":"`+keyBaru+`","version":1}`), 200, "simpan")
+	if u["judul"] != "Pelatihan AI Lanjut" || u["version"].(float64) != 2 || u["slug"] != "pelatihan-ai" || u["tanggalPublikasi"] != "2026-11-10" {
 		t.Fatalf("hasil simpan salah: %v", u)
 	}
 	if adaDiStorage(key1) {
@@ -187,7 +187,7 @@ func TestE2EAdminBeritaSiklusPenuh(t *testing.T) {
 	}
 
 	// 8. aturan status: posted tidak bisa diedit/dihapus; harus Retract dulu
-	harus(panggil("PUT", path, `{"judul":"x","isi":"y","tanggalPublikasi":"2026-12-01","gambar":"`+keyBaru+`","version":3}`), 409, "edit posted")
+	harus(panggil("PUT", path, `{"judul":"x","isi":"y","tanggalPublikasi":"2026-11-10","gambar":"`+keyBaru+`","version":3}`), 409, "edit posted")
 	harus(panggil("DELETE", path, ""), 409, "hapus posted")
 	harus(panggil("POST", path+"/post", `{"version":3}`), 409, "post ulang")
 
@@ -212,7 +212,7 @@ func TestE2EAdminBeritaSiklusPenuh(t *testing.T) {
 	if semua := baca(panggil("GET", "/api/admin/berita", "")); semua["total"].(float64) != 1 {
 		t.Errorf("daftar biasa tidak boleh memuat item trash: %v", semua)
 	}
-	harus(panggil("PUT", path, `{"judul":"x","isi":"y","tanggalPublikasi":"2026-12-01","gambar":"`+keyBaru+`","version":4}`), 409, "edit trash")
+	harus(panggil("PUT", path, `{"judul":"x","isi":"y","tanggalPublikasi":"2026-11-10","gambar":"`+keyBaru+`","version":4}`), 409, "edit trash")
 
 	// 11. pulihkan -> draft; hapus lagi; hapus permanen -> baris dan file hilang
 	pl := harus(panggil("POST", path+"/restore", ""), 200, "pulihkan")

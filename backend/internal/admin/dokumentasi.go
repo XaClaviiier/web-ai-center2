@@ -5,24 +5,19 @@ import (
 	"errors"
 	"log/slog"
 	"strconv"
-	"strings"
 	"time"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/media"
 )
 
 // Batas dokumentasi (database.md §3.2, §5.1, requirement.md §5.2).
 const (
-	MaksGambarDokumentasi = 6   // jumlah gambar per dokumentasi: 1..6
-	BatasAlt              = 200 // karakter, opsional
+	MaksGambarDokumentasi = 6 // jumlah gambar per dokumentasi: 1..6
 )
 
-// GambarDokumentasi adalah satu gambar dokumentasi. Alt kosong = tidak ada (frontend memakai judul sebagai cadangan).
+// GambarDokumentasi adalah satu gambar dokumentasi (key RustFS). Teks alt tidak disimpan: frontend memakai judul.
 type GambarDokumentasi struct {
 	Key string
-	Alt string
 }
 
 // Dokumentasi adalah satu dokumentasi lengkap untuk admin (semua status, termasuk trash).
@@ -97,26 +92,12 @@ type DokumentasiLayanan struct {
 	Log   *slog.Logger
 }
 
-// altOpsional merapikan alt: kosong boleh; bila ada, satu baris, tanpa karakter kontrol, maksimum BatasAlt.
-func altOpsional(s string) (string, error) {
-	if !utf8.ValidString(s) {
-		return "", salah("Field alt bukan teks UTF-8 yang valid")
-	}
-	for _, r := range s {
-		if unicode.IsControl(r) && !unicode.IsSpace(r) {
-			return "", salah("Field alt memuat karakter yang tidak diizinkan")
-		}
-	}
-	s = strings.Join(strings.Fields(s), " ")
-	if utf8.RuneCountInString(s) > BatasAlt {
-		return "", salah("Field alt maksimal " + strconv.Itoa(BatasAlt) + " karakter")
-	}
-	return s, nil
-}
-
 // ValidasiDokumentasi memvalidasi dan merapikan isi dokumentasi (tanpa memeriksa key gambar ke storage).
-func ValidasiDokumentasi(m MentahDokumentasi) (InputDokumentasi, error) {
-	judul, err := barisSatu("judul", m.Judul, BatasJudul)
+func ValidasiDokumentasi(m MentahDokumentasi) (InputDokumentasi, error) { return validasiDokumentasi(m, "") }
+
+// validasiDokumentasi seperti ValidasiDokumentasi; judulLama (Simpan) mengizinkan judul lama >BatasJudul yang tidak diubah.
+func validasiDokumentasi(m MentahDokumentasi, judulLama string) (InputDokumentasi, error) {
+	judul, err := judulBoleh("judul", m.Judul, judulLama)
 	if err != nil {
 		return InputDokumentasi{}, err
 	}
@@ -137,11 +118,7 @@ func ValidasiDokumentasi(m MentahDokumentasi) (InputDokumentasi, error) {
 			return InputDokumentasi{}, salah("Field gambar memuat key yang sama lebih dari sekali")
 		}
 		sudah[g.Key] = struct{}{}
-		alt, err := altOpsional(g.Alt)
-		if err != nil {
-			return InputDokumentasi{}, err
-		}
-		gambar = append(gambar, GambarDokumentasi{Key: g.Key, Alt: alt})
+		gambar = append(gambar, GambarDokumentasi{Key: g.Key})
 	}
 	return InputDokumentasi{Judul: judul, TanggalPublikasi: tgl, Gambar: gambar}, nil
 }
@@ -252,7 +229,7 @@ func (s DokumentasiLayanan) Ubah(ctx context.Context, id int64, m MentahDokument
 	if cur.Version != version {
 		return Dokumentasi{}, ErrVersiBentrok
 	}
-	in, err := ValidasiDokumentasi(m)
+	in, err := validasiDokumentasi(m, cur.Judul)
 	if err != nil {
 		return Dokumentasi{}, err
 	}

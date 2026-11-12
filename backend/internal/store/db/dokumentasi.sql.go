@@ -12,7 +12,8 @@ import (
 )
 
 const cariDokumentasiPublik = `-- name: CariDokumentasiPublik :many
-SELECT d.id, d.slug, d.judul, d.tanggal_publikasi, g.key AS gambar_utama
+SELECT d.id, d.slug, d.judul, d.tanggal_publikasi, g.key AS gambar_utama,
+       (SELECT count(*) FROM dokumentasi_gambar x WHERE x.dokumentasi_id = d.id)::int AS jumlah_gambar
 FROM dokumentasi d
 LEFT JOIN dokumentasi_gambar g ON g.dokumentasi_id = d.id AND g.urutan = 1
 WHERE d.status = 'posted' AND d.deleted_at IS NULL AND d.judul ILIKE $1::text
@@ -32,6 +33,7 @@ type CariDokumentasiPublikRow struct {
 	Judul            string
 	TanggalPublikasi pgtype.Date
 	GambarUtama      pgtype.Text
+	JumlahGambar     int32
 }
 
 func (q *Queries) CariDokumentasiPublik(ctx context.Context, arg CariDokumentasiPublikParams) ([]CariDokumentasiPublikRow, error) {
@@ -49,6 +51,7 @@ func (q *Queries) CariDokumentasiPublik(ctx context.Context, arg CariDokumentasi
 			&i.Judul,
 			&i.TanggalPublikasi,
 			&i.GambarUtama,
+			&i.JumlahGambar,
 		); err != nil {
 			return nil, err
 		}
@@ -110,7 +113,8 @@ func (q *Queries) HitungDokumentasiPublik(ctx context.Context) (int64, error) {
 
 const listDokumentasiPublik = `-- name: ListDokumentasiPublik :many
 
-SELECT d.id, d.slug, d.judul, d.tanggal_publikasi, g.key AS gambar_utama
+SELECT d.id, d.slug, d.judul, d.tanggal_publikasi, g.key AS gambar_utama,
+       (SELECT count(*) FROM dokumentasi_gambar x WHERE x.dokumentasi_id = d.id)::int AS jumlah_gambar
 FROM dokumentasi d
 LEFT JOIN dokumentasi_gambar g ON g.dokumentasi_id = d.id AND g.urutan = 1
 WHERE d.status = 'posted' AND d.deleted_at IS NULL
@@ -129,9 +133,10 @@ type ListDokumentasiPublikRow struct {
 	Judul            string
 	TanggalPublikasi pgtype.Date
 	GambarUtama      pgtype.Text
+	JumlahGambar     int32
 }
 
-// Query publik dokumentasi. Gambar utama = gambar urutan 1 (headline).
+// Query publik dokumentasi. Gambar utama = gambar urutan 1 (headline); jumlah_gambar = semua gambar milik dokumentasi.
 func (q *Queries) ListDokumentasiPublik(ctx context.Context, arg ListDokumentasiPublikParams) ([]ListDokumentasiPublikRow, error) {
 	rows, err := q.db.Query(ctx, listDokumentasiPublik, arg.Geser, arg.Batas)
 	if err != nil {
@@ -147,6 +152,7 @@ func (q *Queries) ListDokumentasiPublik(ctx context.Context, arg ListDokumentasi
 			&i.Judul,
 			&i.TanggalPublikasi,
 			&i.GambarUtama,
+			&i.JumlahGambar,
 		); err != nil {
 			return nil, err
 		}
@@ -159,27 +165,22 @@ func (q *Queries) ListDokumentasiPublik(ctx context.Context, arg ListDokumentasi
 }
 
 const listGambarDokumentasi = `-- name: ListGambarDokumentasi :many
-SELECT key, alt FROM dokumentasi_gambar WHERE dokumentasi_id = $1 ORDER BY urutan
+SELECT key FROM dokumentasi_gambar WHERE dokumentasi_id = $1 ORDER BY urutan
 `
 
-type ListGambarDokumentasiRow struct {
-	Key string
-	Alt pgtype.Text
-}
-
-func (q *Queries) ListGambarDokumentasi(ctx context.Context, dokumentasiID int64) ([]ListGambarDokumentasiRow, error) {
+func (q *Queries) ListGambarDokumentasi(ctx context.Context, dokumentasiID int64) ([]string, error) {
 	rows, err := q.db.Query(ctx, listGambarDokumentasi, dokumentasiID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListGambarDokumentasiRow
+	var items []string
 	for rows.Next() {
-		var i ListGambarDokumentasiRow
-		if err := rows.Scan(&i.Key, &i.Alt); err != nil {
+		var key string
+		if err := rows.Scan(&key); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, key)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

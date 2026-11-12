@@ -33,7 +33,6 @@ type dokumentasiAdminHandler struct {
 type gambarDokumentasiAdminJSON struct {
 	Key string `json:"key"`
 	URL string `json:"url"`
-	Alt string `json:"alt,omitempty"` // dihilangkan bila kosong (frontend memakai judul sebagai cadangan)
 }
 
 // dokumentasiAdminJSON adalah detail lengkap (dengan seluruh gambar berurutan).
@@ -70,7 +69,7 @@ type dokumentasiAdminRingkasJSON struct {
 func bentukDokumentasiAdmin(d admin.Dokumentasi) dokumentasiAdminJSON {
 	g := make([]gambarDokumentasiAdminJSON, 0, len(d.Gambar))
 	for _, x := range d.Gambar {
-		g = append(g, gambarDokumentasiAdminJSON{Key: x.Key, URL: urlMedia(x.Key), Alt: x.Alt})
+		g = append(g, gambarDokumentasiAdminJSON{Key: x.Key, URL: urlMedia(x.Key)})
 	}
 	return dokumentasiAdminJSON{
 		ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: d.TanggalPublikasi, Gambar: g, Status: d.Status, Version: d.Version,
@@ -94,7 +93,6 @@ func bentukDokumentasiRingkas(r admin.RingkasDokumentasi) dokumentasiAdminRingka
 // urutan array = urutan gambar, key yang sudah ada dipertahankan, key baru ditambahkan, key yang hilang dihapus.
 type gambarMasukJSON struct {
 	Key string `json:"key"`
-	Alt string `json:"alt"`
 }
 
 // POST tidak boleh membawa version; PUT wajib.
@@ -112,7 +110,7 @@ type bodyUbahDokumentasi struct {
 func (b bodyBuatDokumentasi) mentah() admin.MentahDokumentasi {
 	g := make([]admin.GambarDokumentasi, 0, len(b.Gambar))
 	for _, x := range b.Gambar {
-		g = append(g, admin.GambarDokumentasi{Key: x.Key, Alt: x.Alt})
+		g = append(g, admin.GambarDokumentasi{Key: x.Key})
 	}
 	return admin.MentahDokumentasi{Judul: b.Judul, TanggalPublikasi: b.TanggalPublikasi, Gambar: g}
 }
