@@ -80,7 +80,7 @@ Section jenis layanan memuat dua card, yaitu 'Pelatihan' dan ''Inference and Sol
 
 Section dokumentasi akan menampilkan 3 unggahan dokumentasi terbaru (dari halaman detail dokumentasi), lalu ada button untuk menuju page daftar dokumentasi. Tiap preview item dokumentasi akan muncul dalam bentuk card yang berisi (foto headline, judul, tanggal publikasi dokumentasi terkait), lalu ada button untuk melihat detail dokumentasi yang dipilih.
 
-Section testimoni klien (carousel otomatis, gerak per 10 detik). Per carousel akan tampilkan 1 testimoni. Autoplay hanya aktif di perangkat dengan hover dan berhenti saat disorot atau difokus; di layar sentuh dan saat `prefers-reduced-motion`, carousel digerakkan manual lewat panah. Tidak ada tombol jeda \[Lihat design.md §1\].
+Section testimoni klien (carousel otomatis, gerak per 5 detik; sebelumnya 10 detik, direvisi di frontend-final 13 November 2026; carousel pertanyaan Inference tetap 6 detik). Per carousel akan tampilkan 1 testimoni. Autoplay hanya aktif di perangkat dengan hover dan berhenti saat disorot atau difokus; di layar sentuh dan saat `prefers-reduced-motion`, carousel digerakkan manual lewat panah. Tidak ada tombol jeda \[Lihat design.md §1\].
 
 Section berita menampilkan 3 unggahan berita terbaru (dari halaman detail berita), lalu ada button untuk menuju page daftar berita. Tiap preview item berita akan muncul dalam bentuk card yang berisi (foto headline, judul, potongan berita dari paragraf pertama artikel terkait), lalu ada button untuk melihat detail berita yang dipilih.
 
