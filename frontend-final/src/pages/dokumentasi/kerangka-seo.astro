@@ -1,0 +1,11 @@
+---
+// Kerangka halaman detail dokumentasi untuk Go (lihat berita/kerangka-seo.astro).
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import { AlbumDetail } from '../../public/Lists';
+---
+<PublicLayout title={null} page="dokumentasi-detail" kerangka>
+  <Fragment slot="head" set:html="<!--seo:head-->" />
+  <div data-seo-konten><Fragment set:html="<!--seo:konten-->" /></div>
+  <AlbumDetail client:only="react" slug="" />
+  <Fragment set:html="<!--seo:data-->" />
+</PublicLayout>

@@ -103,6 +103,7 @@ func jalankan() error {
 	handler := httpapi.NewRouter(httpapi.Deps{
 		SEO:                seoDeps,
 		HSTS:               cfg.AppEnv == config.EnvProduction,
+		HashSkrip:          muatHashSkrip(cfg.StaticDir, log),
 		Static:             &httpapi.DepsStatic{Dir: cfg.StaticDir, DevLoginAktif: cfg.DevLoginAktif, Halaman404: seoDeps.Halaman404, NamaSitus: cfg.SiteName},
 		Log:                log,
 		DB:                 st,

@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Entity, Item, Status } from '../../src/shared/types';
 import { Icon, Loading, State } from '../../src/shared/ui';
 import { Button } from '../../src/components/ui/button';
-import { api } from '../../src/simulation/api';
-import { useSimulationVersion } from '../../src/simulation/state';
+import { api } from '../../src/api/api';
 import { ENTITAS } from './entities';
 import { is401, useAdmin, useTitle, type ConfirmOptions } from './context';
 import Shell from './Shell';
@@ -14,10 +13,9 @@ const LABEL_STATUS: Record<Status, string> = { draft: 'Draft', posted: 'Posted' 
 export default function ListPage({ sumber, trash }: { sumber: Entity; trash: boolean }) {
   const e = ENTITAS[sumber];
   const admin = useAdmin();
-  const versi = useSimulationVersion();
   useTitle(`${e.label}${trash ? ' (Trash)' : ''} | Admin UBAYA AI Center`);
   const daftar = useQuery({
-    queryKey: ['admin-daftar', sumber, trash, versi],
+    queryKey: ['admin-daftar', sumber, trash],
     queryFn: () => api.adminDaftar(sumber, { trash }),
     gcTime: 0,
   });

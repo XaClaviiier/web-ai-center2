@@ -18,7 +18,9 @@ for (const [url, judul] of HALAMAN) {
     expect(res.status()).toBe(200);
     await expect(page).toHaveTitle(judul);
     await expect(page.locator('header.nav')).toBeVisible();
+    await page.waitForLoadState('networkidle'); // island React/Astro selesai terhidrasi
     await expect(page.locator('#utama')).not.toBeEmpty();
+    await expect(page.locator('#utama h1').first()).toBeVisible();
     // galat jaringan 404 pada /media untuk data kosong bukan masalah; yang tidak boleh: galat skrip
     expect(galat.filter((g) => !/404|Failed to load resource/i.test(g))).toEqual([]);
   });

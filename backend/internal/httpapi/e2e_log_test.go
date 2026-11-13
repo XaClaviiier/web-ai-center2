@@ -37,7 +37,7 @@ func TestE2ELogAktivitas(t *testing.T) {
 	a.harus(a.panggil("POST", pathT+"/post", `{"version":1}`), 200, "post")
 
 	// gagal (version basi, status salah) tidak tercatat
-	a.harus(a.panggil("PUT", pathT, `{"nama":"X","teks":"y","posisi":"z","foto":null,"version":1}`), 409, "edit posted")
+	a.harus(a.panggil("PUT", pathT, `{"nama":"X","teks":"y","posisi":"z","foto":null,"version":1}`), 400, "edit posted")
 	a.harus(a.panggil("POST", pathT+"/post", `{"version":99}`), 409, "version basi")
 
 	// akun B (login lain) memakai cookie sendiri

@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Format } from '../../src/shared/format';
 import { Icon, Loading, Pagination, State } from '../../src/shared/ui';
 import { Button } from '../../src/components/ui/button';
-import { api } from '../../src/simulation/api';
-import { useSimulationVersion } from '../../src/simulation/state';
+import { api } from '../../src/api/api';
 import { is401, useAdmin, useTitle } from './context';
 import Shell from './Shell';
 
@@ -25,7 +24,6 @@ function Field({ label, id, children }: { label: string; id: string; children: R
 export default function LogPage() {
   useTitle('Log Aktivitas | Admin UBAYA AI Center');
   const admin = useAdmin();
-  const versi = useSimulationVersion();
   const [isian, setIsian] = useState<Filter>(KOSONG);
   // `muat` selalu membuat permintaan baru, walau filter sama (nomor permintaan bagian dari key).
   const [opsi, setOpsi] = useState({ ...KOSONG, page: 1, permintaan: 0 });
@@ -35,7 +33,7 @@ export default function LogPage() {
   const sampai = useRef<HTMLInputElement>(null);
 
   const log = useQuery({
-    queryKey: ['admin-log', opsi, versi],
+    queryKey: ['admin-log', opsi],
     queryFn: () => api.adminLog({ page: opsi.page, username: opsi.username, jenis: opsi.jenis, dari: opsi.dari, sampai: opsi.sampai }),
     gcTime: 0,
   });
@@ -88,7 +86,7 @@ export default function LogPage() {
           <div className="tabel-wadah log-tabel-wadah" role="region" tabIndex={0} aria-label="Log aktivitas">
             <p className="tabel-petunjuk">Geser tabel ke samping untuk melihat seluruh kolom.</p>
             <table className="tabel log-tabel">
-              <caption className="sr-only">Riwayat aktivitas simulasi, terbaru dahulu</caption>
+              <caption className="sr-only">Riwayat aktivitas, terbaru dahulu</caption>
               <thead>
                 <tr>
                   {['Tanggal & Waktu', 'Aktivitas', 'Username'].map((teks) => <th key={teks} scope="col">{teks}</th>)}
@@ -108,7 +106,7 @@ export default function LogPage() {
         ) : (
           <State
             title={terfilter ? 'Tidak ada aktivitas yang cocok' : 'Belum ada aktivitas'}
-            text={terfilter ? 'Coba ubah atau reset filter.' : 'Perubahan data yang berhasil pada simulasi ini akan tercatat di sini.'}
+            text={terfilter ? 'Coba ubah atau reset filter.' : 'Perubahan data yang berhasil akan tercatat di sini.'}
           />
         )}
         <Pagination page={data.page} limit={data.limit} total={data.total} onPage={(n) => muat(isian, n)} />
@@ -125,8 +123,7 @@ export default function LogPage() {
         <h1 tabIndex={-1}>Log Aktivitas</h1>
       </div>
       <p className="log-simulasi">
-        <strong>Simulasi. </strong>
-        Aktivitas simulasi hanya tersimpan selama halaman ini terbuka dan kembali kosong setelah refresh. Identitas akun dan waktu perangkat belum diverifikasi server.
+        Aktivitas dicatat oleh server saat data berubah. Riwayat yang melewati masa simpan dihapus otomatis secara berkala.
       </p>
       <form
         className="log-filter"

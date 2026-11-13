@@ -56,6 +56,8 @@ type Deps struct {
 
 	// HSTS mengaktifkan Strict-Transport-Security (true hanya di production).
 	HSTS bool
+	// HashSkrip adalah hash CSP ("sha256-...") skrip inline yang diizinkan (hasil build frontend); kosong = hanya 'self'.
+	HashSkrip []string
 }
 
 // DepsAdmin adalah layanan penulisan konten oleh admin.
@@ -71,7 +73,7 @@ type DepsAdmin struct {
 func NewRouter(d Deps) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	r.Use(headerKeamanan(d.HSTS))
+	r.Use(headerKeamanan(d.HSTS, d.HashSkrip))
 	r.Use(ipKlienTepercaya(d.ProxyTepercaya))
 	r.Use(logRequest(d.Log))
 	r.Use(pulihkanPanic(d.Log))

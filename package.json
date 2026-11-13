@@ -6,7 +6,7 @@
   "scripts": {
     "bangun-web": "node scripts/bangun-web.cjs",
     "test:web": "node scripts/tests/web.test.cjs",
-    "test:api": "node scripts/tests/api.test.cjs",
+    "test:api": "bun test scripts/tests/api.test.ts",
     "test:e2e": "playwright test -c scripts/e2e/playwright.config.cjs"
   },
   "devDependencies": {

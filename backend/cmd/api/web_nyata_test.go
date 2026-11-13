@@ -13,7 +13,7 @@ import (
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/httpapi"
 )
 
-// webNyata adalah web/ di akar repo (hasil `node scripts/bangun-web.cjs`).
+// webNyata adalah web/ di akar repo (hasil `node scripts/bangun-web-final.cjs`).
 func webNyata(t *testing.T) string {
 	t.Helper()
 	dir, err := filepath.Abs(filepath.Join("..", "..", "..", "web"))
@@ -50,7 +50,7 @@ func TestWebNyataSemuaRuteTersaji(t *testing.T) {
 	})
 	for _, rute := range []string{"/", "/berita", "/dokumentasi", "/tim", "/tentang-kami", "/layanan/pelatihan", "/layanan/inference-solutions",
 		"/layanan/inference-solutions/jejak-alumni", "/layanan/inference-solutions/perencanaan-implan-gigi", "/layanan/inference-solutions/document-intelligence",
-		"/admin", "/admin/", "/admin/masuk", "/assets/css/tokens.css", "/assets/js/public.js", "/assets/js/konten.js", "/assets/js/masuk.js", "/assets/fonts/GeneralSans-Regular.woff2"} {
+		"/admin", "/admin/", "/admin/masuk", "/admin/masuk.css", "/admin/masuk.js", "/assets/fonts/GeneralSans-Regular.woff2", "/assets/img/AI-Center_Logo.png"} {
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, rute, nil))
 		if rec.Code != http.StatusOK || rec.Body.Len() == 0 {

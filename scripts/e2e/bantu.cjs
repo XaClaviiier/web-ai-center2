@@ -12,6 +12,9 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 
 const tidur = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** Hari ini (WIB) dalam format tanggal API: DD-MM-YYYY. */
+const hariIni = () => new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Jakarta' }).replaceAll('/', '-');
+
 /** Klien API ber-cookie untuk satu akun. Mengulang otomatis bila kena batas laju (429) dengan menunggu Retry-After. */
 async function klienAdmin(password, { origin = BASE } = {}) {
   const ctx = await pwRequest.newContext({ baseURL: BASE, extraHTTPHeaders: { Origin: origin } });
@@ -39,7 +42,7 @@ async function buatBerita(k, judul, isi = 'Paragraf satu.\n\nParagraf dua.') {
   const up = await k.panggil('POST', '/api/admin/upload', { multipart: { sumber: 'berita', gambar: { name: 'e2e.png', mimeType: 'image/png', buffer: PNG } } });
   if (up.status() !== 201) throw new Error('upload gagal ' + up.status());
   const { key } = await up.json();
-  const res = await k.panggil('POST', '/api/admin/berita', { data: { judul, isi, tanggalPublikasi: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' }), gambar: key } });
+  const res = await k.panggil('POST', '/api/admin/berita', { data: { judul, isi, tanggalPublikasi: hariIni(), gambar: key } });
   if (res.status() !== 201) throw new Error('buat berita gagal ' + res.status() + ' ' + (await res.text()));
   return res.json();
 }
@@ -75,4 +78,4 @@ async function masukUI(page, password = PW) {
   await page.locator('nav.samping').waitFor();
 }
 
-module.exports = { BASE, PW, PW2, LABEL, PNG, klienAdmin, buatBerita, bersihkan, masukUI, tidur };
+module.exports = { BASE, PW, PW2, LABEL, PNG, klienAdmin, buatBerita, bersihkan, masukUI, tidur, hariIni };

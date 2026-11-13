@@ -120,3 +120,17 @@ func TestHSTSHanyaBilaDiaktifkan(t *testing.T) {
 		t.Errorf("HSTS = %q", got)
 	}
 }
+
+// Hash skrip inline dari build frontend masuk ke script-src; tanpa hash hanya 'self', dan 'unsafe-inline' tidak pernah ada.
+func TestKebijakanKontenHashSkrip(t *testing.T) {
+	if got := kebijakanKonten(nil); !strings.Contains(got, "script-src 'self';") {
+		t.Errorf("tanpa hash: %s", got)
+	}
+	got := kebijakanKonten([]string{"sha256-AAAA", "sha256-BBBB"})
+	if !strings.Contains(got, "script-src 'self' 'sha256-AAAA' 'sha256-BBBB';") {
+		t.Errorf("dengan hash: %s", got)
+	}
+	if strings.Contains(strings.SplitN(got, "style-src", 2)[0], "unsafe-inline") {
+		t.Error("script-src tidak boleh memuat unsafe-inline")
+	}
+}

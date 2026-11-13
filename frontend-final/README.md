@@ -14,8 +14,8 @@ Bun is vendored locally at `.tooling/package/bin/bun.exe` (not on PATH).
 ./.tooling/package/bin/bun.exe run preview  # serve dist/public, /admin/* SPA fallback, 404.html
 ```
 
-## Simulation (temporary)
+## API client
 
-`src/simulation/` replaces the backend until integration: in-memory API (`api.ts`, 300 ms delay, reset on reload or logout), the Simulation panel (loading/empty/error/429/401/409/heartbeat/lock states), and simulated account selection instead of Keycloak. No cookie, session, CSRF, or persistence. Remove `src/simulation/` and swap `api` for real `/api/*` calls when the Go backend is integrated.
+`src/api/api.ts` is the real client for the Go backend (`/api/*`, same origin, HttpOnly session cookie, `X-CSRF-Token` on writes, image upload on Save, soft lock). The old in-memory simulation panel and account picker are in `deprecated/` (not built). The temporary dev login page is `admin-masuk/` (replaced by Keycloak later).
 
-Known limits versus production: detail pages are pre-generated only for seed slugs (unknown slugs and SEO injection are handled by Go later); HTTP 404 status exists only in `preview`.
+Known limits versus production: detail pages for news and documentation are one generic skeleton (`src/pages/{berita,dokumentasi}/kerangka-seo.astro`) served by Go for every slug, which injects the SEO head and initial data; HTTP 404 status for unknown slugs comes from Go, and exists in `preview` only as a static fallback.

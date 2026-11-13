@@ -14,7 +14,7 @@ import (
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/seo"
 )
 
-// DepsStatic adalah dependensi penyajian frontend statis (folder web/, tanpa langkah build). Satu origin
+// DepsStatic adalah dependensi penyajian frontend statis (folder web/, hasil build frontend-final). Satu origin
 // dengan API (docs/stack.md). nil = tidak dipasang (tes API murni).
 type DepsStatic struct {
 	Dir           string // STATIC_DIR
@@ -27,15 +27,15 @@ type DepsStatic struct {
 // path acak (mis. /index.html, /berita.html) tidak melayani apa pun dan jatuh ke 404.
 var rutaStatis = map[string]string{
 	"/":                            "index.html",
-	"/berita":                      "berita.html",
-	"/dokumentasi":                 "dokumentasi.html",
-	"/tim":                         "tim.html",
-	"/tentang-kami":                "tentang-kami.html",
-	"/layanan/pelatihan":           "pelatihan.html",
-	"/layanan/inference-solutions": "inference.html",
-	"/layanan/inference-solutions/jejak-alumni":            "jejak-alumni.html",
-	"/layanan/inference-solutions/perencanaan-implan-gigi": "perencanaan-implan-gigi.html",
-	"/layanan/inference-solutions/document-intelligence":   "document-intelligence.html",
+	"/berita":                      "berita/index.html",
+	"/dokumentasi":                 "dokumentasi/index.html",
+	"/tim":                         "tim/index.html",
+	"/tentang-kami":                "tentang-kami/index.html",
+	"/layanan/pelatihan":           "layanan/pelatihan/index.html",
+	"/layanan/inference-solutions": "layanan/inference-solutions/index.html",
+	"/layanan/inference-solutions/jejak-alumni":            "layanan/inference-solutions/jejak-alumni/index.html",
+	"/layanan/inference-solutions/perencanaan-implan-gigi": "layanan/inference-solutions/perencanaan-implan-gigi/index.html",
+	"/layanan/inference-solutions/document-intelligence":   "layanan/inference-solutions/document-intelligence/index.html",
 }
 
 // Tipe yang tidak selalu ada di tabel MIME bawaan sistem (mis. Windows tanpa registri).
@@ -62,10 +62,15 @@ func pasangStatic(r chi.Router, d DepsStatic) {
 		r.Head(rute, layani)
 	}
 	// Aset: tanpa daftar direktori, path dengan ".." ditolak (fs.ValidPath).
-	r.Get("/assets/*", h.aset)
-	r.Head("/assets/*", h.aset)
+	r.Get("/assets/*", h.aset("assets", "no-cache"))
+	r.Head("/assets/*", h.aset("assets", "no-cache"))
+	// Bundel ber-hash (nama berubah bila isi berubah): aman di-cache lama.
+	r.Get("/_astro/*", h.aset("_astro", cacheBerHash))
+	r.Head("/_astro/*", h.aset("_astro", cacheBerHash))
+	r.Get("/admin/assets/*", h.aset("admin/assets", cacheBerHash))
+	r.Head("/admin/assets/*", h.aset("admin/assets", cacheBerHash))
 
-	// Admin: hash-route di sisi klien, jadi hanya dua pintu masuk. Tidak di-cache (RP-05).
+	// Admin (React, hash-route di sisi klien): hanya dua pintu masuk. Tidak di-cache (RP-05).
 	admin := func(w http.ResponseWriter, req *http.Request) { h.layaniBerkas(w, req, "admin/index.html", "no-store") }
 	for _, p := range []string{"/admin", "/admin/"} {
 		r.Get(p, admin)
@@ -81,6 +86,19 @@ func pasangStatic(r chi.Router, d DepsStatic) {
 	}
 	r.Get("/admin/masuk", masuk)
 	r.Head("/admin/masuk", masuk)
+	// Aset halaman masuk development; ikut 404 di luar development agar halamannya tidak terlihat.
+	for _, f := range []string{"masuk.css", "masuk.js"} {
+		f := f
+		berkas := func(w http.ResponseWriter, req *http.Request) {
+			if !h.d.DevLoginAktif {
+				h.tulis404(w, req)
+				return
+			}
+			h.layaniBerkas(w, req, "admin/"+f, "no-store")
+		}
+		r.Get("/admin/"+f, berkas)
+		r.Head("/admin/"+f, berkas)
+	}
 }
 
 // tidakDitemukan melayani 404 HTML untuk path di luar /api dan JSON di bawah /api.
@@ -109,13 +127,20 @@ func tulis404HTML(w http.ResponseWriter, isi []byte, namaSitus string) {
 	_, _ = w.Write(isi)
 }
 
-func (h staticHandler) aset(w http.ResponseWriter, r *http.Request) {
-	nama := path.Join("assets", chi.URLParam(r, "*"))
-	if !fs.ValidPath(nama) || strings.Contains(chi.URLParam(r, "*"), "..") {
-		h.tulis404(w, r)
-		return
+// cacheBerHash untuk berkas yang namanya memuat hash isi.
+const cacheBerHash = "public, max-age=31536000, immutable"
+
+// aset melayani berkas di bawah direktori (relatif STATIC_DIR) untuk pola "/.../*".
+func (h staticHandler) aset(dir, cacheControl string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sisa := chi.URLParam(r, "*")
+		nama := path.Join(dir, sisa)
+		if !fs.ValidPath(nama) || strings.Contains(sisa, "..") {
+			h.tulis404(w, r)
+			return
+		}
+		h.layaniBerkas(w, r, nama, cacheControl)
 	}
-	h.layaniBerkas(w, r, nama, "no-cache")
 }
 
 // layaniBerkas melayani satu berkas di bawah STATIC_DIR dengan ETag lemah (ukuran + waktu ubah) dan

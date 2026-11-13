@@ -7,7 +7,7 @@ import { konten } from '../../../shared/content';
 
 const d = konten.document_intelligence;
 ---
-<PublicLayout title={`${d.judul} (Demo Konsep)`} description={d.disclaimer} page="document-intelligence" noindex simulation={false}>
+<PublicLayout title={`${d.judul} (Demo Konsep)`} description={d.disclaimer} page="document-intelligence" noindex>
   <Breadcrumb items={[{ label: 'Inference and Solutions', href: '/layanan/inference-solutions' }, { label: d.judul }]} />
   <DocNext client:load />
   <Contact

@@ -6,7 +6,6 @@ import '../styles/tailwind.css';
 import '../styles/public.css';
 import Navbar from '../public/Navbar.astro';
 import { Footer } from '../public/Common';
-import SimulationPanel from '../simulation/Panel';
 
 interface Props {
   /** Judul halaman tanpa nama situs; null = hanya nama situs (Beranda). */
@@ -15,8 +14,8 @@ interface Props {
   /** Nilai `data-halaman` prototype; dipakai CSS dan behavior.ts. */
   page: string;
   noindex?: boolean;
-  /** Panel simulasi; halaman demo tidak memakai API sehingga tanpa panel (prototype T-38). */
-  simulation?: boolean;
+  /** Kerangka detail untuk Go: head diisi Go lewat slot "head". */
+  kerangka?: boolean;
 }
 
 const {
@@ -24,7 +23,7 @@ const {
   description = 'Pusat riset dan layanan kecerdasan artifisial Universitas Surabaya.',
   page,
   noindex = false,
-  simulation = true,
+  kerangka = false,
 } = Astro.props;
 const LAYANAN = ['pelatihan', 'inference', 'jejak-alumni', 'perencanaan-implan-gigi', 'document-intelligence'];
 const menuAktif = LAYANAN.includes(page) ? 'layanan' : page.replace('-detail', '');
@@ -34,9 +33,10 @@ const menuAktif = LAYANAN.includes(page) ? 'layanan' : page.replace('-detail', '
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title === null ? 'UBAYA AI Center' : `${title} | UBAYA AI Center`}</title>
-    <meta name="description" content={description} />
-    <meta name="robots" content={noindex ? 'noindex' : 'index'} />
+    {kerangka && <slot name="head" />}
+    {!kerangka && <title>{title === null ? 'UBAYA AI Center' : `${title} | UBAYA AI Center`}</title>}
+    {!kerangka && <meta name="description" content={description} />}
+    {!kerangka && <meta name="robots" content={noindex ? 'noindex' : 'index'} />}
   </head>
   <body data-halaman={page} data-sisi="publik">
     <a class="lewati" href="#utama">Lewati ke konten</a>
@@ -45,7 +45,6 @@ const menuAktif = LAYANAN.includes(page) ? 'layanan' : page.replace('-detail', '
       <slot />
     </main>
     <Footer />
-    {simulation && <SimulationPanel client:load />}
     <script>
       import { mountPublic } from '../public/behavior';
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Membangun `web/` (sumber frontend yang disajikan Go) dari `prototype/`. Dapat dijalankan ulang kapan saja:
+/* Membangun `web-deprecated/` (frontend lama; DIGANTIKAN oleh scripts/bangun-web-final.cjs yang menulis `web/`) (sumber frontend yang disajikan Go) dari `prototype/`. Dapat dijalankan ulang kapan saja:
      node scripts/bangun-web.cjs
    `web/` ditulis ulang SELURUHNYA (dihapus lalu dibuat). Jangan menyunting `web/` dengan tangan.
    - Perubahan atas hasil salinan: dilakukan di skrip ini.
@@ -14,7 +14,7 @@ const path = require('node:path');
 
 const akar = path.resolve(__dirname, '..');
 const P = path.join(akar, 'prototype');
-const W = path.join(akar, 'web');
+const W = path.join(akar, 'web-deprecated');
 const TAMBAHAN = path.join(__dirname, 'tambahan-web');
 
 // === Pemetaan ===
@@ -220,7 +220,7 @@ function salinPohon(dari, ke, saring = () => true) {
 }
 
 function jalankan() {
-  if (path.basename(W) !== 'web' || path.dirname(W) !== akar) gagal('lokasi web/ tidak sesuai harapan: ' + W);
+  if (path.basename(W) !== 'web-deprecated' || path.dirname(W) !== akar) gagal('lokasi web-deprecated/ tidak sesuai harapan: ' + W);
   fs.rmSync(W, { recursive: true, force: true });
 
   // 1. Aset statis: css, font, gambar disalin apa adanya (css memakai ../fonts/ relatif, tetap benar).

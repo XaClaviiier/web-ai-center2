@@ -20,6 +20,8 @@ coverage/
 # referensi skema/kontrak lama, hanya lokal
 docs/backend/01-kontrak-api.md
 docs/backend/Schema.md
+web-deprecated/
+prototype/
 
 # laporan lighthouse hanya lokal, tidak ikut repo
 lighthouse_report/
@@ -30,3 +32,4 @@ skills-lock.json
 
 # artefak tes e2e Playwright (tangkapan layar, trace, hasil)
 output/
+

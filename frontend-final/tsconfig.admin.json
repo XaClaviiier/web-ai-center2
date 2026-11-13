@@ -14,5 +14,5 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["admin/src/**/*", "src/shared/**/*", "src/simulation/**/*", "src/components/**/*", "src/lib/**/*"]
+  "include": ["admin/src/**/*", "src/shared/**/*", "src/api/**/*", "src/components/**/*", "src/lib/**/*"]
 }

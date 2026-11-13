@@ -1,0 +1,13 @@
+@font-face { font-family: "General Sans"; src: url("/assets/fonts/GeneralSans-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "General Sans"; src: url("/assets/fonts/GeneralSans-SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 1.25rem; background: #eef4fb; color: #0b1f3a; font-family: "General Sans", system-ui, sans-serif; }
+main { width: min(100%, 28rem); display: grid; gap: 1rem; padding: 2rem; background: #fff; border: 2px dashed #0b1f3a; border-radius: 12px; }
+h1 { margin: 0; font-size: 1.5rem; }
+p { margin: 0; }
+.label-dev { justify-self: start; padding: .25rem .75rem; background: #ffd84d; border-radius: 6px; font-size: .85rem; }
+form { display: grid; gap: .75rem; }
+input { padding: .65rem .75rem; border: 1px solid #6b7a90; border-radius: 8px; font: inherit; }
+button { padding: .7rem 1rem; border: 0; border-radius: 8px; background: #0b1f3a; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+button:disabled { opacity: .6; cursor: progress; }
+#galat-masuk { color: #b00020; }

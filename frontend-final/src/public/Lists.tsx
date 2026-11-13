@@ -1,9 +1,8 @@
-/* Island data publik. Kunci query memuat versi simulasi agar panel selalu memicu muat ulang. */
+/* Island data publik. Kunci query per jenis data dan parameter. */
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { Input } from '../components/ui/input';
-import { api } from '../simulation/api';
-import { useSimulationVersion } from '../simulation/state';
+import { api } from '../api/api';
 import { image } from '../shared/content';
 import { Format } from '../shared/format';
 import QueryProvider from '../shared/QueryProvider';
@@ -34,8 +33,7 @@ function Muat<T extends { items: unknown[] }>({ query, kerangka, kosong, childre
 /* === Beranda === */
 
 function HomeAlbumsIsi() {
-  const versi = useSimulationVersion();
-  const query = useQuery({ queryKey: ['dokumentasi', 'beranda', versi], queryFn: () => api.daftarDokumentasi({ limit: 3 }) });
+  const query = useQuery({ queryKey: ['dokumentasi', 'beranda'], queryFn: () => api.daftarDokumentasi({ limit: 3 }) });
   return (
     <Muat query={query} kerangka={<Loading count={3} />} kosong={<State title="Belum ada dokumentasi" text="Dokumentasi kegiatan akan tampil di sini." />}>
       {(data) => <div className="grid-kartu grid-kartu--tiga">{data.items.map((d) => <DocCard key={d.id} album={d} />)}</div>}
@@ -44,8 +42,7 @@ function HomeAlbumsIsi() {
 }
 
 function HomeTestimonialsIsi() {
-  const versi = useSimulationVersion();
-  const query = useQuery({ queryKey: ['testimoni', versi], queryFn: () => api.daftarTestimoni() });
+  const query = useQuery({ queryKey: ['testimoni'], queryFn: () => api.daftarTestimoni() });
   return (
     <Muat
       query={query}
@@ -74,8 +71,7 @@ function HomeTestimonialsIsi() {
 }
 
 function HomeNewsIsi() {
-  const versi = useSimulationVersion();
-  const query = useQuery({ queryKey: ['berita', 'beranda', versi], queryFn: () => api.daftarBerita({ limit: 3 }) });
+  const query = useQuery({ queryKey: ['berita', 'beranda'], queryFn: () => api.daftarBerita({ limit: 3 }) });
   return (
     <Muat query={query} kerangka={<Loading count={3} />} kosong={<State title="Belum ada berita" text="Berita terbaru akan tampil di sini." />}>
       {(data) => <div className="grid-kartu grid-kartu--tiga">{data.items.map((b) => <NewsCard key={b.id} news={b} heading="h3" />)}</div>}
@@ -98,8 +94,7 @@ export function HomeNews() {
 /* === Tim === */
 
 function TeamListIsi() {
-  const versi = useSimulationVersion();
-  const query = useQuery({ queryKey: ['tim', versi], queryFn: () => api.daftarTim() });
+  const query = useQuery({ queryKey: ['tim'], queryFn: () => api.daftarTim() });
   return (
     <Muat query={query} kerangka={<Loading count={6} />} kosong={<State title="Belum ada data tim" text="Susunan tim akan tampil di sini." />}>
       {(data) => <div className="grid-tim">{data.items.map((t) => <MemberCard key={t.id} member={t} />)}</div>}
@@ -140,7 +135,6 @@ interface ListConfig<T> {
 }
 
 function ListPageIsi<T extends { id: number }>({ kind, namaJamak, grid, ambil, card }: ListConfig<T>) {
-  const versi = useSimulationVersion();
   const [awal] = useState(bacaUrl);
   const [q, setQ] = useState(awal.q);
   const [page, setPage] = useState(awal.page);
@@ -150,7 +144,7 @@ function ListPageIsi<T extends { id: number }>({ kind, namaJamak, grid, ambil, c
   const hasil = useRef<HTMLDivElement>(null);
   const qAktif = q.length >= 2 ? q : '';
 
-  const query = useQuery({ queryKey: [kind, 'daftar', page, qAktif, versi], queryFn: () => ambil({ page, q: qAktif }) });
+  const query = useQuery({ queryKey: [kind, 'daftar', page, qAktif], queryFn: () => ambil({ page, q: qAktif }) });
   const data = query.data;
   const terakhir = data ? Math.max(1, Math.ceil(data.total / data.limit)) : page;
 
@@ -296,8 +290,7 @@ function Detail<T>({ query, label, children }: { query: UseQueryResult<T>; label
 }
 
 function NewsDetailIsi({ slug }: { slug: string }) {
-  const versi = useSimulationVersion();
-  const query = useQuery({ queryKey: ['berita', 'detail', slug, versi], queryFn: () => api.detailBerita(slug) });
+  const query = useQuery({ queryKey: ['berita', 'detail', slug], queryFn: () => api.detailBerita(slug) });
   const berita = query.data;
   useEffect(() => {
     if (berita) setMeta(berita.judul, Format.potongan(berita.isi, 160));
@@ -329,8 +322,7 @@ function NewsDetailIsi({ slug }: { slug: string }) {
 }
 
 function AlbumDetailIsi({ slug }: { slug: string }) {
-  const versi = useSimulationVersion();
-  const query = useQuery({ queryKey: ['dokumentasi', 'detail', slug, versi], queryFn: () => api.detailDokumentasi(slug) });
+  const query = useQuery({ queryKey: ['dokumentasi', 'detail', slug], queryFn: () => api.detailDokumentasi(slug) });
   const album = query.data;
   useEffect(() => {
     if (album) setMeta(album.judul, `Dokumentasi kegiatan ${album.judul} — ${album.tanggalPublikasi}`);
@@ -358,10 +350,16 @@ function AlbumDetailIsi({ slug }: { slug: string }) {
   );
 }
 
+const slugDariUrl = (slug: string): string => slug || decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() ?? '');
+function HapusKontenSeo() {
+  useEffect(() => { document.querySelector('[data-seo-konten]')?.remove(); }, []);
+  return null;
+}
+
 export function NewsDetail({ slug }: { slug: string }) {
-  return <QueryProvider><NewsDetailIsi slug={slug} /></QueryProvider>;
+  return <QueryProvider><HapusKontenSeo /><NewsDetailIsi slug={slugDariUrl(slug)} /></QueryProvider>;
 }
 
 export function AlbumDetail({ slug }: { slug: string }) {
-  return <QueryProvider><AlbumDetailIsi slug={slug} /></QueryProvider>;
+  return <QueryProvider><HapusKontenSeo /><AlbumDetailIsi slug={slugDariUrl(slug)} /></QueryProvider>;
 }

@@ -1,7 +1,7 @@
 # Rencana: Menggabungkan `frontend-final/` (branch `frontend`) dengan backend Go (branch `Fullstack`)
 
 > Berkas ini disimpan di `docs/backend/PLAN-MERGE-FULLSTACK.md` atas permintaan eksplisit pengguna (pengecualian dari aturan "jangan menyunting `.md` di `docs/`", berlaku hanya untuk berkas ini bersama `perubahan-kode.md`, `req.md`, `schema-baru.md`). Isi lama (merge prototipe HTML/CSS/JS ke backend) digantikan oleh rencana ini; riwayat langkah lama ada di `docs/backend/perubahan-kode.md` dan git.
-> **Status (2026-11-13): perencanaan. Belum ada kode yang diubah untuk tahap ini.**
+> **Status (2026-11-13): langkah 1-7 SELESAI (backend, build `web/`, SEO kerangka, CSP; smoke test browser lulus). Langkah 7 (e2e Playwright) SELESAI. Sisa: langkah 8 (ditunda; jalur lama dibiarkan sebagai referensi atas keputusan pengguna) dan tes Node lama (`scripts/tests`, `prototype/tests`).** Rincian dan verifikasi: `docs/backend/perubahan-kode.md`.
 
 ## 1. Konteks
 
@@ -43,7 +43,7 @@
 
 Diputuskan: tanggal API mengikuti frontend (`DD-MM-YYYY`); kode galat disamakan dengan frontend (`conflict`, `bukan_draft`, `locked` 423, `lock_lost` 410); payload dokumentasi memakai `gambarDaftar`; jembatan klien berupa skrip pascabuild di `scripts/`. Semuanya menyimpang dari `docs/` (stack.md §9, database.md) dan dicatat sebagai penyimpangan di `perubahan-kode.md`. Parameter log `dari`/`sampai` tetap `YYYY-MM-DD` (frontend membandingkan dengan `hariJakarta`).
 
-Selisih tambahan (belum diputuskan; pemetaan di jembatan atau perubahan backend):
+Selisih tambahan (diputuskan pengguna: campuran, dipetakan di klien `scripts/tambahan-frontend-final/src/simulation/api.ts`, bukan di backend):
 
 - Nama field metadata: frontend `createdAt`/`createdBy`/`updatedBy`/`deletedAt`; backend `dibuatPada`/`dibuatOleh`/`diubahOleh`/`dihapusPada`.
 - Dokumentasi publik dan admin: frontend membaca `gambar:[{key,urutan}]` di daftar (`gambar[0].key`, `gambar.length`); backend daftar memberi `gambarUtama`+`jumlahGambar`, detail `gambar:[{url}]` (publik) / `[{key,url}]` (admin).
@@ -51,7 +51,9 @@ Selisih tambahan (belum diputuskan; pemetaan di jembatan atau perubahan backend)
 - Lock: acquire frontend `{milik:'saya'|'lain', nama}` (200); backend 423 `locked` bila dipegang orang lain, 200 `{pemegang,milikSaya,...}` bila berhasil. Heartbeat `{ok:true}` vs objek lock.
 - Login: frontend memilih akun lewat `?akun=`; backend `dev-login` dengan password.
 
-## 5. Pertanyaan struktural yang menunggu keputusan
+## 5. Pertanyaan struktural (DIPUTUSKAN dan dilaksanakan 2026-11-13)
+
+Keputusan: (1) opsi (a) skrip pascabuild/salinan kerja di `scripts/`; (2) Bun dipakai lewat `scripts/bangun-web-final.cjs` (salinan kerja `.bangun/`, ter-ignore); (3) `web/` di-commit sebagai hasil build. Teks asli pertanyaan:
 
 1. **Tempat klien API nyata.** Karena `frontend-final/` tidak boleh disentuh, jembatan ke `/api/*` (cookie, CSRF, unggah, lock, pemetaan tanggal) tidak dapat ditaruh di dalamnya. Opsi: (a) skrip pascabuild di `scripts/` yang mengganti modul simulasi pada bundel; (b) tim frontend menyediakan titik sambung (mis. `api` yang dapat diganti lewat env/alias build) — diurus tim frontend; (c) backend meniru bentuk tiruan sepenuhnya sehingga hanya "sumber data" yang ditukar. Perlu dipilih setelah hasil build dilihat.
 2. **Alat build.** `frontend-final` memakai Bun; repo ini memakai npm/Node. Siapa yang menjalankan build dan di mana artefaknya disimpan.
@@ -61,14 +63,14 @@ Selisih tambahan (belum diputuskan; pemetaan di jembatan atau perubahan backend)
 
 | # | Langkah | Pelaksana | Status |
 |---|---|---|---|
-| 1 | Rename `web/` → `web-deprecated/`; merge `origin/frontend` ke `Fullstack` | pengguna | menunggu |
-| 2 | Putuskan item **terbuka** di §4 dan §5 | pengguna | menunggu |
-| 3 | Sesuaikan backend dengan kontrak yang diputuskan (handler, kode galat, format tanggal, payload gambar, rute lock), lengkap dengan tes | agen | menunggu #2 |
-| 4 | Skrip penyalin build ke `web/` tanpa menyentuh `frontend-final/`; sesuaikan `static.go` untuk struktur Astro dan fallback `/admin/*`, `404.html` berstatus 404 | agen | menunggu #1, #2 |
-| 5 | Sisip SEO Go pada kerangka detail Astro generik; slug tidak ada → 404 + noindex | agen | menunggu #4 |
-| 6 | Sesuaikan CSP (`middleware.go`) agar Astro/React berjalan tanpa pelanggaran, tanpa melonggarkan berlebihan | agen | menunggu #4 |
-| 7 | Perbarui `scripts/e2e/*` (selektor DOM berubah) dan jalankan ulang | agen | menunggu #5, #6 |
-| 8 | Hapus jalur lama (`bangun-web.cjs`, `scripts/tambahan-web/`, `prototype/` bila tak dipakai) | atas keputusan pengguna | menunggu |
+| 1 | Rename `web/` → `web-deprecated/`; merge `origin/frontend` ke `Fullstack` | pengguna | SELESAI |
+| 2 | Putuskan item **terbuka** di §4 dan §5 | pengguna | SELESAI |
+| 3 | Sesuaikan backend dengan kontrak yang diputuskan (handler, kode galat, format tanggal, payload gambar, rute lock), lengkap dengan tes | agen | SELESAI |
+| 4 | Skrip penyalin build ke `web/` tanpa menyentuh `frontend-final/`; sesuaikan `static.go` untuk struktur Astro dan fallback `/admin/*`, `404.html` berstatus 404 | agen | SELESAI (`scripts/bangun-web-final.cjs`, `static.go`) |
+| 5 | Sisip SEO Go pada kerangka detail Astro generik; slug tidak ada → 404 + noindex | agen | SELESAI |
+| 6 | Sesuaikan CSP (`middleware.go`) agar Astro/React berjalan tanpa pelanggaran, tanpa melonggarkan berlebihan | agen | SELESAI (hash skrip + `blob:`) |
+| 7 | Perbarui `scripts/e2e/*` (selektor DOM berubah) dan jalankan ulang | agen | SELESAI (spec lulus; lihat perubahan-kode.md) |
+| 8 | Hapus jalur lama (`bangun-web.cjs`, `scripts/tambahan-web/`, `prototype/` bila tak dipakai) | atas keputusan pengguna | DITUNDA (2026-11-13: pengguna memutuskan jalur lama dibiarkan sebagai referensi) |
 
 ## 7. Verifikasi
 

@@ -5,7 +5,7 @@ import PublicLayout from '../../../layouts/PublicLayout.astro';
 import { Breadcrumb, Contact } from '../../../public/Common';
 import { konten } from '../../../shared/content';
 ---
-<PublicLayout title="JejakAlumni (Demo Konsep)" description={konten.jejak_alumni.disclaimer} page="jejak-alumni" noindex simulation={false}>
+<PublicLayout title="JejakAlumni (Demo Konsep)" description={konten.jejak_alumni.disclaimer} page="jejak-alumni" noindex>
   <Breadcrumb items={[{ label: 'Inference and Solutions', href: '/layanan/inference-solutions' }, { label: 'JejakAlumni' }]} />
   <JejakAlumni client:load />
   <Contact

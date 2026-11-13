@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ApiError, type Entity, type Item, type Payload } from '../../src/shared/types';
 import { Icon, Loading, State } from '../../src/shared/ui';
 import { Button } from '../../src/components/ui/button';
-import { api } from '../../src/simulation/api';
-import { useSimulationVersion } from '../../src/simulation/state';
+import { api } from '../../src/api/api';
 import { daftarGambar, ENTITAS, type FieldDef } from './entities';
 import { is401, PESAN_TANPA_PERUBAHAN, useAdmin, useTitle } from './context';
 import { dariTeks, diMasaDepan, hariIniTeks } from './Calendar';
@@ -89,10 +88,9 @@ export default function FormPage({ sumber, id }: { sumber: Entity; id: number | 
 function MuatForm({ sumber, id }: { sumber: Entity; id: number }) {
   const e = ENTITAS[sumber];
   const admin = useAdmin();
-  const versi = useSimulationVersion();
   // Mengambil kunci adalah efek samping: tidak di-cache dan tidak diulang otomatis.
   const muat = useQuery({
-    queryKey: ['admin-form', sumber, id, versi],
+    queryKey: ['admin-form', sumber, id],
     gcTime: 0,
     staleTime: Infinity,
     queryFn: async (): Promise<{ data: Item; kunci: Kunci | null }> => {

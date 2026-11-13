@@ -33,13 +33,29 @@ test('login: password salah ditolak, password benar membuka admin', async ({ pag
   await page.screenshot({ path: 'output/playwright/admin-daftar.png', fullPage: true });
 });
 
-test('admin tanpa login menampilkan layar Masuk', async ({ browser }) => {
+test('admin tanpa login dialihkan ke halaman masuk (dev-login)', async ({ browser }) => {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await page.goto('/admin/');
+  await page.waitForURL(/\/admin\/masuk$/);
   await expect(page.getByRole('heading', { name: /Masuk ke admin/ })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Masuk' })).toHaveAttribute('href', '/admin/masuk');
   await ctx.close();
+});
+
+test('kontrak API: tanggal DD-MM-YYYY, ISO ditolak, edit non-draft 400 bukan_draft, version basi 409 conflict', async () => {
+  const { buatBerita, hariIni } = require('./bantu.cjs');
+  const b = await buatBerita(k, `${LABEL} kontrak`);
+  expect(b.tanggalPublikasi).toBe(hariIni());
+  const badan = (tgl, v) => ({ judul: `${LABEL} kontrak`, isi: 'x', tanggalPublikasi: tgl, gambar: b.gambar.key, version: v });
+  await k.panggil('POST', `/api/admin/berita/${b.id}/lock`);
+  expect((await k.panggil('PUT', `/api/admin/berita/${b.id}`, { data: badan('2026-01-01', b.version) })).status()).toBe(400); // ISO tidak lagi diterima
+  expect((await k.panggil('PUT', `/api/admin/berita/${b.id}`, { data: badan(hariIni(), 99) })).status()).toBe(409);
+  await k.panggil('POST', `/api/admin/berita/${b.id}/post`, { data: { version: b.version } });
+  const edit = await k.panggil('PUT', `/api/admin/berita/${b.id}`, { data: badan(hariIni(), b.version + 1) });
+  expect(edit.status()).toBe(400);
+  expect((await edit.json()).error.code).toBe('bukan_draft');
+  const pub = await (await k.ctx.get(`/api/berita/${(await (await k.panggil('GET', `/api/admin/berita/${b.id}`)).json()).slug}`)).json();
+  expect(pub.tanggalPublikasi).toBe(hariIni());
 });
 
 test('siklus berita: tambah (unggah gambar), ubah, Post, publik, Retract, trash, pulihkan, hapus permanen', async ({ page, request }) => {
@@ -74,7 +90,9 @@ test('siklus berita: tambah (unggah gambar), ubah, Post, publik, Retract, trash,
   expect(html).toContain('application/ld+json');
   expect(html).toContain('id="data-awal"');
   await page.goto(`/berita/${b.slug}`);
-  await expect(page.getByRole('heading', { level: 1 })).toContainText(JUDUL2);
+  await expect(page.locator('article.artikel h1')).toContainText(JUDUL2);
+  await expect(page.locator('[data-seo-konten]')).toHaveCount(0); // teks SEO polos diganti tampilan React
+  await expect(page.locator('.artikel__gambar')).toHaveAttribute('src', /^\/media\/berita\//);
   await expect(page.locator('.artikel__isi')).toContainText('Paragraf dua dari tes e2e.');
   await page.screenshot({ path: 'output/playwright/berita-detail.png', fullPage: true });
   const daftarPublik = await (await request.get('/api/berita?q=E2E-PW')).json();
@@ -83,24 +101,24 @@ test('siklus berita: tambah (unggah gambar), ubah, Post, publik, Retract, trash,
   // Retract -> langsung 404 di publik
   await page.goto('/admin/#/berita');
   await page.locator('tr', { hasText: JUDUL2 }).getByRole('button', { name: /^Retract:/ }).click();
-  await page.locator('dialog').getByRole('button', { name: 'Retract', exact: true }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Retract', exact: true }).click();
   await expect(page.getByText('Dikembalikan ke draft.')).toBeVisible();
   expect((await request.get(`/berita/${b.slug}`)).status()).toBe(404);
   expect((await request.get(`/api/berita/${b.slug}`)).status()).toBe(404);
 
   // hapus ke trash -> pulihkan -> hapus lagi -> hapus permanen
   await page.locator('tr', { hasText: JUDUL2 }).getByRole('button', { name: /^Hapus:/ }).click();
-  await page.locator('dialog').getByRole('button', { name: 'Pindahkan ke trash' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Pindahkan ke trash' }).click();
   await expect(page.getByText('Dipindahkan ke trash.')).toBeVisible();
   await page.goto('/admin/#/berita/trash');
   await page.locator('tr', { hasText: JUDUL2 }).getByRole('button', { name: /^Restore:/ }).click();
   await expect(page.getByText('Dipulihkan sebagai draft.')).toBeVisible();
   await page.goto('/admin/#/berita');
   await page.locator('tr', { hasText: JUDUL2 }).getByRole('button', { name: /^Hapus:/ }).click();
-  await page.locator('dialog').getByRole('button', { name: 'Pindahkan ke trash' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Pindahkan ke trash' }).click();
   await page.goto('/admin/#/berita/trash');
   await page.locator('tr', { hasText: JUDUL2 }).getByRole('button', { name: /^Hapus Permanen:/ }).click();
-  await page.locator('dialog').getByRole('button', { name: 'Hapus Permanen' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Hapus Permanen' }).click();
   await expect(page.getByText('Dihapus permanen.')).toBeVisible();
   expect(await cariSlug(JUDUL2)).toBeFalsy();
 });
@@ -109,7 +127,7 @@ test('dokumentasi dengan dua gambar: tambah, Post, galeri publik', async ({ page
   const judul = `${LABEL} Dokumentasi UI`;
   await masukUI(page);
   await page.goto('/admin/#/dokumentasi/baru');
-  await page.locator('#f-gambar_daftar').setInputFiles([berkas('1.png'), berkas('2.png')]);
+  await page.locator('#f-gambarDaftar').setInputFiles([berkas('1.png'), berkas('2.png')]);
   await expect(page.locator('ol.galeri-admin li')).toHaveCount(2);
   await page.locator('#f-judul').fill(judul);
   await page.getByRole('button', { name: 'Simpan' }).click();
@@ -133,7 +151,7 @@ test('tim dan testimoni lewat form: tambah, tampil publik', async ({ page, reque
   await page.locator('#f-foto').setInputFiles(berkas('t.png'));
   await page.locator('#f-posisi').fill('Peneliti');
   await page.locator('#f-nama').fill(nama);
-  await page.locator('#f-bidang_riset').fill('Computer Vision');
+  await page.locator('#f-bidangRiset').fill('Computer Vision');
   await page.locator('#f-urutan').fill('99');
   await page.getByRole('button', { name: 'Simpan' }).click();
   await expect(page.getByText('Anggota tim ditambahkan.')).toBeVisible();

@@ -14,15 +14,15 @@ import (
 // rutaUji memetakan URL bersih ke isi berkas fixture yang dibuat siapkanWeb.
 var rutaUji = map[string]string{
 	"/":                            "index.html",
-	"/berita":                      "berita.html",
-	"/dokumentasi":                 "dokumentasi.html",
-	"/tim":                         "tim.html",
-	"/tentang-kami":                "tentang-kami.html",
-	"/layanan/pelatihan":           "pelatihan.html",
-	"/layanan/inference-solutions": "inference.html",
-	"/layanan/inference-solutions/jejak-alumni":            "jejak-alumni.html",
-	"/layanan/inference-solutions/perencanaan-implan-gigi": "perencanaan-implan-gigi.html",
-	"/layanan/inference-solutions/document-intelligence":   "document-intelligence.html",
+	"/berita":                      "berita/index.html",
+	"/dokumentasi":                 "dokumentasi/index.html",
+	"/tim":                         "tim/index.html",
+	"/tentang-kami":                "tentang-kami/index.html",
+	"/layanan/pelatihan":           "layanan/pelatihan/index.html",
+	"/layanan/inference-solutions": "layanan/inference-solutions/index.html",
+	"/layanan/inference-solutions/jejak-alumni":            "layanan/inference-solutions/jejak-alumni/index.html",
+	"/layanan/inference-solutions/perencanaan-implan-gigi": "layanan/inference-solutions/perencanaan-implan-gigi/index.html",
+	"/layanan/inference-solutions/document-intelligence":   "layanan/inference-solutions/document-intelligence/index.html",
 }
 
 // siapkanWeb membuat folder web palsu. File "rahasia.txt" ada di LUAR dir web untuk menguji traversal.
@@ -49,6 +49,10 @@ func siapkanWeb(t *testing.T) (dir string) {
 	tulis("assets/js/a.js", "var a=1;")
 	tulis("assets/fonts/f.woff2", "woff2-data")
 	tulis("assets/img/g.svg", "<svg/>")
+	tulis("_astro/app.AbC123.js", "var b=1;")
+	tulis("admin/assets/index-XyZ.js", "var c=1;")
+	tulis("admin/masuk.css", "body{}")
+	tulis("admin/masuk.js", "var m=1;")
 	if err := os.WriteFile(filepath.Join(induk, "rahasia.txt"), []byte("RAHASIA"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -213,7 +217,7 @@ func TestStaticMasukHanyaDiDevelopment(t *testing.T) {
 // /berita (daftar, statis) dan /berita/{slug} (SEO) hidup berdampingan.
 func TestStaticBerdampinganDenganRuteSEO(t *testing.T) {
 	h := routerStatis(t, false, &DepsSEO{BaseURL: "https://situs.test", NamaSitus: "AI Center"})
-	if rec := panggil(h, http.MethodGet, "/berita"); rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "berita.html") {
+	if rec := panggil(h, http.MethodGet, "/berita"); rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "berita/index.html") {
 		t.Errorf("/berita: %d %q", rec.Code, rec.Body.String())
 	}
 	// Tanpa kerangka, detail dilayani handler SEO (503 JSON), bukan handler statis.
@@ -239,6 +243,33 @@ func TestStaticDirKosongTidakPanik(t *testing.T) {
 	for _, p := range []string{"/", "/assets/x.css", "/admin"} {
 		if rec := panggil(h, http.MethodGet, p); rec.Code != http.StatusNotFound {
 			t.Errorf("%s: %d, mau 404 (berkas tidak ada)", p, rec.Code)
+		}
+	}
+}
+
+// Bundel ber-hash (/_astro, /admin/assets) di-cache lama dan immutable; halaman tidak.
+func TestStaticBundelBerHashImmutable(t *testing.T) {
+	h := routerStatis(t, false, nil)
+	for _, rute := range []string{"/_astro/app.AbC123.js", "/admin/assets/index-XyZ.js"} {
+		rec := panggil(h, http.MethodGet, rute)
+		if rec.Code != http.StatusOK || !strings.Contains(rec.Header().Get("Cache-Control"), "immutable") {
+			t.Errorf("%s: %d cache=%q", rute, rec.Code, rec.Header().Get("Cache-Control"))
+		}
+	}
+	if rec := panggil(h, http.MethodGet, "/_astro/../rahasia.txt"); rec.Code == http.StatusOK && strings.Contains(rec.Body.String(), "RAHASIA") {
+		t.Error("traversal lewat /_astro berhasil")
+	}
+}
+
+// Aset halaman masuk development ikut 404 di luar development.
+func TestStaticAsetMasukHanyaDevelopment(t *testing.T) {
+	for _, dev := range []bool{true, false} {
+		h := routerStatis(t, dev, nil)
+		for _, rute := range []string{"/admin/masuk.css", "/admin/masuk.js"} {
+			rec := panggil(h, http.MethodGet, rute)
+			if (rec.Code == http.StatusOK) != dev {
+				t.Errorf("dev=%v %s: status %d", dev, rute, rec.Code)
+			}
 		}
 	}
 }

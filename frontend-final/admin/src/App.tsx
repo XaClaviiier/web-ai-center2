@@ -5,7 +5,7 @@ import { ConfirmDialog } from '../../src/components/ui/alert-dialog';
 import { Button } from '../../src/components/ui/button';
 import { errorMessage, Icon, State } from '../../src/shared/ui';
 import { image } from '../../src/shared/content';
-import { api } from '../../src/simulation/api';
+import { api } from '../../src/api/api';
 import { AdminContext, is401, PESAN_TANPA_PERUBAHAN, URL_LOGIN, useTitle, type Admin, type ConfirmOptions, type FormGuard } from './context';
 import { ENTITAS, isEntity } from './entities';
 import ListPage from './ListPage';
@@ -106,6 +106,7 @@ export default function App() {
         const teks = `Anda perlu masuk kembali untuk mengelola konten.${formAktif.current?.dirty() ? ' Perubahan yang belum disimpan akan hilang.' : ''}`;
         if (!(await konfirmasi({ judul: 'Keluar dari admin?', teks, labelYa: 'Keluar' }))) return;
         formAktif.current = null;
+        await api.keluar();
         location.href = import.meta.env.BASE_URL;
       },
       formAktif,

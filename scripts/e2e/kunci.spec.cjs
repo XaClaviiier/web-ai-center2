@@ -18,7 +18,7 @@ test('kunci: akun B ditolak 423 saat A mengedit; setelah dilepas B boleh; PUT ta
   const bPasang = await b.panggil('POST', `${url}/lock`);
   expect(bPasang.status()).toBe(423);
   expect((await bPasang.json()).error.code).toBe('locked');
-  const bUbah = await b.panggil('PUT', url, { data: { judul: `${LABEL} dibajak`, isi: 'x', tanggalPublikasi: '2020-01-01', gambar: item.gambar.key, version: item.version } });
+  const bUbah = await b.panggil('PUT', url, { data: { judul: `${LABEL} dibajak`, isi: 'x', tanggalPublikasi: '01-01-2020', gambar: item.gambar.key, version: item.version } });
   expect(bUbah.status()).toBe(423);
   expect((await b.panggil('DELETE', url)).status()).toBe(423);
   await b.panggil('DELETE', `${url}/lock`); // B mencoba melepas kunci A (boleh no-op), kunci A harus tetap berlaku
@@ -35,7 +35,7 @@ test('kunci: akun B ditolak 423 saat A mengedit; setelah dilepas B boleh; PUT ta
   expect((await b.panggil('DELETE', `${url}/lock`)).status()).toBe(204);
 });
 
-test('optimistic locking: version basi -> 409 version_conflict', async () => {
+test('optimistic locking: version basi -> 409 conflict', async () => {
   const item = await buatBerita(a, `${LABEL} versi basi`);
   const url = `/api/admin/berita/${item.id}`;
   const badan = (v) => ({ judul: `${LABEL} versi basi`, isi: 'Isi baru.', tanggalPublikasi: item.tanggalPublikasi, gambar: item.gambar.key, version: v });
@@ -45,7 +45,7 @@ test('optimistic locking: version basi -> 409 version_conflict', async () => {
   await a.panggil('POST', `${url}/lock`);
   const basi = await a.panggil('PUT', url, { data: badan(item.version) });
   expect(basi.status()).toBe(409);
-  expect((await basi.json()).error.code).toBe('version_conflict');
+  expect((await basi.json()).error.code).toBe('conflict');
 });
 
 test('UI: B melihat banner baca-saja saat A memegang kunci', async ({ browser }) => {

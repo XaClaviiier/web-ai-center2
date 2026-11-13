@@ -4,7 +4,7 @@ import type { IconName } from '../../src/shared/ui';
 import { Format } from '../../src/shared/format';
 import { image } from '../../src/shared/content';
 
-// Batas judul konten (spasi dihitung, nilai di-trim). Salinan di src/simulation/api.ts.
+// Batas judul konten (spasi dihitung, nilai di-trim). Salinan di src/api/api.ts.
 const MAKS_JUDUL = 70;
 
 export type TextName = 'judul' | 'tanggalPublikasi' | 'isi' | 'nama' | 'teks' | 'posisi' | 'bidangRiset';

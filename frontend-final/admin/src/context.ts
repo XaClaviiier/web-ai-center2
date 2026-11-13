@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, type RefObject } from 'react';
 import { ApiError, type Account } from '../../src/shared/types';
 
 export const PESAN_TANPA_PERUBAHAN = 'Tidak ada perubahan yang disimpan.';
-export const URL_LOGIN = `${import.meta.env.BASE_URL}?simulation=login`;
+export const URL_LOGIN = '/admin/masuk';
 
 export interface ConfirmOptions {
   judul: string;

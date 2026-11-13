@@ -25,7 +25,7 @@ test('tanpa login: API admin 401; tulis tanpa Origin 403', async () => {
 });
 
 test('CSRF: tulis admin tanpa token atau Origin asing ditolak; dengan keduanya lolos', async () => {
-  const body = { judul: `${LABEL} csrf`, isi: 'x', tanggalPublikasi: '2020-01-01', gambar: 'berita/x.png' };
+  const body = { judul: `${LABEL} csrf`, isi: 'x', tanggalPublikasi: '01-01-2020', gambar: 'berita/x.png' };
   const tanpaToken = await k.panggil('POST', '/api/admin/berita', { data: body, tanpaCsrf: true });
   expect(tanpaToken.status()).toBe(403);
   const tokenSalah = await k.panggil('POST', '/api/admin/berita', { data: body, header: { 'X-CSRF-Token': 'salah' } });
@@ -64,7 +64,8 @@ test('XSS tersimpan: payload di judul/isi/nama tampil sebagai teks di publik, SS
   expect(html).not.toContain('<img src=x onerror');
   expect(html).not.toContain('<script>window.__xss');
   expect(html).toContain('&lt;img src=x onerror=window.__xss=1&gt;');
-  expect(html).not.toContain('</script><script');
+  expect(html).not.toMatch(/<\/script>\s*<script[^>]*>\s*window\.__xss/); // skrip Astro/JSON-LD bersebelahan itu wajar; yang dilarang: skrip berisi payload
+  expect(html).not.toMatch(/<script(?![^>]*\bsrc=)(?![^>]*type="application\/(ld\+)?json")[^>]*>[^<]*__xss/);
 
   const galat = [];
   page.on('dialog', (d) => { galat.push('dialog:' + d.message()); d.dismiss(); });
@@ -74,7 +75,7 @@ test('XSS tersimpan: payload di judul/isi/nama tampil sebagai teks di publik, SS
     expect(await page.evaluate(() => window.__xss), `window.__xss di ${url}`).toBeUndefined();
   }
   await page.goto(`/berita/${b.slug}`);
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('<img src=x onerror=window.__xss=1>');
+  await expect(page.locator('article.artikel h1')).toContainText('<img src=x onerror=window.__xss=1>');
   await expect(page.locator('.artikel__isi')).toContainText('<script>window.__xss=3</script>');
   expect(await page.locator('.artikel__isi script, .artikel__isi iframe, h1 img').count()).toBe(0);
 
@@ -112,7 +113,8 @@ test('upload: non-gambar, terlalu besar, sumber salah, dan tanpa file ditolak; g
 
 test('traversal dan akses langsung: /assets, /media, berkas konfigurasi tidak terbaca', async () => {
   const anon = await pwRequest.newContext({ baseURL: BASE });
-  const jalur = ['/assets/', '/assets/css', '/assets/%2e%2e/%2e%2e/backend/.env', '/assets/..%2f..%2fbackend%2f.env', '/assets/css/..%5c..%5c..%5cbackend%5c.env',
+  const jalur = ['/assets/', '/assets/img', '/assets/%2e%2e/%2e%2e/backend/.env', '/assets/..%2f..%2fbackend%2f.env', '/assets/img/..%5c..%5c..%5cbackend%5c.env',
+    '/_astro/', '/_astro/%2e%2e/%2e%2e/backend/.env', '/_astro/..%2f..%2fbackend%2f.env', '/admin/assets/', '/admin/assets/..%2f..%2f..%2fbackend%2f.env', '/csp-hash-skrip.txt', '/admin/masuk.html',
     '/media/../backend/.env', '/media/berita/../../x', '/media/berita/00000000-0000-4000-8000-000000000000.png', '/media/%2e%2e/%2e%2e/etc/passwd',
     '/backend/.env', '/.env', '/web/admin/index.html', '/index.html', '/berita.html', '/admin/index.html', '/api/admin/../auth/me'];
   for (const p of jalur) {
@@ -126,7 +128,9 @@ test('traversal dan akses langsung: /assets, /media, berkas konfigurasi tidak te
 
 test('kontrol kunci: heartbeat dan lepas tidak bisa dipakai tanpa memegang kunci', async () => {
   const b = await buatBerita(k, `${LABEL} kunci`);
-  expect((await k.panggil('PUT', `/api/admin/berita/${b.id}/lock`)).status()).toBe(423); // belum memegang kunci
+  const belum = await k.panggil('PUT', `/api/admin/berita/${b.id}/lock`); // belum memegang kunci: 410 lock_lost (kontrak frontend-final)
+  expect(belum.status()).toBe(410);
+  expect((await belum.json()).error.code).toBe('lock_lost');
   const pasang = await k.panggil('POST', `/api/admin/berita/${b.id}/lock`);
   expect(pasang.status()).toBe(200);
   expect((await pasang.json()).heartbeatDetik).toBeGreaterThan(0);
@@ -142,7 +146,7 @@ test('header keamanan: nosniff, X-Frame-Options, CSP same-origin, Referrer-Polic
     expect(h['x-frame-options'], `XFO ${p}`).toBe('DENY');
     expect(h['referrer-policy'], `referrer ${p}`).toBe('strict-origin-when-cross-origin');
     expect(h['content-security-policy'], `CSP ${p}`).toContain("frame-ancestors 'none'");
-    expect(h['content-security-policy'], `CSP ${p}`).toContain("script-src 'self'");
+    expect(h['content-security-policy'], `CSP ${p}`).toMatch(/script-src 'self'( 'sha256-[A-Za-z0-9+/]{43}=')*;/); // hanya hash skrip inline Astro yang ditambahkan
     expect(h['content-security-policy'], `CSP ${p}`).not.toMatch(/script-src[^;]*unsafe/);
     expect(h['strict-transport-security'], `HSTS tidak aktif di development ${p}`).toBeUndefined();
   }
@@ -154,7 +158,7 @@ test('CSP tidak merusak halaman: tanpa pelanggaran CSP di beranda, berita, admin
   const pelanggaran = [];
   page.on('console', (m) => { if (/Content Security Policy|Refused to/i.test(m.text())) pelanggaran.push(m.text()); });
   page.on('pageerror', (e) => pelanggaran.push(e.message));
-  for (const u of ['/', '/berita', '/dokumentasi', '/tim', '/layanan/inference-solutions/perencanaan-implan-gigi', '/admin/masuk']) {
+  for (const u of ['/', '/berita', '/dokumentasi', '/tim', '/tentang-kami', '/layanan/pelatihan', '/layanan/inference-solutions/perencanaan-implan-gigi', '/layanan/inference-solutions/jejak-alumni', '/layanan/inference-solutions/document-intelligence', '/admin/masuk']) {
     await page.goto(u);
     await page.waitForLoadState('networkidle');
   }
@@ -166,10 +170,13 @@ test('CSP tidak merusak halaman: tanpa pelanggaran CSP di beranda, berita, admin
   expect(pelanggaran).toEqual([]);
 });
 
-test('URL gambar: nilai //host dan http(s) tidak dipakai sebagai src (hardening frontend)', async ({ page }) => {
-  await page.goto('/');
-  const hasil = await page.evaluate(() => [gambar('//evil.example/x.png'), gambar('https://evil.example/x.png'), gambar('/media/berita/a.png'), gambar('logo.png')]);
-  expect(hasil).toEqual(['/assets/img///evil.example/x.png', '/assets/img/https://evil.example/x.png', '/media/berita/a.png', '/assets/img/logo.png']);
+test('URL gambar: semua <img> di halaman publik dan admin bersumber same-origin (/media atau /assets/img) atau blob:', async ({ page }) => {
+  for (const u of ['/', '/berita', '/dokumentasi', '/tim', '/tentang-kami']) {
+    await page.goto(u);
+    await page.waitForLoadState('networkidle');
+    const asing = await page.evaluate(() => [...document.images].map((i) => i.currentSrc || i.src).filter((s) => s && !s.startsWith(location.origin + '/') && !s.startsWith('blob:') && !s.startsWith('data:')));
+    expect(asing, `gambar asing di ${u}`).toEqual([]);
+  }
 });
 
 test('karakter tersembunyi (bidi, lebar nol) ditolak 400 pada judul dan isi; ZWJ emoji tetap diterima', async () => {
@@ -178,7 +185,7 @@ test('karakter tersembunyi (bidi, lebar nol) ditolak 400 pada judul dan isi; ZWJ
   const kirim = async (judul, isi = 'Isi biasa.') => {
     const up = await k.panggil('POST', '/api/admin/upload', { multipart: { sumber: 'berita', gambar: { name: 'a.png', mimeType: 'image/png', buffer: PNG } } });
     const { key } = await up.json();
-    return k.panggil('POST', '/api/admin/berita', { data: { judul, isi, tanggalPublikasi: '2026-01-01', gambar: key } });
+    return k.panggil('POST', '/api/admin/berita', { data: { judul, isi, tanggalPublikasi: '01-01-2026', gambar: key } });
   };
   for (const kode of [0x202e, 0x200b, 0x2066, 0xfeff]) {
     for (const res of [await kirim(sisip(kode)), await kirim(`${LABEL} bersih`, `isi${String.fromCharCode(kode)}x`)]) {
