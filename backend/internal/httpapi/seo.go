@@ -100,7 +100,7 @@ func (h seoHandler) dokumentasi(w http.ResponseWriter, r *http.Request) {
 			urlGambar = append(urlGambar, h.urlAbsolut(g.Key))
 		}
 		data, err := json.Marshal(dokumentasiDetailJSON{
-			ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: d.TanggalPublikasi, Gambar: jsonGambar,
+			ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: tglAPI(d.TanggalPublikasi), Gambar: jsonGambar,
 		})
 		if err != nil {
 			return nil, false, fmt.Errorf("encode data awal: %w", err)

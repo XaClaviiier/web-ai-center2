@@ -199,7 +199,7 @@ func (l lingkunganDok) unggahN(t *testing.T, n int) []GambarDokumentasi {
 
 func (l lingkunganDok) mentah(t *testing.T, judul string, n int) MentahDokumentasi {
 	t.Helper()
-	return MentahDokumentasi{Judul: judul, TanggalPublikasi: "2026-11-09", Gambar: l.unggahN(t, n)}
+	return MentahDokumentasi{Judul: judul, TanggalPublikasi: "09-11-2026", Gambar: l.unggahN(t, n)}
 }
 
 func keysDok(d Dokumentasi) []string {
@@ -211,7 +211,7 @@ func keysDok(d Dokumentasi) []string {
 }
 
 func TestValidasiDokumentasi(t *testing.T) {
-	ok := MentahDokumentasi{Judul: "  Kegiatan   Satu ", TanggalPublikasi: "2026-11-09",
+	ok := MentahDokumentasi{Judul: "  Kegiatan   Satu ", TanggalPublikasi: "09-11-2026",
 		Gambar: []GambarDokumentasi{{Key: "k1"}, {Key: "k2"}}}
 	in, err := ValidasiDokumentasi(ok)
 	if err != nil {
@@ -231,7 +231,7 @@ func TestValidasiDokumentasi(t *testing.T) {
 		"judul kosong":     func(m *MentahDokumentasi) { m.Judul = "" },
 		"judul panjang":    func(m *MentahDokumentasi) { m.Judul = strings.Repeat("a", BatasJudul+1) },
 		"tanggal salah":    func(m *MentahDokumentasi) { m.TanggalPublikasi = "kemarin" },
-		"tanggal masa depan": func(m *MentahDokumentasi) { m.TanggalPublikasi = "2999-01-01" },
+		"tanggal masa depan": func(m *MentahDokumentasi) { m.TanggalPublikasi = "01-01-2999" },
 		"tanpa gambar":     func(m *MentahDokumentasi) { m.Gambar = nil },
 		"gambar kosong []": func(m *MentahDokumentasi) { m.Gambar = []GambarDokumentasi{} },
 		"tujuh gambar":     func(m *MentahDokumentasi) { m.Gambar = banyak(7) },
@@ -300,7 +300,7 @@ func TestDokBuatKeyDitolak(t *testing.T) {
 		"traversal":          "../dokumentasi/x.png",
 	}
 	for nama, key := range kasus {
-		m := MentahDokumentasi{Judul: "J", TanggalPublikasi: "2026-11-09", Gambar: []GambarDokumentasi{baik, {Key: key}}}
+		m := MentahDokumentasi{Judul: "J", TanggalPublikasi: "09-11-2026", Gambar: []GambarDokumentasi{baik, {Key: key}}}
 		_, err := l.svc.Buat(ctx, m, "u")
 		var e *ErrInput
 		if !errors.As(err, &e) {
@@ -332,7 +332,7 @@ func TestDokBuatGagalMenghapusFileBaruTetapMenjagaYangDipakai(t *testing.T) {
 	// 2. satu key tidak ada di bucket: galat; key lain yang sah dan belum dipakai ikut dibersihkan
 	baik1, baik2 := l.unggahN(t, 2)[0], l.unggahN(t, 1)[0]
 	hilang := GambarDokumentasi{Key: "dokumentasi/3f9c2a10-7b4e-4c6d-9a1f-0123456789ab.png"}
-	if _, err := l.svc.Buat(ctx, MentahDokumentasi{Judul: "J", TanggalPublikasi: "2026-11-09", Gambar: []GambarDokumentasi{baik1, hilang, baik2}}, "u"); err == nil {
+	if _, err := l.svc.Buat(ctx, MentahDokumentasi{Judul: "J", TanggalPublikasi: "09-11-2026", Gambar: []GambarDokumentasi{baik1, hilang, baik2}}, "u"); err == nil {
 		t.Fatal("seharusnya galat")
 	}
 	if adaKey(t, l.mem, baik1.Key) || adaKey(t, l.mem, baik2.Key) {
@@ -344,7 +344,7 @@ func TestDokBuatGagalMenghapusFileBaruTetapMenjagaYangDipakai(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dup := MentahDokumentasi{Judul: "Kedua", TanggalPublikasi: "2026-11-09", Gambar: []GambarDokumentasi{{Key: pertama.Gambar[1].Key}}}
+	dup := MentahDokumentasi{Judul: "Kedua", TanggalPublikasi: "09-11-2026", Gambar: []GambarDokumentasi{{Key: pertama.Gambar[1].Key}}}
 	_, err = l.svc.Buat(ctx, dup, "u")
 	perluErrInput(t, err, "sudah dipakai")
 	for _, g := range pertama.Gambar {
@@ -373,7 +373,7 @@ func TestDokUbahSiklusFile(t *testing.T) {
 	a, b, c := awal.Gambar[0], awal.Gambar[1], awal.Gambar[2]
 	ubah := func(g []GambarDokumentasi, version int32) Dokumentasi {
 		t.Helper()
-		r, err := l.svc.Ubah(ctx, d.ID, MentahDokumentasi{Judul: "Dok", TanggalPublikasi: "2026-11-09", Gambar: g}, version, "u")
+		r, err := l.svc.Ubah(ctx, d.ID, MentahDokumentasi{Judul: "Dok", TanggalPublikasi: "09-11-2026", Gambar: g}, version, "u")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -421,7 +421,7 @@ func TestDokUbahVersiBentrokMenghapusFileBaruTapiMenjagaLama(t *testing.T) {
 	d, _ := l.svc.Buat(ctx, awal, "u")
 	baru := l.unggahN(t, 2)
 
-	_, err := l.svc.Ubah(ctx, d.ID, MentahDokumentasi{Judul: "Dok", TanggalPublikasi: "2026-11-09", Gambar: []GambarDokumentasi{awal.Gambar[0], baru[0], baru[1]}}, 99, "u")
+	_, err := l.svc.Ubah(ctx, d.ID, MentahDokumentasi{Judul: "Dok", TanggalPublikasi: "09-11-2026", Gambar: []GambarDokumentasi{awal.Gambar[0], baru[0], baru[1]}}, 99, "u")
 	if !errors.Is(err, ErrVersiBentrok) {
 		t.Fatalf("diharapkan ErrVersiBentrok, dapat %v", err)
 	}
@@ -450,13 +450,13 @@ func TestDokUbahKeyBaruBermasalahTidakMengubahApaPun(t *testing.T) {
 	hilang := GambarDokumentasi{Key: "dokumentasi/3f9c2a10-7b4e-4c6d-9a1f-0123456789ab.png"}
 
 	// 1. key baru tidak ada di bucket: ditolak sebelum menyentuh database; key baru lain yang sah dibersihkan
-	_, err := l.svc.Ubah(ctx, d.ID, MentahDokumentasi{Judul: "Dok", TanggalPublikasi: "2026-11-09", Gambar: []GambarDokumentasi{awal.Gambar[0], bagus, hilang}}, 1, "u")
+	_, err := l.svc.Ubah(ctx, d.ID, MentahDokumentasi{Judul: "Dok", TanggalPublikasi: "09-11-2026", Gambar: []GambarDokumentasi{awal.Gambar[0], bagus, hilang}}, 1, "u")
 	perluErrInput(t, err, "belum diunggah")
 	if adaKey(t, l.mem, bagus.Key) {
 		t.Error("file baru yang sah ikut dibersihkan saat request gagal")
 	}
 	// 2. key milik dokumentasi lain: ditolak, dan file milik dokumentasi lain TIDAK terhapus
-	_, err = l.svc.Ubah(ctx, d.ID, MentahDokumentasi{Judul: "Dok", TanggalPublikasi: "2026-11-09", Gambar: []GambarDokumentasi{awal.Gambar[0], lain.Gambar[0]}}, 1, "u")
+	_, err = l.svc.Ubah(ctx, d.ID, MentahDokumentasi{Judul: "Dok", TanggalPublikasi: "09-11-2026", Gambar: []GambarDokumentasi{awal.Gambar[0], lain.Gambar[0]}}, 1, "u")
 	perluErrInput(t, err, "sudah dipakai")
 	if !adaKey(t, l.mem, lain.Gambar[0].Key) {
 		t.Fatal("file milik dokumentasi lain terhapus")
@@ -480,7 +480,7 @@ func TestDokUbahKeyYangSudahDimilikiTidakDiperiksaUlang(t *testing.T) {
 	if err := l.mem.Hapus(ctx, awal.Gambar[1].Key); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := l.svc.Ubah(ctx, d.ID, MentahDokumentasi{Judul: "Dok Baru", TanggalPublikasi: "2026-11-09", Gambar: awal.Gambar}, 1, "u"); err != nil {
+	if _, err := l.svc.Ubah(ctx, d.ID, MentahDokumentasi{Judul: "Dok Baru", TanggalPublikasi: "09-11-2026", Gambar: awal.Gambar}, 1, "u"); err != nil {
 		t.Fatalf("key yang sudah dimiliki tidak diperiksa ulang saat Simpan: %v", err)
 	}
 }
@@ -489,7 +489,7 @@ func TestDokUbahStatusDanKetidakadaan(t *testing.T) {
 	l := siapkanDok(t)
 	m := l.mentah(t, "Dok", 1)
 	d, _ := l.svc.Buat(ctx, m, "u")
-	ubah := MentahDokumentasi{Judul: "x", TanggalPublikasi: "2026-11-09", Gambar: m.Gambar}
+	ubah := MentahDokumentasi{Judul: "x", TanggalPublikasi: "09-11-2026", Gambar: m.Gambar}
 
 	if _, err := l.svc.Ubah(ctx, 999, ubah, 1, "u"); !errors.Is(err, ErrTidakDitemukan) {
 		t.Errorf("tidak ada: %v", err)

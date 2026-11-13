@@ -72,14 +72,14 @@ func bentukDokumentasiAdmin(d admin.Dokumentasi) dokumentasiAdminJSON {
 		g = append(g, gambarDokumentasiAdminJSON{Key: x.Key, URL: urlMedia(x.Key)})
 	}
 	return dokumentasiAdminJSON{
-		ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: d.TanggalPublikasi, Gambar: g, Status: d.Status, Version: d.Version,
+		ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: tglAPI(d.TanggalPublikasi), Gambar: g, Status: d.Status, Version: d.Version,
 		DibuatPada: d.DibuatPada, DibuatOleh: d.DibuatOleh, DiubahOleh: d.DiubahOleh, DihapusPada: d.DihapusPada,
 	}
 }
 
 func bentukDokumentasiRingkas(r admin.RingkasDokumentasi) dokumentasiAdminRingkasJSON {
 	j := dokumentasiAdminRingkasJSON{
-		ID: r.ID, Slug: r.Slug, Judul: r.Judul, TanggalPublikasi: r.TanggalPublikasi, JumlahGambar: r.JumlahGambar,
+		ID: r.ID, Slug: r.Slug, Judul: r.Judul, TanggalPublikasi: tglAPI(r.TanggalPublikasi), JumlahGambar: r.JumlahGambar,
 		Status: r.Status, Version: r.Version, DibuatPada: r.DibuatPada, DibuatOleh: r.DibuatOleh, DiubahOleh: r.DiubahOleh,
 		DihapusPada: r.DihapusPada,
 	}
@@ -89,7 +89,7 @@ func bentukDokumentasiRingkas(r admin.RingkasDokumentasi) dokumentasiAdminRingka
 	return j
 }
 
-// gambarMasukJSON adalah satu gambar pada body. Daftar `gambar` menyatakan KEADAAN AKHIR berurutan (1-6 item):
+// gambarMasukJSON adalah satu gambar pada body. Daftar `gambarDaftar` menyatakan KEADAAN AKHIR berurutan (1-6 item):
 // urutan array = urutan gambar, key yang sudah ada dipertahankan, key baru ditambahkan, key yang hilang dihapus.
 type gambarMasukJSON struct {
 	Key string `json:"key"`
@@ -99,7 +99,7 @@ type gambarMasukJSON struct {
 type bodyBuatDokumentasi struct {
 	Judul            string            `json:"judul"`
 	TanggalPublikasi string            `json:"tanggalPublikasi"`
-	Gambar           []gambarMasukJSON `json:"gambar"`
+	Gambar           []gambarMasukJSON `json:"gambarDaftar"` // nama mengikuti frontend-final (dulu "gambar")
 }
 
 type bodyUbahDokumentasi struct {

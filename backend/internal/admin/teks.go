@@ -18,7 +18,7 @@ func barisSatu(nama, s string, maks int) (string, error) {
 		return "", salah("Field " + nama + " bukan teks UTF-8 yang valid")
 	}
 	for _, r := range s {
-		if unicode.IsControl(r) && !unicode.IsSpace(r) {
+		if (unicode.IsControl(r) && !unicode.IsSpace(r)) || formatTersembunyi(r) {
 			return "", salah("Field " + nama + " memuat karakter yang tidak diizinkan")
 		}
 	}
@@ -30,6 +30,14 @@ func barisSatu(nama, s string, maks int) (string, error) {
 		return "", salah("Field " + nama + " maksimal " + strconv.Itoa(maks) + " karakter")
 	}
 	return s, nil
+}
+
+// formatTersembunyi melaporkan karakter format Unicode (kategori Cf) yang tidak tampak dan dapat menyamarkan teks:
+// penimpa arah bidi (U+202A-202E, U+2066-2069, U+200E/200F) dan spasi lebar nol (U+200B, U+2060, U+FEFF). ZWNJ dan
+// ZWJ (U+200C, U+200D) tetap diizinkan karena dipakai urutan emoji dan beberapa aksara. Dasar: hardening audit
+// keamanan 2026-11-12 (tidak ada ketentuan di docs/).
+func formatTersembunyi(r rune) bool {
+	return unicode.Is(unicode.Cf, r) && r != '‌' && r != '‍'
 }
 
 var barisKosongBerlebih = regexp.MustCompile(`\n{3,}`)
@@ -57,7 +65,7 @@ func banyakBaris(nama, s string, maks int) (string, error) {
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 	s = strings.ReplaceAll(s, "\r", "\n")
 	for _, r := range s {
-		if unicode.IsControl(r) && r != '\n' && r != '\t' {
+		if (unicode.IsControl(r) && r != '\n' && r != '\t') || formatTersembunyi(r) {
 			return "", salah("Field " + nama + " memuat karakter yang tidak diizinkan")
 		}
 	}
@@ -78,15 +86,16 @@ var zonaWIB = time.FixedZone("WIB", 7*60*60)
 // sekarang dapat diganti di tes.
 var sekarang = time.Now
 
-// tanggal memvalidasi YYYY-MM-DD (tanggal kalender yang sah) dan menolak tanggal setelah hari ini (WIB).
+// tanggal memvalidasi DD-MM-YYYY (format API; tanggal kalender yang sah) dan menolak tanggal setelah hari ini (WIB).
+// Hasilnya YYYY-MM-DD (bentuk internal).
 func tanggal(nama, s string) (string, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return "", salah("Field " + nama + " wajib diisi")
 	}
-	t, err := time.Parse("2006-01-02", s)
+	t, err := time.Parse("02-01-2006", s)
 	if err != nil {
-		return "", salah("Field " + nama + " harus tanggal valid berformat YYYY-MM-DD")
+		return "", salah("Field " + nama + " harus tanggal valid berformat DD-MM-YYYY")
 	}
 	if hariIni := sekarang().In(zonaWIB).Format("2006-01-02"); t.Format("2006-01-02") > hariIni {
 		return "", salah("Field " + nama + " tidak boleh setelah hari ini")

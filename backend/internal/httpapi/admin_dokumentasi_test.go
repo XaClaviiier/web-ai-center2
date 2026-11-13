@@ -90,7 +90,7 @@ func siapkanDokHTTP(t *testing.T) lingkunganDokHTTP {
 	return lingkunganDokHTTP{lingkunganAuth: e, svc: svc}
 }
 
-const badanDokOK = `"judul":"Kegiatan Dua","tanggalPublikasi":"2026-11-09","gambar":[{"key":"` + keyDok1 + `"},{"key":"` + keyDok2 + `"}]`
+const badanDokOK = `"judul":"Kegiatan Dua","tanggalPublikasi":"09-11-2026","gambarDaftar":[{"key":"` + keyDok1 + `"},{"key":"` + keyDok2 + `"}]`
 
 func TestAdminDokumentasiButuhLoginCSRFDanOrigin(t *testing.T) {
 	e := siapkanDokHTTP(t)
@@ -231,7 +231,7 @@ func TestAdminDokumentasiBuatMeneruskanDaftarGambarBerurutan(t *testing.T) {
 		t.Fatalf("buat: %d %q %s", rec.Code, rec.Header().Get("Location"), rec.Body)
 	}
 	m := e.svc.mentah
-	if e.svc.aksi != "buat" || m.Judul != "Kegiatan Dua" || m.TanggalPublikasi != "2026-11-09" || e.svc.oleh != "dev-admin" {
+	if e.svc.aksi != "buat" || m.Judul != "Kegiatan Dua" || m.TanggalPublikasi != "09-11-2026" || e.svc.oleh != "dev-admin" {
 		t.Errorf("argumen: %+v", e.svc)
 	}
 	if len(m.Gambar) != 2 || m.Gambar[0].Key != keyDok1 || m.Gambar[1].Key != keyDok2 {
@@ -245,11 +245,11 @@ func TestAdminDokumentasiBodyJSONKetat(t *testing.T) {
 	kasus := map[string]string{
 		"POST tidak boleh version":  `{` + badanDokOK + `,"version":1}`,
 		"field tak dikenal":         `{` + badanDokOK + `,"status":"posted"}`,
-		"item gambar: field asing":  `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":[{"key":"k","urutan":1}]}`,
-		"gambar bukan array":        `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":"k"}`,
-		"gambar array string":       `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":["k"]}`,
-		"item gambar key bukan str": `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":[{"key":1}]}`,
-		"alt tidak dikenal lagi":    `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":[{"key":"k","alt":"x"}]}`,
+		"item gambar: field asing":  `{"judul":"J","tanggalPublikasi":"09-11-2026","gambarDaftar":[{"key":"k","urutan":1}]}`,
+		"gambar bukan array":        `{"judul":"J","tanggalPublikasi":"09-11-2026","gambarDaftar":"k"}`,
+		"gambar array string":       `{"judul":"J","tanggalPublikasi":"09-11-2026","gambarDaftar":["k"]}`,
+		"item gambar key bukan str": `{"judul":"J","tanggalPublikasi":"09-11-2026","gambarDaftar":[{"key":1}]}`,
+		"alt tidak dikenal lagi":    `{"judul":"J","tanggalPublikasi":"09-11-2026","gambarDaftar":[{"key":"k","alt":"x"}]}`,
 		"bukan JSON":                `x`,
 	}
 	for nama, body := range kasus {
@@ -262,8 +262,8 @@ func TestAdminDokumentasiBodyJSONKetat(t *testing.T) {
 	}
 	// gambar tidak dikirim / kosong: tidak ditolak di lapisan HTTP, tetapi diteruskan apa adanya ke layanan (aturan 1-6 milik layanan)
 	for nama, body := range map[string]string{
-		"tanpa field gambar": `{"judul":"J","tanggalPublikasi":"2026-11-09"}`,
-		"gambar kosong":      `{"judul":"J","tanggalPublikasi":"2026-11-09","gambar":[]}`,
+		"tanpa field gambar": `{"judul":"J","tanggalPublikasi":"09-11-2026"}`,
+		"gambar kosong":      `{"judul":"J","tanggalPublikasi":"09-11-2026","gambarDaftar":[]}`,
 	} {
 		e.svc.aksi = ""
 		kirimAdmin(t, e.h, id, csrf, "POST", "/api/admin/dokumentasi", body)
@@ -367,7 +367,11 @@ func TestAdminDokumentasiPemetaanGalat(t *testing.T) {
 		e.svc.err = k.err
 		for _, a := range aksi {
 			rec := kirimAdmin(t, e.h, id, csrf, a.metode, a.path, a.body)
-			if rec.Code != k.kode || kodeGalat(t, rec) != k.code {
+			kode, code := k.kode, k.code
+			if code == kodeStatusTidakValid && a.metode == "PUT" { // Simpan pada item bukan draft: 400 bukan_draft (frontend-final)
+				kode, code = 400, kodeBukanDraft
+			}
+			if rec.Code != kode || kodeGalat(t, rec) != code {
 				t.Errorf("%v: %s %s -> %d %s", k.err, a.metode, a.path, rec.Code, rec.Body)
 			}
 			if strings.Contains(rec.Body.String(), "RAHASIA") || strings.Contains(rec.Body.String(), "pq:") {

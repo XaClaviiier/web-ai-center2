@@ -11,6 +11,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const hapusLogKedaluwarsa = `-- name: HapusLogKedaluwarsa :execrows
+DELETE FROM log_aktivitas
+WHERE id IN (
+    SELECT id FROM log_aktivitas
+    WHERE terjadi_pada < now() - make_interval(months => $1::int)
+    ORDER BY id
+    LIMIT $2::int
+)
+`
+
+type HapusLogKedaluwarsaParams struct {
+	Bulan int32
+	Batas int32
+}
+
+func (q *Queries) HapusLogKedaluwarsa(ctx context.Context, arg HapusLogKedaluwarsaParams) (int64, error) {
+	result, err := q.db.Exec(ctx, hapusLogKedaluwarsa, arg.Bulan, arg.Batas)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const hitungLogAktivitas = `-- name: HitungLogAktivitas :one
 SELECT count(*) FROM log_aktivitas
 WHERE ($1::text = '' OR username = $1::text)
@@ -33,6 +56,20 @@ func (q *Queries) HitungLogAktivitas(ctx context.Context, arg HitungLogAktivitas
 		arg.Dari,
 		arg.Sampai,
 	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const hitungLogKedaluwarsa = `-- name: HitungLogKedaluwarsa :one
+SELECT count(*) FROM log_aktivitas
+WHERE terjadi_pada < now() - make_interval(months => $1::int)
+`
+
+// Retensi bergulir: baris lebih tua dari N bulan kalender (jam database). Dihapus dalam batch terlama dulu agar
+// transaksi pendek; HitungLogKedaluwarsa dipakai mode dry-run. Satu-satunya jalur DELETE pada log dari aplikasi.
+func (q *Queries) HitungLogKedaluwarsa(ctx context.Context, bulan int32) (int64, error) {
+	row := q.db.QueryRow(ctx, hitungLogKedaluwarsa, bulan)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

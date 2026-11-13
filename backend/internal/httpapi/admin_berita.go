@@ -58,7 +58,7 @@ type beritaAdminJSON struct {
 
 func bentukBeritaAdmin(b admin.Berita, denganIsi bool) beritaAdminJSON {
 	j := beritaAdminJSON{
-		ID: b.ID, Slug: b.Slug, Judul: b.Judul, Ringkasan: b.Ringkasan, TanggalPublikasi: b.TanggalPublikasi,
+		ID: b.ID, Slug: b.Slug, Judul: b.Judul, Ringkasan: b.Ringkasan, TanggalPublikasi: tglAPI(b.TanggalPublikasi),
 		Gambar: gambarAdminJSON{Key: b.GambarKey, URL: urlMedia(b.GambarKey)},
 		Status: b.Status, Version: b.Version, DibuatPada: b.DibuatPada, DibuatOleh: b.DibuatOleh, DiubahOleh: b.DiubahOleh,
 		DihapusPada: b.DihapusPada,

@@ -97,3 +97,26 @@ func TestPanicMenjadi500TanpaBocor(t *testing.T) {
 		t.Fatal("pesan panic bocor ke klien")
 	}
 }
+
+func TestHeaderKeamananSemuaRespons(t *testing.T) {
+	for _, rute := range []string{"/api/health", "/api/tidak-ada"} {
+		rec := panggil(routerUji(pingerPalsu{}), http.MethodGet, rute)
+		h := rec.Header()
+		if h.Get("X-Content-Type-Options") != "nosniff" || h.Get("X-Frame-Options") != "DENY" || h.Get("Referrer-Policy") == "" {
+			t.Errorf("%s: header keamanan kurang: %v", rute, h)
+		}
+		if csp := h.Get("Content-Security-Policy"); !strings.Contains(csp, "frame-ancestors 'none'") || !strings.Contains(csp, "script-src 'self'") || strings.Contains(csp, "script-src 'self' 'unsafe") {
+			t.Errorf("%s: CSP tidak sesuai: %q", rute, csp)
+		}
+		if h.Get("Strict-Transport-Security") != "" {
+			t.Errorf("%s: HSTS tidak boleh aktif tanpa Deps.HSTS", rute)
+		}
+	}
+}
+
+func TestHSTSHanyaBilaDiaktifkan(t *testing.T) {
+	h := NewRouter(Deps{Log: slog.New(slog.NewTextHandler(io.Discard, nil)), DB: pingerPalsu{}, Konten: kontenPalsu{}, HSTS: true})
+	if got := panggil(h, http.MethodGet, "/api/health").Header().Get("Strict-Transport-Security"); !strings.HasPrefix(got, "max-age=") {
+		t.Errorf("HSTS = %q", got)
+	}
+}

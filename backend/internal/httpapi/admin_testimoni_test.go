@@ -339,7 +339,11 @@ func TestAdminTestimoniPemetaanGalat(t *testing.T) {
 		e.svc.err = k.err
 		for _, a := range aksi {
 			rec := kirimAdmin(t, e.h, id, csrf, a.metode, a.path, a.body)
-			if rec.Code != k.kode || kodeGalat(t, rec) != k.code {
+			kode, code := k.kode, k.code
+			if code == kodeStatusTidakValid && a.metode == "PUT" { // Simpan pada item bukan draft: 400 bukan_draft (frontend-final)
+				kode, code = 400, kodeBukanDraft
+			}
+			if rec.Code != kode || kodeGalat(t, rec) != code {
 				t.Errorf("%v: %s %s -> %d %s", k.err, a.metode, a.path, rec.Code, rec.Body)
 			}
 			if strings.Contains(rec.Body.String(), "RAHASIA") || strings.Contains(rec.Body.String(), "pq:") {

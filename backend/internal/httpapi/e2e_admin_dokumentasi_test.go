@@ -27,7 +27,7 @@ func daftarGambar(keys ...string) string {
 func TestE2EAdminDokumentasiSiklusPenuh(t *testing.T) {
 	a := siapkanE2EAdmin(t)
 	badan := func(judul, gambar string) string {
-		return `{"judul":"` + judul + `","tanggalPublikasi":"2026-11-09","gambar":` + gambar + `}`
+		return `{"judul":"` + judul + `","tanggalPublikasi":"09-11-2026","gambarDaftar":` + gambar + `}`
 	}
 
 	// 1. buat dengan tiga gambar
@@ -74,7 +74,7 @@ func TestE2EAdminDokumentasiSiklusPenuh(t *testing.T) {
 
 	// 4. Simpan version basi: 409, file baru dihapus kembali, data tidak berubah
 	n1 := a.unggah("dokumentasi")
-	a.harus(a.panggil("PUT", path, `{"judul":"Baru","tanggalPublikasi":"2026-11-10","gambar":`+daftarGambar(k[0], n1)+`,"version":99}`), 409, "version basi")
+	a.harus(a.panggil("PUT", path, `{"judul":"Baru","tanggalPublikasi":"10-11-2026","gambarDaftar":`+daftarGambar(k[0], n1)+`,"version":99}`), 409, "version basi")
 	if a.ada(n1) {
 		t.Error("file baru yang gagal disimpan harus dihapus kembali")
 	}
@@ -83,7 +83,7 @@ func TestE2EAdminDokumentasiSiklusPenuh(t *testing.T) {
 	}
 
 	// 5. ganti urutan: tidak ada file yang dihapus
-	u := a.harus(a.panggil("PUT", path, `{"judul":"Pelatihan AI","tanggalPublikasi":"2026-11-09","gambar":`+daftarGambar(k[2], k[0], k[1])+`,"version":1}`), 200, "urutan")
+	u := a.harus(a.panggil("PUT", path, `{"judul":"Pelatihan AI","tanggalPublikasi":"09-11-2026","gambarDaftar":`+daftarGambar(k[2], k[0], k[1])+`,"version":1}`), 200, "urutan")
 	if keysDariGambar(t, u) != k[2]+","+k[0]+","+k[1] || u["version"].(float64) != 2 {
 		t.Fatalf("urutan: %v", u)
 	}
@@ -95,7 +95,7 @@ func TestE2EAdminDokumentasiSiklusPenuh(t *testing.T) {
 
 	// 6. replace (k1 -> n2 di posisi tengah), hapus (k0), tambah (n3 di akhir) dalam SATU simpan
 	n2, n3 := a.unggah("dokumentasi"), a.unggah("dokumentasi")
-	u = a.harus(a.panggil("PUT", path, `{"judul":"Pelatihan AI","tanggalPublikasi":"2026-11-09","gambar":`+daftarGambar(k[2], n2, n3)+`,"version":2}`), 200, "replace+hapus+tambah")
+	u = a.harus(a.panggil("PUT", path, `{"judul":"Pelatihan AI","tanggalPublikasi":"09-11-2026","gambarDaftar":`+daftarGambar(k[2], n2, n3)+`,"version":2}`), 200, "replace+hapus+tambah")
 	if keysDariGambar(t, u) != k[2]+","+n2+","+n3 || u["version"].(float64) != 3 {
 		t.Fatalf("hasil: %v", u)
 	}
@@ -145,7 +145,7 @@ func TestE2EAdminDokumentasiSiklusPenuh(t *testing.T) {
 	}
 
 	// 9. aturan status
-	a.harus(a.panggil("PUT", path, `{"judul":"x","tanggalPublikasi":"2026-11-09","gambar":`+daftarGambar(k[2])+`,"version":4}`), 409, "edit posted")
+	a.harus(a.panggil("PUT", path, `{"judul":"x","tanggalPublikasi":"09-11-2026","gambarDaftar":`+daftarGambar(k[2])+`,"version":4}`), 400, "edit posted")
 	a.harus(a.panggil("DELETE", path, ""), 409, "hapus posted")
 	r := a.harus(a.panggil("POST", path+"/retract", `{"version":4}`), 200, "retract")
 	if r["status"] != "draft" || r["version"].(float64) != 5 || len(r["gambar"].([]any)) != 3 {

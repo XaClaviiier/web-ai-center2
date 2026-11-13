@@ -283,7 +283,7 @@ func TestBatalCacheAdminMenaikkanVersiSesuaiAturan(t *testing.T) {
 		return v
 	}
 	json := `{"version":1}`
-	ubah := `{"judul":"x","isi":"y","tanggalPublikasi":"2026-01-01","gambar":"berita/a.png","version":1}`
+	ubah := `{"judul":"x","isi":"y","tanggalPublikasi":"01-01-2026","gambar":"berita/a.png","version":1}`
 
 	// Simpan/hapus/pulihkan draft tidak mengubah apa pun di publik.
 	kirimJSON(e.h, "PUT", "/api/admin/berita/1", ubah, o)

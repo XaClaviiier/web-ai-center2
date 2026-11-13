@@ -11,20 +11,20 @@ PK=PRIMARY KEY | FK=FOREIGN KEY | NN=NOT NULL | UQ=UNIQUE | DEF=DEFAULT | "gen"=
 ## Tabel
 
 **berita**
-| Kolom | Tipe | Aturan | Catatan |
-| ----- | ---- | ------ | ------- |
-| `id` | bigint | PK, identity | |
-| `slug` | text | NN, UQ | dibuat saat simpan pertama; bentrok diberi akhiran `-2`, `-3`; tidak berubah |
-| `judul` | text | NN | |
-| `ringkasan` | text | gen STORED | `left(split_part(isi, E'\n\n', 1), 200)`: paragraf pertama `isi`, maksimal 200 karakter; tidak diisi editor; mengubah 200 butuh migrasi |
-| `isi` | text | NN | teks biasa; paragraf dipisah `\n\n` |
-| `tanggal_publikasi` | date | NN | dipilih editor di form admin, wajib sejak simpan pertama (mengikuti `database.md` §3.1 dan `requirement.md` §5.1); tampil `DD-MM-YYYY` |
-| `gambar` | text | NN, UQ | key RustFS `berita/{uuid}.ext` (tanpa `{id}`, lihat catatan di bawah) |
-| `status` | text | NN, DEF `'draft'`, CHECK | |
-| `version` | integer | NN, DEF `1`, CHECK `>= 1` | optimistic locking |
-| `created_at` | timestamptz | NN, DEF `now()` | pemutus seri urutan tampil |
-| `created_by`, `updated_by` | text | NN | `sub` dari session |
-| `deleted_at` | timestamptz | null | waktu masuk trash |
+| Kolom                      | Tipe        | Aturan                    | Catatan                                                                                                                                 |     |
+| -------------------------- | ----------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| `id`                       | bigint      | PK, identity              |                                                                                                                                         |     |
+| `slug`                     | text        | NN, UQ                    | dibuat saat simpan pertama; bentrok diberi akhiran `-2`, `-3`; tidak berubah                                                            |     |
+| `judul`                    | text        | NN                        |                                                                                                                                         |     |
+| `ringkasan`                | text        | gen STORED                | `left(split_part(isi, E'\n\n', 1), 200)`: paragraf pertama `isi`, maksimal 200 karakter; tidak diisi editor; mengubah 200 butuh migrasi |     |
+| `isi`                      | text        | NN                        | teks biasa; paragraf dipisah `\n\n`                                                                                                     |     |
+| `tanggal_publikasi`        | date        | NN                        | dipilih editor di form admin, wajib sejak simpan pertama (mengikuti `database.md` §3.1 dan `requirement.md` §5.1); tampil `DD-MM-YYYY`  |     |
+| `gambar`                   | text        | NN, UQ                    | key RustFS `berita/{uuid}.ext` (tanpa `{id}`, lihat catatan di bawah)                                                                   |     |
+| `status`                   | text        | NN, DEF `'draft'`, CHECK  |                                                                                                                                         |     |
+| `version`                  | integer     | NN, DEF `1`, CHECK `>= 1` | optimistic locking                                                                                                                      |     |
+| `created_at`               | timestamptz | NN, DEF `now()`           | pemutus seri urutan tampil                                                                                                              |     |
+| `created_by`, `updated_by` | text        | NN                        | `sub` dari session                                                                                                                      |     |
+| `deleted_at`               | timestamptz | null                      | waktu masuk trash                                                                                                                       |     |
 
 **dokumentasi**: kolom sama seperti berita, kecuali tidak ada `ringkasan`, `isi`, dan `gambar` (gambar ada di `dokumentasi_gambar`). `judul` = judul kegiatan. `tanggal_publikasi` juga date, NN, dipilih editor (`requirement.md` §5.2).
 

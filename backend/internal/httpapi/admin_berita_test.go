@@ -212,7 +212,7 @@ func TestAdminBeritaDaftar(t *testing.T) {
 		t.Errorf("item trash harus memuat dihapusPada: %v", i1)
 	}
 	want := map[string]any{
-		"id": 7.0, "slug": "judul-tujuh", "judul": "Judul Tujuh", "ringkasan": "Ringkas.", "tanggalPublikasi": "2026-11-09",
+		"id": 7.0, "slug": "judul-tujuh", "judul": "Judul Tujuh", "ringkasan": "Ringkas.", "tanggalPublikasi": "09-11-2026",
 		"status": "draft", "version": 3.0, "dibuatPada": "2026-11-09T03:00:00Z", "dibuatOleh": "dev-admin", "diubahOleh": "editor-2",
 	}
 	for k, v := range want {
@@ -274,7 +274,7 @@ func TestAdminBeritaDetail(t *testing.T) {
 func TestAdminBeritaBuat(t *testing.T) {
 	e := siapkanBerita(t)
 	id, csrf := e.login(t)
-	body := `{"judul":"Judul","isi":"Isi","tanggalPublikasi":"2026-11-09","gambar":"berita/k.png"}`
+	body := `{"judul":"Judul","isi":"Isi","tanggalPublikasi":"09-11-2026","gambar":"berita/k.png"}`
 	rec := e.kirimJSON(t, id, csrf, "POST", "/api/admin/berita", body)
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("status %d: %s", rec.Code, rec.Body)
@@ -283,7 +283,7 @@ func TestAdminBeritaBuat(t *testing.T) {
 		t.Errorf("Location salah: %q", rec.Header().Get("Location"))
 	}
 	m := e.svc.mentah
-	if e.svc.aksi != "buat" || m.Judul != "Judul" || m.Isi != "Isi" || m.TanggalPublikasi != "2026-11-09" || m.Gambar != "berita/k.png" || e.svc.oleh != "dev-admin" {
+	if e.svc.aksi != "buat" || m.Judul != "Judul" || m.Isi != "Isi" || m.TanggalPublikasi != "09-11-2026" || m.Gambar != "berita/k.png" || e.svc.oleh != "dev-admin" {
 		t.Errorf("argumen ke layanan salah: %+v oleh=%q", e.svc, e.svc.oleh)
 	}
 	var out map[string]any
@@ -296,7 +296,7 @@ func TestAdminBeritaBuat(t *testing.T) {
 func TestAdminBeritaBodyJSONKetat(t *testing.T) {
 	e := siapkanBerita(t)
 	id, csrf := e.login(t)
-	ok := `"judul":"J","isi":"I","tanggalPublikasi":"2026-11-09","gambar":"berita/k.png"`
+	ok := `"judul":"J","isi":"I","tanggalPublikasi":"09-11-2026","gambar":"berita/k.png"`
 	kasus := map[string]struct {
 		body  string
 		ctype string
@@ -333,7 +333,7 @@ func TestAdminBeritaBodyJSONKetat(t *testing.T) {
 func TestAdminBeritaUbahWajibVersion(t *testing.T) {
 	e := siapkanBerita(t)
 	id, csrf := e.login(t)
-	ok := `"judul":"J","isi":"I","tanggalPublikasi":"2026-11-09","gambar":"berita/k.png"`
+	ok := `"judul":"J","isi":"I","tanggalPublikasi":"09-11-2026","gambar":"berita/k.png"`
 	for _, body := range []string{`{` + ok + `}`, `{` + ok + `,"version":0}`, `{` + ok + `,"version":-2}`, `{` + ok + `,"version":"1"}`, `{` + ok + `,"version":null}`} {
 		rec := e.kirimJSON(t, id, csrf, "PUT", "/api/admin/berita/7", body)
 		if rec.Code != http.StatusBadRequest {
@@ -410,8 +410,8 @@ func TestAdminBeritaPemetaanGalat(t *testing.T) {
 		{"galat lain", errors.New("pq: koneksi putus password=RAHASIA"), 500, kodeInternal},
 	}
 	aksi := []struct{ metode, path, body string }{
-		{"POST", "/api/admin/berita", `{"judul":"J","isi":"I","tanggalPublikasi":"2026-11-09","gambar":"b"}`},
-		{"PUT", "/api/admin/berita/7", `{"judul":"J","isi":"I","tanggalPublikasi":"2026-11-09","gambar":"b","version":1}`},
+		{"POST", "/api/admin/berita", `{"judul":"J","isi":"I","tanggalPublikasi":"09-11-2026","gambar":"b"}`},
+		{"PUT", "/api/admin/berita/7", `{"judul":"J","isi":"I","tanggalPublikasi":"09-11-2026","gambar":"b","version":1}`},
 		{"POST", "/api/admin/berita/7/post", `{"version":1}`},
 		{"POST", "/api/admin/berita/7/retract", `{"version":1}`},
 		{"DELETE", "/api/admin/berita/7", ``},
@@ -424,7 +424,11 @@ func TestAdminBeritaPemetaanGalat(t *testing.T) {
 		e.svc.err = k.err
 		for _, a := range aksi {
 			rec := e.kirimJSON(t, id, csrf, a.metode, a.path, a.body)
-			if rec.Code != k.kode || kodeGalat(t, rec) != k.code {
+			kode, code := k.kode, k.code
+			if code == kodeStatusTidakValid && a.metode == "PUT" { // Simpan pada item bukan draft: 400 bukan_draft (frontend-final)
+				kode, code = 400, kodeBukanDraft
+			}
+			if rec.Code != kode || kodeGalat(t, rec) != code {
 				t.Errorf("%s: %s %s -> %d %s", k.nama, a.metode, a.path, rec.Code, rec.Body)
 			}
 			if strings.Contains(rec.Body.String(), "RAHASIA") || strings.Contains(rec.Body.String(), "pq:") {
@@ -434,7 +438,7 @@ func TestAdminBeritaPemetaanGalat(t *testing.T) {
 	}
 	// pesan ErrInput diteruskan apa adanya ke klien
 	e.svc.err = &admin.ErrInput{Pesan: "Field judul wajib diisi"}
-	rec := e.kirimJSON(t, id, csrf, "POST", "/api/admin/berita", `{"judul":"J","isi":"I","tanggalPublikasi":"2026-11-09","gambar":"b"}`)
+	rec := e.kirimJSON(t, id, csrf, "POST", "/api/admin/berita", `{"judul":"J","isi":"I","tanggalPublikasi":"09-11-2026","gambar":"b"}`)
 	if !strings.Contains(rec.Body.String(), "Field judul wajib diisi") {
 		t.Errorf("pesan validasi harus sampai ke klien: %s", rec.Body)
 	}

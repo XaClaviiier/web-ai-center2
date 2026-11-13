@@ -2,7 +2,7 @@
    redirect (Keycloak), aplikasi tidak punya form password. */
 const aplikasi = document.getElementById('aplikasi');
 const URL_LOGIN = '/admin/masuk';
-const urlGambar = (key) => (/^(blob:|\/|https?:)/.test(String(key)) ? key : `/media/${key}`);
+const urlGambar = (key) => (/^(blob:|\/media\/|\/assets\/img\/)/.test(String(key)) ? key : `/media/${key}`);
 
 // Batas judul konten (spasi dihitung, nilai di-trim).
 const MAKS_JUDUL = 70;

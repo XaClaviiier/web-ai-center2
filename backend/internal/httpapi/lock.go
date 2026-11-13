@@ -1,8 +1,8 @@
 package httpapi
 
 import (
-	"context"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -20,10 +20,11 @@ import (
 )
 
 const (
-	kodeTerkunci   = "locked"      // dipegang orang lain
-	kodeLockHilang = "lock_hilang" // kedaluwarsa atau bukan milik pemanggil (heartbeat)
+	kodeTerkunci   = "locked"    // dipegang orang lain
+	kodeLockHilang = "lock_lost" // kedaluwarsa atau bukan milik pemanggil (heartbeat); dulu lock_hilang
 
-	statusTerkunci = 423 // http.StatusLocked
+	statusTerkunci   = 423             // http.StatusLocked
+	statusLockHilang = http.StatusGone // 410, sesuai frontend-final
 
 	batasWaktuLepasLock = 3 * time.Second
 )
@@ -227,7 +228,7 @@ func (p *pengelolaLock) galat(w http.ResponseWriter, r *http.Request, err error)
 	case errors.As(err, &dipegang):
 		p.tulisTerkunci(w, dipegang.Info)
 	case errors.Is(err, lock.ErrHilang):
-		tulisGalat(w, statusTerkunci, kodeLockHilang, "Kunci edit sudah berakhir; buka kembali form edit")
+		tulisGalat(w, statusLockHilang, kodeLockHilang, "Kunci edit sudah berakhir; buka kembali form edit")
 	default:
 		p.galatRedis(w, r, err)
 	}

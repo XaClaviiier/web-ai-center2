@@ -21,3 +21,18 @@ WHERE (sqlc.arg(username)::text = '' OR username = sqlc.arg(username)::text)
 -- Pilihan filter username: semua username yang pernah tercatat.
 -- name: ListUsernameLog :many
 SELECT DISTINCT username FROM log_aktivitas ORDER BY username;
+
+-- Retensi bergulir: baris lebih tua dari N bulan kalender (jam database). Dihapus dalam batch terlama dulu agar
+-- transaksi pendek; HitungLogKedaluwarsa dipakai mode dry-run. Satu-satunya jalur DELETE pada log dari aplikasi.
+-- name: HitungLogKedaluwarsa :one
+SELECT count(*) FROM log_aktivitas
+WHERE terjadi_pada < now() - make_interval(months => sqlc.arg(bulan)::int);
+
+-- name: HapusLogKedaluwarsa :execrows
+DELETE FROM log_aktivitas
+WHERE id IN (
+    SELECT id FROM log_aktivitas
+    WHERE terjadi_pada < now() - make_interval(months => sqlc.arg(bulan)::int)
+    ORDER BY id
+    LIMIT sqlc.arg(batas)::int
+);

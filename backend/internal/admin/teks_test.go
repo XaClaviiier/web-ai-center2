@@ -105,39 +105,40 @@ func TestBanyakBaris(t *testing.T) {
 }
 
 func TestTanggal(t *testing.T) {
-	for _, in := range []string{"2026-11-09", " 2026-02-28 ", "2024-02-29"} {
-		if got, err := tanggal("t", in); err != nil || got != strings.TrimSpace(in) {
+	// Masukan DD-MM-YYYY; hasil YYYY-MM-DD (bentuk internal).
+	for in, want := range map[string]string{"09-11-2026": "2026-11-09", " 28-02-2026 ": "2026-02-28", "29-02-2024": "2024-02-29"} {
+		if got, err := tanggal("t", in); err != nil || got != want {
 			t.Errorf("%q: %q %v", in, got, err)
 		}
 	}
-	for _, in := range []string{"", "2026-13-01", "2026-02-30", "2025-02-29", "09-11-2026", "2026/11/09", "kemarin", "2026-11-09T00:00:00Z", "0000-00-00"} {
+	for _, in := range []string{"", "01-13-2026", "30-02-2026", "29-02-2025", "2026-11-09", "09/11/2026", "kemarin", "09-11-2026T00:00:00Z", "00-00-0000"} {
 		if _, err := tanggal("t", in); err == nil {
 			t.Errorf("%q seharusnya ditolak", in)
 		}
 	}
 }
 
-// Batas "hari ini" memakai WIB: 2026-11-12 23:30 UTC sudah 2026-11-13 di Jakarta.
+// Batas "hari ini" memakai WIB: 12-11-2026 23:30 UTC sudah 13-11-2026 di Jakarta.
 func TestTanggalBatasHariIniWIB(t *testing.T) {
 	asli := sekarang
 	defer func() { sekarang = asli }()
 	sekarang = func() time.Time { return time.Date(2026, 11, 12, 23, 30, 0, 0, time.UTC) }
-	for _, in := range []string{"2026-11-12", "2026-11-13"} {
+	for _, in := range []string{"12-11-2026", "13-11-2026"} {
 		if _, err := tanggal("t", in); err != nil {
 			t.Errorf("%q harus diterima: %v", in, err)
 		}
 	}
-	if _, err := tanggal("t", "2026-11-14"); err == nil {
+	if _, err := tanggal("t", "14-11-2026"); err == nil {
 		t.Error("besok (WIB) harus ditolak")
 	}
 	sekarang = func() time.Time { return time.Date(2026, 11, 12, 16, 59, 0, 0, time.UTC) } // 23:59 WIB
-	if _, err := tanggal("t", "2026-11-13"); err == nil {
-		t.Error("2026-11-13 masih besok pada 12 Nov 23:59 WIB, harus ditolak")
+	if _, err := tanggal("t", "13-11-2026"); err == nil {
+		t.Error("13-11-2026 masih besok pada 12 Nov 23:59 WIB, harus ditolak")
 	}
 }
 
 func TestValidasiBerita(t *testing.T) {
-	ok := MentahBerita{Judul: "  Judul   Berita ", Isi: "Paragraf satu.\r\n\r\n\r\nParagraf dua.", TanggalPublikasi: "2026-11-09", Gambar: "berita/x.png"}
+	ok := MentahBerita{Judul: "  Judul   Berita ", Isi: "Paragraf satu.\r\n\r\n\r\nParagraf dua.", TanggalPublikasi: "09-11-2026", Gambar: "berita/x.png"}
 	in, err := ValidasiBerita(ok)
 	if err != nil {
 		t.Fatal(err)
@@ -153,7 +154,7 @@ func TestValidasiBerita(t *testing.T) {
 		"isi terlalu panjang":   func(m *MentahBerita) { m.Isi = strings.Repeat("a", BatasIsi+1) },
 		"tanggal salah":         func(m *MentahBerita) { m.TanggalPublikasi = "besok" },
 		"tanggal kosong":        func(m *MentahBerita) { m.TanggalPublikasi = "" },
-		"tanggal masa depan":    func(m *MentahBerita) { m.TanggalPublikasi = "2999-01-01" },
+		"tanggal masa depan":    func(m *MentahBerita) { m.TanggalPublikasi = "01-01-2999" },
 		"gambar kosong":         func(m *MentahBerita) { m.Gambar = "" },
 	}
 	for nama, f := range ubah {
@@ -208,6 +209,26 @@ func TestJudulBoleh(t *testing.T) {
 		_, err := judulBoleh("judul", k.judul, k.judulLama)
 		if (err == nil) != k.ok {
 			t.Errorf("%s: ok=%v err=%v", k.nama, k.ok, err)
+		}
+	}
+}
+
+func TestFormatTersembunyiDitolak(t *testing.T) {
+	// titik kode dirangkai lewat string(rune(...)) agar berkas sumber bebas karakter tak tampak
+	sisip := func(cp rune) string { return "a" + string(rune(cp)) + "b" }
+	tolak := []string{sisip(0x202E), sisip(0x200B), sisip(0x2066), sisip(0x200E), sisip(0x2060), string(rune(0xFEFF)) + "awal", sisip(0x00AD)}
+	for _, in := range tolak {
+		if _, err := barisSatu("judul", in, 50); err == nil {
+			t.Errorf("barisSatu(%q) harus ditolak", in)
+		}
+		if _, err := banyakBaris("isi", "x\n\n"+in, 50); err == nil {
+			t.Errorf("banyakBaris(%q) harus ditolak", in)
+		}
+	}
+	// ZWJ/ZWNJ tetap boleh (urutan emoji, beberapa aksara)
+	for _, in := range []string{sisip(0x200D), sisip(0x200C)} {
+		if _, err := barisSatu("judul", in, 50); err != nil {
+			t.Errorf("barisSatu(%q) harus diterima: %v", in, err)
 		}
 	}
 }

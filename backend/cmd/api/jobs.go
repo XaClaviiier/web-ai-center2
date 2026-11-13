@@ -28,6 +28,7 @@ func bangunJob(cfg config.Config, log *slog.Logger, rdb redis.Cmdable, st *store
 	}
 	return &jobs.Job{
 		Log: log, Redis: rdb, Gudang: gudang, Dipakai: st.KeyDipakai,
+		HitungLog: st.HitungLogKedaluwarsa, HapusLog: st.HapusLogKedaluwarsa,
 		Sumber: []jobs.Sumber{
 			sumber("berita", berita.HapusPermanen),
 			sumber("dokumentasi", dokumentasi.HapusPermanen),
@@ -37,6 +38,7 @@ func bangunJob(cfg config.Config, log *slog.Logger, rdb redis.Cmdable, st *store
 			Interval:         cfg.JobInterval,
 			LockTTL:          cfg.JobLockTTL,
 			RetensiTrashHari: int32(cfg.TrashRetentionDays),
+			RetensiLogBulan:  int32(cfg.LogRetentionMonths),
 			UmurMinYatim:     cfg.OrphanMinAge,
 			MaksHapusYatim:   cfg.OrphanMaxDelete,
 			DryRun:           cfg.JobsDryRun,

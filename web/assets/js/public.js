@@ -1,7 +1,7 @@
 /* Halaman publik. Tiap HTML menentukan <body data-halaman>; isi dirender di sini. */
 const K = KONTEN;
 const utama = document.getElementById('utama');
-const gambar = (nama) => (/^(\/|https?:)/.test(nama) ? nama : `/assets/img/${nama}`); // URL dari API (/media/...) dipakai apa adanya
+const gambar = (nama) => (/^\/(media|assets\/img)\//.test(nama) ? nama : `/assets/img/${nama}`); // hanya /media/ (URL dari API) dan /assets/img/ dipakai apa adanya; //host dan http(s): tidak
 const judulSitus = 'UBAYA AI Center';
 const parameter = new URLSearchParams(location.search);
 const slugDariUrl = () => { try { return decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() ?? ''); } catch { return ''; } };

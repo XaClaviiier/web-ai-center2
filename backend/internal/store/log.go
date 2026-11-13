@@ -63,3 +63,22 @@ func (s RepoLog) Usernames(ctx context.Context) ([]string, error) {
 	}
 	return nama, nil
 }
+
+// HitungLogKedaluwarsa menghitung baris log yang lebih tua dari bulan bulan kalender (jam database).
+func (s *Store) HitungLogKedaluwarsa(ctx context.Context, bulan int32) (int64, error) {
+	n, err := s.Q.HitungLogKedaluwarsa(ctx, bulan)
+	if err != nil {
+		return 0, fmt.Errorf("hitung log kedaluwarsa: %w", err)
+	}
+	return n, nil
+}
+
+// HapusLogKedaluwarsa menghapus paling banyak batas baris log yang lebih tua dari bulan bulan kalender, terlama
+// dulu, dan mengembalikan jumlah yang terhapus. Dipanggil job berkala (retensi bergulir), bukan oleh request admin.
+func (s *Store) HapusLogKedaluwarsa(ctx context.Context, bulan, batas int32) (int64, error) {
+	n, err := s.Q.HapusLogKedaluwarsa(ctx, db.HapusLogKedaluwarsaParams{Bulan: bulan, Batas: batas})
+	if err != nil {
+		return 0, fmt.Errorf("hapus log kedaluwarsa: %w", err)
+	}
+	return n, nil
+}

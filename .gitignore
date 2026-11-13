@@ -27,3 +27,6 @@ lighthouse_report/
 # artefak tool lokal (opencode), bukan bagian proyek
 .agents/
 skills-lock.json
+
+# artefak tes e2e Playwright (tangkapan layar, trace, hasil)
+output/

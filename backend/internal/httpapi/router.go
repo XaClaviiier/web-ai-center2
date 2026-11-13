@@ -53,6 +53,9 @@ type Deps struct {
 
 	// Frontend statis (web/): halaman publik, /assets, /admin, 404 HTML; nil = tidak dipasang (404 selalu JSON).
 	Static *DepsStatic
+
+	// HSTS mengaktifkan Strict-Transport-Security (true hanya di production).
+	HSTS bool
 }
 
 // DepsAdmin adalah layanan penulisan konten oleh admin.
@@ -68,6 +71,7 @@ type DepsAdmin struct {
 func NewRouter(d Deps) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
+	r.Use(headerKeamanan(d.HSTS))
 	r.Use(ipKlienTepercaya(d.ProxyTepercaya))
 	r.Use(logRequest(d.Log))
 	r.Use(pulihkanPanic(d.Log))

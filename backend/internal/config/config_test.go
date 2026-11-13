@@ -346,3 +346,20 @@ func TestLoadJobDefaultDanEnv(t *testing.T) {
 		}
 	}
 }
+
+func TestLogRetentionMonths(t *testing.T) {
+	m := dasarDev()
+	if cfg, err := Load(lookupDari(m)); err != nil || cfg.LogRetentionMonths != 3 {
+		t.Fatalf("default: %v %v", cfg.LogRetentionMonths, err)
+	}
+	m["LOG_RETENTION_MONTHS"] = "6"
+	if cfg, err := Load(lookupDari(m)); err != nil || cfg.LogRetentionMonths != 6 {
+		t.Errorf("6 bulan: %v %v", cfg.LogRetentionMonths, err)
+	}
+	for _, buruk := range []string{"0", "-1", "tiga"} {
+		m["LOG_RETENTION_MONTHS"] = buruk
+		if _, err := Load(lookupDari(m)); err == nil {
+			t.Errorf("LOG_RETENTION_MONTHS=%q harus ditolak", buruk)
+		}
+	}
+}

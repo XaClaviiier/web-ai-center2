@@ -151,7 +151,7 @@ func TestE2EAdminTimSiklusPenuh(t *testing.T) {
 	// 3. Simpan version basi: 409 dan file baru dihapus kembali
 	fotoBaru := a.unggah("tim")
 	e409 := a.harus(a.panggil("PUT", pathAni, `{"nama":"Ani Lestari","posisi":"Ketua","bidangRiset":"NLP","foto":"`+fotoBaru+`","urutan":1,"version":99}`), 409, "version basi")
-	if e409["error"].(map[string]any)["code"] != "version_conflict" {
+	if e409["error"].(map[string]any)["code"] != "conflict" {
 		t.Errorf("kode salah: %v", e409)
 	}
 	if a.ada(fotoBaru) {
@@ -272,7 +272,7 @@ func TestE2EAdminTestimoniSiklusPenuh(t *testing.T) {
 	}
 
 	// 4. aturan status: posted tidak bisa diedit atau dihapus
-	a.harus(a.panggil("PUT", pathDengan, `{"nama":"x","teks":"y","posisi":"z","foto":"`+foto1+`","version":2}`), 409, "edit posted")
+	a.harus(a.panggil("PUT", pathDengan, `{"nama":"x","teks":"y","posisi":"z","foto":"`+foto1+`","version":2}`), 400, "edit posted")
 	a.harus(a.panggil("DELETE", pathDengan, ""), 409, "hapus posted")
 
 	// 5. Retract lalu ubah foto: ganti, hapus, tambah

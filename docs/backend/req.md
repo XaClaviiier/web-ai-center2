@@ -91,3 +91,8 @@ Tes memakai layanan Docker di atas, tetapi data dev tidak pernah disentuh:
 
 - Struktur folder Go sudah diputuskan: modul `github.com/XaClaviiier/web-ai-center2/backend`, `cmd/api`, `internal/{config,httpapi,store,konten,auth,ratelimit,testutil}`.
 - Paket gambar (resize/optimasi) tidak dipakai; bila `docs/` kelak mensyaratkannya, tambahkan di sini.
+
+## 7. Alat uji e2e dan audit keamanan (2026-11-12)
+
+- **`@playwright/test` 1.65.0** (devDependency root, versi tepat tanpa `^`; Chromium diunduh ke cache pengguna `%LOCALAPPDATA%\ms-playwright`, bukan ke repo). Alasan: spesifikasi e2e browser nyata di `scripts/e2e/*.spec.cjs` (`npm run test:e2e`; butuh server dev berjalan, variabel `BASE_URL`, `PW`, `PW2`). Reputasi: runner resmi Microsoft Playwright. `npm audit`: **0 vulnerabilities**. Kompatibilitas: berjalan di Node 22.19.0; spesifikasi memakai CommonJS (`.cjs`) agar sesuai `scripts/`. Strategi tes: spesifikasi memakai worker tunggal (batas tulis admin 30/menit per akun), data uji berlabel `[E2E-PW]` yang dibuat dan dibersihkan sendiri.
+- **Skill agen (bukan dependensi proyek, terpasang global di `~/.claude/skills`):** `security-audit` dari `github.com/cloudflare/security-audit-skill` (audit statis; keluaran di luar repo, `~/security-audit-skill/web-ai-center2/run-1/`) dan `playwright` dari `github.com/openai/skills` (hanya dipakai sebagai panduan alur; tidak ada kode dari skill yang masuk repo).

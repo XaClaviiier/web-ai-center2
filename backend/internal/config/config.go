@@ -29,6 +29,7 @@ const (
 	jobIntervalDefaultMenit   = 60
 	jobLockTTLDefaultDetik    = 1800
 	trashRetensiDefaultHari   = 30 // docs/requirement.md bagian 5
+	logRetensiDefaultBulan    = 3  // permintaan pengguna 2026-11-12: Log Aktivitas bergulir 3 bulan
 	orphanUmurDefaultJam      = 24 // docs/database.md bagian 5
 	orphanMaksHapusDefault    = 200
 	staticDirDefault          = "../web"
@@ -79,6 +80,7 @@ type Config struct {
 	JobInterval        time.Duration // jarak antar siklus
 	JobLockTTL         time.Duration // masa hidup kunci Redis lock:purge
 	TrashRetentionDays int           // lama item di trash sebelum dihapus permanen
+	LogRetentionMonths int           // umur maksimum baris Log Aktivitas (bulan kalender) sebelum dihapus job
 	OrphanMinAge       time.Duration // umur minimum objek sebelum dianggap yatim
 	OrphanMaxDelete    int           // batas hapus file yatim per siklus
 
@@ -333,6 +335,10 @@ func Load(lookup Lookup) (Config, error) {
 	if err != nil {
 		errs = append(errs, err)
 	}
+	logBulan, err := parsePositifInt("LOG_RETENTION_MONTHS", get("LOG_RETENTION_MONTHS"), logRetensiDefaultBulan)
+	if err != nil {
+		errs = append(errs, err)
+	}
 	umurYatim, err := parsePositifInt("ORPHAN_MIN_AGE_HOURS", get("ORPHAN_MIN_AGE_HOURS"), orphanUmurDefaultJam)
 	if err != nil {
 		errs = append(errs, err)
@@ -344,6 +350,7 @@ func Load(lookup Lookup) (Config, error) {
 	cfg.JobInterval = time.Duration(jobMenit) * time.Minute
 	cfg.JobLockTTL = time.Duration(jobTTL) * time.Second
 	cfg.TrashRetentionDays = retensi
+	cfg.LogRetentionMonths = logBulan
 	cfg.OrphanMinAge = time.Duration(umurYatim) * time.Hour
 	cfg.OrphanMaxDelete = maksYatim
 

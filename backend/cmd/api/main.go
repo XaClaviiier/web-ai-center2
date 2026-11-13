@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"sync"
@@ -48,6 +49,7 @@ func jalankan() error {
 		log = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	}
 	slog.SetDefault(log)
+	peringatanKonfigurasi(cfg, log)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -100,6 +102,7 @@ func jalankan() error {
 
 	handler := httpapi.NewRouter(httpapi.Deps{
 		SEO:                seoDeps,
+		HSTS:               cfg.AppEnv == config.EnvProduction,
 		Static:             &httpapi.DepsStatic{Dir: cfg.StaticDir, DevLoginAktif: cfg.DevLoginAktif, Halaman404: seoDeps.Halaman404, NamaSitus: cfg.SiteName},
 		Log:                log,
 		DB:                 st,
@@ -172,4 +175,31 @@ func jalankan() error {
 	stop() // pastikan job menerima pembatalan juga bila keluar lewat jalur galat
 	selesaiJob.Wait()
 	return err
+}
+
+// peringatanKonfigurasi mencatat WARN untuk kombinasi konfigurasi yang berbahaya tetapi sah secara teknis.
+// Tidak menggagalkan start: keputusan nilai ada pada operator.
+func peringatanKonfigurasi(cfg config.Config, log *slog.Logger) {
+	if cfg.AppEnv == config.EnvProduction && len(cfg.TrustedProxies) == 0 {
+		log.Warn("TRUSTED_PROXIES kosong di production: bila server berada di belakang proxy, semua klien terlihat berasal dari IP proxy dan batas laju per-IP dipakai bersama; isi dengan CIDR proxy tepercaya")
+	}
+	if cfg.AppEnv != config.EnvProduction && !hostLokal(cfg.PublicBaseURL) {
+		log.Warn("APP_ENV bukan production padahal PUBLIC_BASE_URL bukan host lokal: login development dan pengaturan longgar mungkin aktif di server publik", "app_env", cfg.AppEnv, "public_base_url", cfg.PublicBaseURL)
+	}
+}
+
+// hostLokal melaporkan apakah URL menunjuk ke mesin lokal (localhost, 127.0.0.1, ::1) atau kosong.
+func hostLokal(rawURL string) bool {
+	if rawURL == "" {
+		return true
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	switch u.Hostname() {
+	case "localhost", "127.0.0.1", "::1", "":
+		return true
+	}
+	return false
 }

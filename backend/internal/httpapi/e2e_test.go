@@ -56,7 +56,7 @@ func TestE2EBeritaPublik(t *testing.T) {
 	if daftar.Total != 2 || len(daftar.Items) != 2 || daftar.Items[0].Slug != "kedua" || daftar.Items[1].Slug != "pertama" {
 		t.Fatalf("daftar salah: %s", rec.Body)
 	}
-	if daftar.Items[1].Ringkasan != "Paragraf awal." || daftar.Items[1].Gambar != "/media/berita/1/a.jpg" || daftar.Items[1].TanggalPublikasi != "2026-06-01" {
+	if daftar.Items[1].Ringkasan != "Paragraf awal." || daftar.Items[1].Gambar != "/media/berita/1/a.jpg" || daftar.Items[1].TanggalPublikasi != "01-06-2026" {
 		t.Errorf("item salah: %+v", daftar.Items[1])
 	}
 

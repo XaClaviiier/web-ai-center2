@@ -87,7 +87,7 @@ type anggotaTimJSON struct {
 func beritaRingkas(b konten.BeritaRingkas) beritaRingkasJSON {
 	return beritaRingkasJSON{
 		ID: b.ID, Slug: b.Slug, Judul: b.Judul, Ringkasan: b.Ringkasan,
-		Gambar: urlMedia(b.GambarKey), TanggalPublikasi: b.TanggalPublikasi,
+		Gambar: urlMedia(b.GambarKey), TanggalPublikasi: tglAPI(b.TanggalPublikasi),
 	}
 }
 
@@ -149,7 +149,7 @@ func (h publik) daftarDokumentasi(w http.ResponseWriter, r *http.Request) {
 		out := make([]dokumentasiRingkasJSON, 0, len(items))
 		for _, d := range items {
 			out = append(out, dokumentasiRingkasJSON{
-				ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: d.TanggalPublikasi,
+				ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: tglAPI(d.TanggalPublikasi),
 				GambarUtama: urlMedia(d.GambarUtamaKey), JumlahGambar: d.JumlahGambar,
 			})
 		}
@@ -173,7 +173,7 @@ func (h publik) detailDokumentasi(w http.ResponseWriter, r *http.Request) {
 			gambar = append(gambar, gambarDokumentasiJSON{URL: urlMedia(g.Key)})
 		}
 		return dokumentasiDetailJSON{
-			ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: d.TanggalPublikasi, Gambar: gambar,
+			ID: d.ID, Slug: d.Slug, Judul: d.Judul, TanggalPublikasi: tglAPI(d.TanggalPublikasi), Gambar: gambar,
 		}, true, nil
 	})
 }

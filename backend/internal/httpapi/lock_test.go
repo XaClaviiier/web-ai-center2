@@ -77,7 +77,7 @@ func peta(t *testing.T, rec *httptest.ResponseRecorder) map[string]any {
 	return m
 }
 
-const bodyUbahUji = `{"judul":"x","isi":"y","tanggalPublikasi":"2026-11-09","gambar":"berita/3f9c2a10-7b4e-4c6d-9a1f-0123456789ab.png","version":3}`
+const bodyUbahUji = `{"judul":"x","isi":"y","tanggalPublikasi":"09-11-2026","gambar":"berita/3f9c2a10-7b4e-4c6d-9a1f-0123456789ab.png","version":3}`
 
 func TestAkunDevKeduaPunyaIdentitasSendiri(t *testing.T) {
 	e := siapkanLock(t)
@@ -226,7 +226,7 @@ func TestLockHeartbeatDanLepasEndpoint(t *testing.T) {
 	e := siapkanLock(t)
 	ada := func() bool { return e.rdb.Exists(context.Background(), "lock:berita:7").Val() == 1 }
 
-	if rec := e.kirim(t, e.a, "PUT", "/api/admin/berita/7/lock", ""); rec.Code != statusTerkunci || kodeGalat(t, rec) != "lock_hilang" {
+	if rec := e.kirim(t, e.a, "PUT", "/api/admin/berita/7/lock", ""); rec.Code != statusLockHilang || kodeGalat(t, rec) != "lock_lost" {
 		t.Errorf("heartbeat tanpa lock: %d %s", rec.Code, rec.Body)
 	}
 	e.kirim(t, e.a, "POST", "/api/admin/berita/7/lock", "")
@@ -238,7 +238,7 @@ func TestLockHeartbeatDanLepasEndpoint(t *testing.T) {
 	if ttl := e.rdb.PTTL(context.Background(), "lock:berita:7").Val(); ttl < 50*time.Second {
 		t.Errorf("TTL harus diperpanjang: %v", ttl)
 	}
-	if rec := e.kirim(t, e.b, "PUT", "/api/admin/berita/7/lock", ""); rec.Code != statusTerkunci || kodeGalat(t, rec) != "lock_hilang" {
+	if rec := e.kirim(t, e.b, "PUT", "/api/admin/berita/7/lock", ""); rec.Code != statusLockHilang || kodeGalat(t, rec) != "lock_lost" {
 		t.Errorf("heartbeat oleh bukan pemegang: %d %s", rec.Code, rec.Body)
 	}
 	if rec := e.kirim(t, e.b, "DELETE", "/api/admin/berita/7/lock", ""); rec.Code != 204 || !ada() {

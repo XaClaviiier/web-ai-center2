@@ -310,3 +310,54 @@ func TestJalankanBerulangDanBerhentiBersamaKonteks(t *testing.T) {
 		t.Errorf("siklus harus berulang, dijalankan %d kali", jalan.Load())
 	}
 }
+
+func TestHapusLogBergulirBatchSampaiHabis(t *testing.T) {
+	e := siapkan(t)
+	e.j.Cfg.RetensiLogBulan = 3
+	sisa := int64(batchLog*2 + 7)
+	var panggilan int
+	e.j.HitungLog = func(context.Context, int32) (int64, error) { t.Fatal("HitungLog tidak boleh dipanggil di luar dry-run"); return 0, nil }
+	e.j.HapusLog = func(_ context.Context, bulan, batas int32) (int64, error) {
+		panggilan++
+		if bulan != 3 || batas != batchLog {
+			t.Errorf("parameter salah: bulan=%d batas=%d", bulan, batas)
+		}
+		n := min(int64(batas), sisa)
+		sisa -= n
+		return n, nil
+	}
+	if got := e.j.hapusLog(context.Background()); got != int64(batchLog*2+7) || sisa != 0 || panggilan != 3 {
+		t.Errorf("hapus=%d sisa=%d panggilan=%d (mau %d,0,3)", got, sisa, panggilan, batchLog*2+7)
+	}
+}
+
+func TestHapusLogDryRunHanyaMenghitungDanGalatTidakMenghentikanSiklus(t *testing.T) {
+	e := siapkan(t)
+	e.j.Cfg.RetensiLogBulan = 3
+	e.j.Cfg.DryRun = true
+	var dihitung, dihapus int
+	e.j.HitungLog = func(context.Context, int32) (int64, error) { dihitung++; return 42, nil }
+	e.j.HapusLog = func(context.Context, int32, int32) (int64, error) { dihapus++; return 0, nil }
+	e.j.Siklus(context.Background())
+	if dihitung != 1 || dihapus != 0 {
+		t.Errorf("dry-run: dihitung=%d dihapus=%d (mau 1,0)", dihitung, dihapus)
+	}
+
+	e.j.Cfg.DryRun = false
+	e.j.HapusLog = func(context.Context, int32, int32) (int64, error) { return 0, errors.New("db mati") }
+	if got := e.j.hapusLog(context.Background()); got != 0 {
+		t.Errorf("galat harus mengembalikan 0, dapat %d", got)
+	}
+	e.j.Siklus(context.Background()) // tidak boleh panik atau macet
+}
+
+func TestHapusLogDilewatiBilaTidakDikonfigurasi(t *testing.T) {
+	e := siapkan(t)
+	e.j.HapusLog = func(context.Context, int32, int32) (int64, error) { t.Fatal("tidak boleh dipanggil"); return 0, nil }
+	e.j.HitungLog = func(context.Context, int32) (int64, error) { t.Fatal("tidak boleh dipanggil"); return 0, nil }
+	e.j.Cfg.RetensiLogBulan = 0 // dimatikan
+	e.j.hapusLog(context.Background())
+	e.j.Cfg.RetensiLogBulan = 3
+	e.j.HitungLog = nil // salah satu nil = dilewati
+	e.j.hapusLog(context.Background())
+}

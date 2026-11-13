@@ -27,6 +27,8 @@ const (
 
 	tundaAwalDefault   = 2 * time.Minute
 	maksTrashPerSumber = 100 // item per sumber per siklus; sisanya siklus berikutnya
+	batchLog           = 5000 // baris log per DELETE (transaksi pendek)
+	maksBatchLog       = 20   // batch per siklus; sisanya siklus berikutnya
 
 	// Pemutus: pembersihan yatim dibatalkan total bila kandidat melebihi persen ini dari objek berumur di atas
 	// batas DAN lebih dari minimum ini. Mencegah penghapusan massal bila aplikasi salah diarahkan ke database kosong.
@@ -62,6 +64,7 @@ type Config struct {
 	LockTTL          time.Duration
 	BatasSiklus      time.Duration // batas waktu satu siklus; harus lebih pendek dari LockTTL
 	RetensiTrashHari int32
+	RetensiLogBulan  int32 // umur maksimum baris Log Aktivitas (bulan kalender); <= 0 = langkah log dilewati
 	UmurMinYatim     time.Duration
 	MaksHapusYatim   int
 	DryRun           bool
@@ -74,6 +77,10 @@ type Job struct {
 	Gudang  Gudang
 	Sumber  []Sumber
 	Dipakai func(ctx context.Context, key string) (bool, error) // key dipakai baris mana pun?
+
+	// Retensi bergulir Log Aktivitas; keduanya nil = langkah dilewati. HitungLog dipakai mode dry-run.
+	HitungLog func(ctx context.Context, bulan int32) (int64, error)
+	HapusLog  func(ctx context.Context, bulan, batas int32) (int64, error)
 	Cfg     Config
 
 	// Sekarang bisa diganti di tes; default time.Now.
@@ -129,6 +136,7 @@ func (j *Job) Siklus(ctx context.Context) {
 
 	mulai := j.sekarang()
 	dihapusTrash := j.hapusTrash(ctx)
+	dihapusLog := j.hapusLog(ctx)
 	dihapusYatim, err := j.bersihkanYatim(ctx)
 	switch {
 	case errors.Is(err, ErrPemutus):
@@ -136,7 +144,7 @@ func (j *Job) Siklus(ctx context.Context) {
 	case err != nil:
 		j.Log.Error("pembersihan file yatim gagal", "err", err)
 	}
-	j.Log.Info("siklus job selesai", "trash_dihapus", dihapusTrash, "yatim_dihapus", dihapusYatim,
+	j.Log.Info("siklus job selesai", "trash_dihapus", dihapusTrash, "log_dihapus", dihapusLog, "yatim_dihapus", dihapusYatim,
 		"dry_run", j.Cfg.DryRun, "durasi", j.sekarang().Sub(mulai).String())
 }
 
@@ -195,6 +203,39 @@ func (j *Job) hapusTrash(ctx context.Context) int {
 				j.Log.Error("gagal menghapus trash kedaluwarsa", "sumber", s.Nama, "id", id, "err", err)
 			}
 		}
+	}
+	return total
+}
+
+// hapusLog menghapus baris Log Aktivitas yang lebih tua dari RetensiLogBulan (retensi bergulir), dalam batch
+// terlama dulu. Galat dicatat dan tidak menghentikan langkah lain. Mode dry-run hanya melaporkan jumlahnya.
+func (j *Job) hapusLog(ctx context.Context) int64 {
+	if j.HapusLog == nil || j.HitungLog == nil || j.Cfg.RetensiLogBulan <= 0 {
+		return 0
+	}
+	if j.Cfg.DryRun {
+		n, err := j.HitungLog(ctx, j.Cfg.RetensiLogBulan)
+		if err != nil {
+			j.Log.Error("gagal menghitung log kedaluwarsa", "err", err)
+			return 0
+		}
+		j.Log.Info("dry-run: baris log akan dihapus", "jumlah", n, "retensi_bulan", j.Cfg.RetensiLogBulan)
+		return 0
+	}
+	var total int64
+	for i := 0; i < maksBatchLog && ctx.Err() == nil; i++ {
+		n, err := j.HapusLog(ctx, j.Cfg.RetensiLogBulan, batchLog)
+		if err != nil {
+			j.Log.Error("gagal menghapus log kedaluwarsa", "err", err)
+			break
+		}
+		total += n
+		if n < batchLog {
+			break
+		}
+	}
+	if total > 0 {
+		j.Log.Info("log aktivitas kedaluwarsa dihapus", "jumlah", total, "retensi_bulan", j.Cfg.RetensiLogBulan)
 	}
 	return total
 }

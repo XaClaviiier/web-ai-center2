@@ -169,7 +169,7 @@ func TestDaftarBeritaBentukDanPagination(t *testing.T) {
 		t.Fatalf("meta salah: %v", m)
 	}
 	item := m["items"].([]any)[0].(map[string]any)
-	want := map[string]any{"id": 7.0, "slug": "satu", "judul": "Satu", "ringkasan": "Ringkas", "gambar": "/media/berita/7/a.jpg", "tanggalPublikasi": "2026-11-05"}
+	want := map[string]any{"id": 7.0, "slug": "satu", "judul": "Satu", "ringkasan": "Ringkas", "gambar": "/media/berita/7/a.jpg", "tanggalPublikasi": "05-11-2026"}
 	if len(item) != len(want) {
 		t.Fatalf("field berlebih/kurang: %v", item)
 	}

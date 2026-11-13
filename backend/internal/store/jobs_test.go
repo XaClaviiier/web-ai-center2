@@ -79,3 +79,48 @@ func TestKeyDipakaiMemeriksaKeempatTabelTermasukDraftDanTrash(t *testing.T) {
 		}
 	}
 }
+
+func TestHapusLogKedaluwarsaHanyaYangLebihTuaDariBulanDanBerbatas(t *testing.T) {
+	s, ctx := bukaStoreTes(t)
+	exec := func(q string, args ...any) {
+		t.Helper()
+		if _, err := s.Pool.Exec(ctx, q, args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	exec(`DELETE FROM log_aktivitas`)
+	// umur dalam bulan: 5, 4 (kedaluwarsa), 2, 0 (masih berlaku); lalu 3 bulan + 1 hari (kedaluwarsa)
+	for i, umur := range []string{"5 months", "4 months", "2 months", "0 days", "3 months 1 day"} {
+		exec(`INSERT INTO log_aktivitas (terjadi_pada, pengguna_sub, username, jenis, aksi, modul, item_id, label_item)
+			VALUES (now() - $1::interval, 's', 'u', 'tambah', 'tambah', 'berita', $2, 'x')`, umur, i+1)
+	}
+	if n, err := s.HitungLogKedaluwarsa(ctx, 3); err != nil || n != 3 {
+		t.Fatalf("hitung = %d %v (mau 3)", n, err)
+	}
+	n, err := s.HapusLogKedaluwarsa(ctx, 3, 2)
+	if err != nil || n != 2 {
+		t.Fatalf("batch pertama = %d %v (mau 2, berbatas)", n, err)
+	}
+	if n, err = s.HapusLogKedaluwarsa(ctx, 3, 100); err != nil || n != 1 {
+		t.Fatalf("batch kedua = %d %v (mau 1)", n, err)
+	}
+	var sisa []int64
+	rows, err := s.Pool.Query(ctx, `SELECT item_id FROM log_aktivitas ORDER BY item_id`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			t.Fatal(err)
+		}
+		sisa = append(sisa, id)
+	}
+	if idsStr(sisa) != "3,4" {
+		t.Errorf("sisa item_id = %s (mau 3,4: umur 2 bulan dan baru)", idsStr(sisa))
+	}
+	if n, _ = s.HapusLogKedaluwarsa(ctx, 3, 100); n != 0 {
+		t.Errorf("tanpa kedaluwarsa harus 0, dapat %d", n)
+	}
+}

@@ -113,7 +113,7 @@ function ubahPublikJs(isi) {
   const k = 'public.js';
   isi = ganti(isi, 'const K = MOCK.konten;', 'const K = KONTEN;', 1, k);
   isi = ganti(isi, 'const gambar = (nama) => `../assets/img/${nama}`;',
-    'const gambar = (nama) => (/^(\\/|https?:)/.test(nama) ? nama : `/assets/img/${nama}`); // URL dari API (/media/...) dipakai apa adanya',
+    'const gambar = (nama) => (/^\\/(media|assets\\/img)\\//.test(nama) ? nama : `/assets/img/${nama}`); // hanya /media/ (URL dari API) dan /assets/img/ dipakai apa adanya; //host dan http(s): tidak',
     1, k);
   // Slug dari path (/berita/{slug}), bukan ?slug=.
   isi = ganti(isi, "const parameter = new URLSearchParams(location.search);",
@@ -140,9 +140,9 @@ function ubahAdminJs(isi) {
   isi = ganti(isi, "const URL_LOGIN = '../simulasi/keycloak.html';", "const URL_LOGIN = '/admin/masuk';", 1, k);
   isi = ganti(isi, ' Salinan di simulasi/api-simulasi.js.', '', 1, k);
 
-  // Gambar: key dari backend disajikan di /media/{key}; blob: (belum diunggah) dan URL penuh dipakai apa adanya.
+  // Gambar: key dari backend disajikan di /media/{key}; blob: (belum diunggah), /media/ dan /assets/img/ dipakai apa adanya; URL penuh dan //host ditolak (hardening audit 2026-11-12).
   isi = ganti(isi, "const urlGambar = (key) => (String(key).startsWith('blob:') ? key : `../assets/img/${key}`);",
-    "const urlGambar = (key) => (/^(blob:|\\/|https?:)/.test(String(key)) ? key : `/media/${key}`);", 1, k);
+    "const urlGambar = (key) => (/^(blob:|\\/media\\/|\\/assets\\/img\\/)/.test(String(key)) ? key : `/media/${key}`);", 1, k);
   isi = ganti(isi, 'key = URL.createObjectURL(berkas);', 'key = api.blob(berkas);', 1, k);
   isi = ganti(isi, 'daftar.push(URL.createObjectURL(b));', 'daftar.push(api.blob(b));', 1, k);
   isi = ganti(isi, 'daftar[i] = URL.createObjectURL(b);', 'daftar[i] = api.blob(b);', 1, k);

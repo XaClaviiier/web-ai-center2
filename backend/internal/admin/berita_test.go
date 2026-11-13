@@ -193,7 +193,7 @@ func (l lingkungan) unggah(t *testing.T, sumber string) string {
 
 func (l lingkungan) mentah(t *testing.T, judul string) MentahBerita {
 	t.Helper()
-	return MentahBerita{Judul: judul, Isi: "Paragraf satu.\n\nParagraf dua.", TanggalPublikasi: "2026-11-09", Gambar: l.unggah(t, media.SumberBerita)}
+	return MentahBerita{Judul: judul, Isi: "Paragraf satu.\n\nParagraf dua.", TanggalPublikasi: "09-11-2026", Gambar: l.unggah(t, media.SumberBerita)}
 }
 
 func adaFile(t *testing.T, l lingkungan, key string) bool {
@@ -312,7 +312,7 @@ func TestBuatGagalMenghapusFileBaruTapiAmanBagiYangDipakai(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dup := MentahBerita{Judul: "Kedua", Isi: "isi", TanggalPublikasi: "2026-11-09", Gambar: pertama.GambarKey}
+	dup := MentahBerita{Judul: "Kedua", Isi: "isi", TanggalPublikasi: "09-11-2026", Gambar: pertama.GambarKey}
 	_, err = l.svc.Buat(ctx, dup, "u")
 	perluErrInput(t, err, "sudah dipakai")
 	if !adaFile(t, l, pertama.GambarKey) {
@@ -324,7 +324,7 @@ func TestBuatGagalMenghapusFileBaruTapiAmanBagiYangDipakai(t *testing.T) {
 	if err := l.mem.Put(ctx, asing, png, "image/gif"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := l.svc.Buat(ctx, MentahBerita{Judul: "x", Isi: "y", TanggalPublikasi: "2026-11-09", Gambar: asing}, "u"); err == nil {
+	if _, err := l.svc.Buat(ctx, MentahBerita{Judul: "x", Isi: "y", TanggalPublikasi: "09-11-2026", Gambar: asing}, "u"); err == nil {
 		t.Fatal("seharusnya galat")
 	}
 	if !adaFile(t, l, asing) {
@@ -369,7 +369,7 @@ func TestUbahBerhasilDanGantiGambar(t *testing.T) {
 func TestUbahTanpaGantiGambarTidakMenghapusApaPun(t *testing.T) {
 	l := siapkan(t)
 	b, _ := l.svc.Buat(ctx, l.mentah(t, "Judul"), "u")
-	m := MentahBerita{Judul: "Judul Diedit", Isi: "isi baru", TanggalPublikasi: "2026-11-10", Gambar: b.GambarKey}
+	m := MentahBerita{Judul: "Judul Diedit", Isi: "isi baru", TanggalPublikasi: "10-11-2026", Gambar: b.GambarKey}
 	u, err := l.svc.Ubah(ctx, b.ID, m, b.Version, "u")
 	if err != nil {
 		t.Fatal(err)
@@ -537,7 +537,7 @@ func TestUbahJudulLamaDiAtasBatas(t *testing.T) {
 	panjang := strings.Repeat("L", 100)
 	l.repo.baris[b.ID].Judul = panjang // data lama yang lolos batas lama (200)
 
-	m := MentahBerita{Judul: panjang, Isi: "isi baru", TanggalPublikasi: "2026-11-09", Gambar: b.GambarKey}
+	m := MentahBerita{Judul: panjang, Isi: "isi baru", TanggalPublikasi: "09-11-2026", Gambar: b.GambarKey}
 	u, err := l.svc.Ubah(ctx, b.ID, m, b.Version, "u")
 	if err != nil || u.Judul != panjang || u.Isi != "isi baru" {
 		t.Fatalf("judul lama tidak diubah harus lolos: %+v %v", u, err)

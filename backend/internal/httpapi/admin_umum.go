@@ -16,7 +16,8 @@ import (
 // Kode galat admin (stabil untuk klien).
 const (
 	kodeStatusTidakValid = "status_tidak_valid"
-	kodeVersiBentrok     = "version_conflict"
+	kodeVersiBentrok     = "conflict" // dulu version_conflict; disamakan dengan frontend-final (keputusan 2026-11-13)
+	kodeBukanDraft       = "bukan_draft"
 	kodeGambarHilang     = "gambar_hilang"
 )
 
@@ -70,6 +71,9 @@ func petakanGalatAdmin(log *slog.Logger, w http.ResponseWriter, r *http.Request,
 		tulisGalat(w, http.StatusBadRequest, kodeRequestTidakSah, in.Pesan)
 	case errors.Is(err, admin.ErrTidakDitemukan):
 		tulisTidakDitemukan(w)
+	case errors.Is(err, admin.ErrStatusTidakValid) && r.Method == http.MethodPut:
+		// Simpan (PUT) pada item bukan draft: kode dan status mengikuti frontend-final.
+		tulisGalat(w, http.StatusBadRequest, kodeBukanDraft, "Hanya data berstatus draft yang bisa diedit")
 	case errors.Is(err, admin.ErrStatusTidakValid):
 		tulisGalat(w, http.StatusConflict, kodeStatusTidakValid, "Aksi tidak diizinkan pada status konten saat ini")
 	case errors.Is(err, admin.ErrVersiBentrok):
