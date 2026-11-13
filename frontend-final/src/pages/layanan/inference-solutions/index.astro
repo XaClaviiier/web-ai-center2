@@ -1,0 +1,83 @@
+---
+import PublicLayout from '../../../layouts/PublicLayout.astro';
+import { QuestionCarousel } from '../../../public/Carousel';
+import { Breadcrumb, Contact, LinkButton, route } from '../../../public/Common';
+import { image, konten } from '../../../shared/content';
+import { Icon } from '../../../shared/ui';
+
+const n = konten.inference;
+const ILUSTRASI_JENIS = ['it-service-management-line.svg', 'data-science-line.svg'];
+---
+<PublicLayout title="Inference and Solutions" description={n.hero_sub} page="inference">
+  <Breadcrumb items={[{ label: 'Inference and Solutions' }]} />
+  <section class="sampul sampul--enterprise" data-nav-section="layanan">
+    <div class="wadah sampul__dua">
+      <div>
+        <h1><span class="inference-headline">{n.hero_judul}</span></h1>
+        <p>{n.hero_sub}</p>
+        <div class="hero__aksi">
+          <LinkButton href="#portofolio" variant="terang" icon="panah">Lihat Contoh Penerapan</LinkButton>
+        </div>
+      </div>
+      <QuestionCarousel client:load questions={n.pertanyaan} />
+    </div>
+  </section>
+  <section class="bagian wadah" aria-labelledby="j-jenis">
+    <h2 id="j-jenis">Jelajahi Peluang Penerapan AI</h2>
+    <p class="bagian__sub">Solusi inference utama yang kami tawarkan.</p>
+    <div class="jenis-grid">
+      {n.jenis.map((j, i) => (
+        <article class="jenis">
+          <img class="jenis__ilustrasi" src={image(ILUSTRASI_JENIS[i])} alt="" width="180" height="108" loading="lazy" />
+          <h3>{j.nama}</h3>
+          <p class="teks-sekunder">{j.deskripsi}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+  <section class="bagian bagian--muda" aria-labelledby="j-alur">
+    <div class="wadah">
+      <div class="inference-workflow">
+        <h2 id="j-alur">Tahapan penerapan model AI.</h2>
+        <ol class="alur alur--inference" role="list">
+          {n.alur.map((l, i) => (
+            <li style={`--alur-urutan:${i}`}>
+              <span class="alur__nomor">{i + 1}</span>
+              <h3>{l.judul}</h3>
+              <p class="teks-sekunder">{l.deskripsi}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+  <section class="bagian wadah" id="portofolio" tabindex="-1" aria-labelledby="j-porto" data-nav-section="contoh-aplikasi">
+    <div class="porto__kepala">
+      <p class="tentang-label">Portofolio</p>
+      <h2 id="j-porto">Jelajahi Portofolio Kami.</h2>
+      <p class="bagian__sub">Kenali contoh penerapan teknologi AI melalui demonstrasi aplikasi.</p>
+    </div>
+    <div class="grid-kartu grid-kartu--tiga porto">
+      {n.portofolio.map((p) => (
+        <article class="kartu kartu-album">
+          <a class="kartu-album__tautan" href={route(p.href)}>
+            <img class="kartu__gambar" src={image(p.gambar)} alt="" loading="lazy" />
+            <div class="kartu__isi">
+              <p class="kartu-tim__jabatan">{p.bidang}</p>
+              <h3>{p.judul}</h3>
+              <p class="teks-sekunder">{p.deskripsi}</p>
+              <div class="porto__status">
+                {p.status.split('·').map((status) => <span class="badge badge--simulasi">{status.trim()}</span>)}
+              </div>
+              <span class="tautan-panah">{p.cta}<Icon name="panah" size={18} /></span>
+            </div>
+          </a>
+        </article>
+      ))}
+    </div>
+  </section>
+  <Contact
+    title="Diskusikan kebutuhan AI Anda."
+    text="Punya model AI, data, atau ide penerapan yang ingin dikembangkan? Ceritakan kepada tim UBAYA AI Center, dan mari diskusikan langkah yang paling sesuai."
+  />
+</PublicLayout>

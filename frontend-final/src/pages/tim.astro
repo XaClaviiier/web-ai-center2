@@ -1,0 +1,23 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import { Breadcrumb, Contact } from '../public/Common';
+import { TeamList } from '../public/Lists';
+
+const sub = 'Kenali tim yang berkontribusi dalam riset, pengembangan, dan pembelajaran AI di UBAYA AI Center.';
+---
+<PublicLayout title="Tim" description={sub} page="tim">
+  <Breadcrumb items={[{ label: 'Tim' }]} />
+  <header class="kepala-halaman wadah">
+    <h1>Berkenalan dengan Tim Kami.</h1>
+    <p>{sub}</p>
+  </header>
+  <div class="wadah daftar daftar--tim">
+    <TeamList client:load />
+  </div>
+  <Contact
+    className="kontak--tim"
+    headingId="judul-kontak-tim"
+    title="Mari Diskusikan Kebutuhan Anda."
+    text="Punya pertanyaan, ide kolaborasi, atau ingin mengetahui bagaimana AI dapat membantu? Hubungi UBAYA AI Center untuk memulai percakapan."
+  />
+</PublicLayout>

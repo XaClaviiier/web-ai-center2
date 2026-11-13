@@ -1,0 +1,66 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import { konten } from '../shared/content';
+import { Icon } from '../shared/ui';
+import { Contact, LinkButton } from './Common';
+import { HomeAlbums, HomeNews, HomeTestimonials } from './Lists';
+
+const K = konten;
+---
+<PublicLayout title={null} description={K.hero.sub} page="index">
+  <section class="hero" aria-labelledby="judul-hero" data-nav-section="index">
+    <canvas class="hero__bola" aria-hidden="true"></canvas>
+    <div class="wadah hero__isi">
+      <div class="hero__teks">
+        <h1 id="judul-hero">{K.hero.judul}</h1>
+        <p>{K.hero.sub}</p>
+        <div class="hero__aksi">
+          <LinkButton href={K.kontak.whatsapp_url} variant="terang" icon="pesan" external>Diskusikan Kebutuhan AI</LinkButton>
+          <LinkButton href="#layanan" variant="garis-terang">Lihat Layanan</LinkButton>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="lembar lembar--putih" id="layanan" aria-labelledby="judul-layanan" data-nav-section="layanan">
+    <div class="wadah">
+      <h2 id="judul-layanan">Dua cara kami membantu Anda</h2>
+      <div class="layanan-grid">
+        {K.layanan.map((l, i) => (
+          <article class={`layanan-kartu layanan-kartu--${i ? 'gelap' : 'terang'}`}>
+            <h3>{l.nama}</h3>
+            <p>{l.deskripsi}</p>
+            <LinkButton href={l.href} variant={i ? 'terang' : 'utama'} icon="panah">{i ? 'Lihat Solusi AI' : 'Lihat Pelatihan'}</LinkButton>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+  <section class="lembar lembar--muda" aria-labelledby="judul-dok" data-nav-section="kabar">
+    <div class="wadah">
+      <div class="judul-baris">
+        <h2 id="judul-dok">Galeri Dokumentasi</h2>
+        <a class="tautan-panah" href="/dokumentasi">Lihat Galeri Dokumentasi<Icon name="panah" size={18} /></a>
+      </div>
+      <HomeAlbums client:load />
+    </div>
+  </section>
+  <section class="lembar lembar--langit" aria-labelledby="judul-testi">
+    <div class="wadah testi">
+      <h2 id="judul-testi">Cerita dari mereka yang belajar dan bekerja bersama kami</h2>
+      <HomeTestimonials client:load />
+    </div>
+  </section>
+  <section class="lembar lembar--putih" aria-labelledby="judul-berita" data-nav-section="kabar">
+    <div class="wadah">
+      <div class="judul-baris">
+        <h2 id="judul-berita">Berita terbaru</h2>
+        <a class="tautan-panah" href="/berita">Semua berita<Icon name="panah" size={18} /></a>
+      </div>
+      <HomeNews client:load />
+    </div>
+  </section>
+  <Contact
+    title="Punya kebutuhan AI? Mari berdiskusi."
+    text="Ingin mengembangkan kemampuan AI atau mengeksplorasi penerapannya? Ceritakan kebutuhan Anda, dan mari temukan langkah yang sesuai bersama UBAYA AI Center."
+  />
+</PublicLayout>

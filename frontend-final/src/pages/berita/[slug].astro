@@ -1,0 +1,19 @@
+---
+import type { InferGetStaticPropsType } from 'astro';
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import { NewsDetail } from '../../public/Lists';
+import { Format } from '../../shared/format';
+import seed from '../../shared/seed.json';
+
+export function getStaticPaths() {
+  return seed.berita
+    .filter((b) => b.status === 'posted' && !b.deletedAt)
+    .map((b) => ({ params: { slug: b.slug }, props: { slug: b.slug, judul: b.judul, isi: b.isi } }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { slug, judul, isi } = Astro.props;
+---
+<PublicLayout title={judul} description={Format.potongan(isi, 160)} page="berita-detail">
+  <NewsDetail client:load slug={slug} />
+</PublicLayout>

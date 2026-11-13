@@ -1,0 +1,58 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import { Breadcrumb, Contact } from '../public/Common';
+import { image, konten } from '../shared/content';
+
+const t = konten.tentang;
+---
+<PublicLayout title="Tentang Kami" description={t.deskripsi} page="tentang-kami">
+  <Breadcrumb items={[{ label: 'Tentang Kami' }]} />
+  <section class="sampul tentang-sampul" aria-labelledby="judul-tentang">
+    <div class="wadah">
+      <p class="tentang-label">Tentang Kami</p>
+      <h1 id="judul-tentang">{t.hero_judul}</h1>
+      <p class="tentang-sampul__sub">{t.deskripsi}</p>
+    </div>
+  </section>
+  <section class="bagian wadah tentang-cerita" aria-labelledby="judul-cerita">
+    <div class="tentang-pengantar tentang-ungkap">
+      <h2 id="judul-cerita">Arah yang Menjadi Landasan Langkah Kami.</h2>
+      <p class="teks-sekunder">{t.visi_pengantar}</p>
+    </div>
+    <div class="visi-misi tentang-ungkap">
+      <div>
+        <h3>Visi</h3>
+        <p class="visi-misi__judul">{t.visi_judul}</p>
+        <p class="teks-sekunder">{t.visi}</p>
+      </div>
+      <div>
+        <h3>Misi</h3>
+        <ol class="misi">{t.misi.map((m) => <li>{m}</li>)}</ol>
+      </div>
+    </div>
+  </section>
+  <section class="bagian bagian--muda tentang-ruang" aria-labelledby="judul-ruang">
+    <div class="wadah">
+      <div class="tentang-pengantar tentang-ungkap">
+        <h2 id="judul-ruang">Ruang untuk Belajar, Berkolaborasi, dan Berinovasi.</h2>
+        <p class="teks-sekunder">{t.fasilitas_pengantar}</p>
+      </div>
+      <div class="fasilitas tentang-ungkap">
+        {t.fasilitas.map((f) => (
+          <figure>
+            {'gambar' in f && f.gambar
+              ? <img src={image(f.gambar)} alt={f.nama} loading="lazy" width="1000" height="625" />
+              : <div class="fasilitas__kosong" role="img" aria-label="Foto ruang demo belum tersedia">Foto Ruangan Coming Soon</div>}
+            <figcaption>{f.nama}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  </section>
+  <Contact
+    className="kontak--tentang"
+    textClassName="tentang-ungkap"
+    title="Langkah Berikutnya Dimulai di Sini."
+    text="Ingin mengembangkan keterampilan AI atau menerapkannya untuk kebutuhan nyata? Jelajahi layanan kami dan temukan langkah yang sesuai untuk Anda."
+  />
+</PublicLayout>

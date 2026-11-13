@@ -1,0 +1,12 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import { Breadcrumb, PageHeader } from '../../public/Common';
+import { ListPage } from '../../public/Lists';
+
+const sub = 'Ikuti kegiatan, kolaborasi, dan perkembangan UBAYA AI Center melalui cerita dan informasi terbaru kami.';
+---
+<PublicLayout title="Berita" description={sub} page="berita">
+  <Breadcrumb items={[{ label: 'Berita' }]} />
+  <PageHeader title="Kabar Terbaru dari UBAYA AI Center." text={sub} />
+  <ListPage client:only="react" kind="berita" />
+</PublicLayout>

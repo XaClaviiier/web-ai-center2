@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-label="Ilustrasi konseptual rahang bawah dengan satu area gigi hilang dan penampang skematis implan. Bukan citra pasien.">
+  <title>Ilustrasi konseptual perencanaan implan gigi</title>
+  <style>
+    text { font-family: "General Sans", "Segoe UI", Arial, sans-serif; fill: #0A2240; }
+    .gigi { fill: #fff; stroke: #8FA3B5; stroke-width: 2.5; }
+    .target { fill: #FF6B2C; fill-opacity: .16; stroke: #B23F0D; stroke-width: 4; stroke-dasharray: 10 7; }
+    .panah { stroke: #0A2240; stroke-width: 3; fill: none; }
+  </style>
+  <defs>
+    <pattern id="arsir" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="14" height="14" fill="#2547F4" fill-opacity=".1"/>
+      <line x1="0" y1="0" x2="0" y2="14" stroke="#2547F4" stroke-width="3" stroke-opacity=".55"/>
+    </pattern>
+    <marker id="ujung" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M1 1 L9 5 L1 9 z" fill="#0A2240"/>
+    </marker>
+    <clipPath id="tulang"><path d="M772 176 C796 176 812 196 818 236 C826 292 846 360 846 430 C846 492 812 530 772 530 C732 530 698 492 698 430 C698 360 718 292 726 236 C732 196 748 176 772 176 Z"/></clipPath>
+  </defs>
+
+  <rect width="960" height="600" fill="#F1F7FC"/>
+
+  <!-- Lengkung rahang bawah, tampak atas -->
+  <path d="M489.7 170.1 A190 335 0 0 1 110.3 170.1" fill="none" stroke="#B8C6D4" stroke-width="112" stroke-linecap="round"/>
+  <path d="M489.7 170.1 A190 335 0 0 1 110.3 170.1" fill="none" stroke="#E2EAF1" stroke-width="107" stroke-linecap="round"/>
+  <g>
+    <rect x="-31.0" y="-34.0" width="62" height="68" rx="14" transform="translate(485.7 220.7) rotate(97.0)" class="gigi"/>
+    <rect x="-31.0" y="-34.0" width="62" height="68" rx="14" transform="translate(473.5 286.5) rotate(104.2)" class="gigi"/>
+    <rect x="-23.0" y="-30.0" width="46" height="60" rx="14" transform="translate(424.9 402.4) rotate(123.0)" class="gigi"/>
+    <rect x="-22.0" y="-30.0" width="44" height="60" rx="14" transform="translate(393.9 441.3) rotate(134.9)" class="gigi"/>
+    <rect x="-19.0" y="-26.0" width="38" height="52" rx="14" transform="translate(357.6 469.2) rotate(150.7)" class="gigi"/>
+    <rect x="-17.0" y="-26.0" width="34" height="52" rx="14" transform="translate(319.2 483.3) rotate(169.8)" class="gigi"/>
+    <rect x="-17.0" y="-26.0" width="34" height="52" rx="14" transform="translate(280.5 483.2) rotate(-169.7)" class="gigi"/>
+    <rect x="-19.0" y="-26.0" width="38" height="52" rx="14" transform="translate(242.1 469.1) rotate(-150.6)" class="gigi"/>
+    <rect x="-22.0" y="-30.0" width="44" height="60" rx="14" transform="translate(205.9 441.0) rotate(-134.8)" class="gigi"/>
+    <rect x="-23.0" y="-30.0" width="46" height="60" rx="14" transform="translate(174.8 402.0) rotate(-122.9)" class="gigi"/>
+    <rect x="-31.0" y="-34.0" width="62" height="68" rx="14" transform="translate(147.4 349.7) rotate(-112.8)" class="gigi"/>
+    <rect x="-31.0" y="-34.0" width="62" height="68" rx="14" transform="translate(126.4 286.0) rotate(-104.1)" class="gigi"/>
+    <rect x="-31.0" y="-34.0" width="62" height="68" rx="14" transform="translate(114.2 220.2) rotate(-96.9)" class="gigi"/>
+    <rect x="-31.0" y="-34.0" width="62" height="68" rx="14" transform="translate(452.4 350.1) rotate(112.9)" class="target"/>
+  </g>
+
+  <!-- Garis slice dari area target ke penampang -->
+  <path d="M452.4 350.1 L620 350.1" stroke="#B23F0D" stroke-width="3" stroke-dasharray="10 7" fill="none"/>
+
+  <!-- Penampang skematis -->
+  <rect x="620" y="130" width="304" height="440" rx="24" fill="#fff" stroke="#C9D5E0" stroke-width="2"/>
+  <path d="M772 176 C796 176 812 196 818 236 C826 292 846 360 846 430 C846 492 812 530 772 530 C732 530 698 492 698 430 C698 360 718 292 726 236 C732 196 748 176 772 176 Z" fill="#E2EAF1" stroke="#8FA3B5" stroke-width="2.5"/>
+  <rect x="660" y="176" width="224" height="200" fill="url(#arsir)" clip-path="url(#tulang)"/>
+  <circle cx="772" cy="444" r="26" fill="#0C8C78" fill-opacity=".22" stroke="#0C8C78" stroke-width="4"/>
+  <line x1="752" y1="444" x2="792" y2="444" stroke="#0C8C78" stroke-width="3" stroke-dasharray="6 5"/>
+  <!-- Implan skematis: tanpa skala dan tanpa ukuran -->
+  <rect x="750" y="192" width="44" height="168" rx="8" fill="#0A2240"/>
+  <path d="M750 224 H794 M750 250 H794 M750 276 H794 M750 302 H794 M750 328 H794" stroke="#fff" stroke-opacity=".55" stroke-width="3"/>
+  <path d="M706 192 V360" class="panah" marker-start="url(#ujung)" marker-end="url(#ujung)"/>
+  <path d="M750 152 H794" class="panah" marker-start="url(#ujung)" marker-end="url(#ujung)"/>
+
+  <!-- Label konseptual -->
+  <rect x="28" y="26" width="400" height="56" rx="28" fill="#F3D502"/>
+  <text x="228" y="63" font-size="29" font-weight="700" text-anchor="middle">Ilustrasi konseptual</text>
+</svg>

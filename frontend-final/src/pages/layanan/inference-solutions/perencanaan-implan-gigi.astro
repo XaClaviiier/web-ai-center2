@@ -1,0 +1,17 @@
+---
+import '../../../styles/implan-gigi.css';
+import ImplanGigi from '../../../demos/ImplanGigi';
+import PublicLayout from '../../../layouts/PublicLayout.astro';
+import { Breadcrumb, Contact } from '../../../public/Common';
+import { konten } from '../../../shared/content';
+
+const d = konten.implan_gigi;
+---
+<PublicLayout title={`${d.judul} (Konseptual)`} description={d.disclaimer} page="perencanaan-implan-gigi" noindex simulation={false}>
+  <Breadcrumb items={[{ label: 'Inference and Solutions', href: '/layanan/inference-solutions' }, { label: d.judul }]} />
+  <ImplanGigi client:load />
+  <Contact
+    title="Tertarik Mengembangkan Solusi AI Serupa?"
+    text="Diskusikan peluang kolaborasi riset atau pengembangan solusi AI sesuai kebutuhan institusi Anda."
+  />
+</PublicLayout>
