@@ -1,0 +1,7 @@
+/* Simulasi halaman login Keycloak, bukan bagian aplikasi (dari prototype/simulasi/keycloak.html). */
+.sim-login { min-height: 100dvh; display: grid; place-items: center; padding: var(--jarak-5); background: var(--warna-langit-muda); }
+.sim-login__kartu { width: min(100%, 28rem); display: grid; gap: var(--jarak-4); padding: var(--jarak-6); background: var(--warna-putih); border: 2px dashed var(--warna-navy); border-radius: var(--radius-besar); }
+.sim-login h1 { font-size: var(--judul-3); }
+.sim-login__label { font-family: var(--font-data); font-size: var(--teks-kecil); padding: var(--jarak-1) var(--jarak-3); background: var(--warna-kuning); border-radius: var(--radius-kecil); justify-self: start; }
+.sim-login ul { display: grid; gap: var(--jarak-3); }
+.sim-login .tombol { width: 100%; justify-content: flex-start; }

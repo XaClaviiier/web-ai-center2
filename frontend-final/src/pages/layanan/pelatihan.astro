@@ -1,0 +1,70 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import { Breadcrumb, Contact, LinkButton } from '../../public/Common';
+import TrainingChooser from '../../public/TrainingChooser';
+import { konten } from '../../shared/content';
+
+const p = konten.pelatihan;
+const wa = konten.kontak.whatsapp_url;
+---
+<PublicLayout title="Pelatihan" description={p.hero_sub} page="pelatihan">
+  <Breadcrumb items={[{ label: 'Pelatihan' }]} />
+  <section class="sampul sampul--belajar">
+    <div class="wadah">
+      <h1>{p.hero_judul}</h1>
+      <p>{p.hero_sub}</p>
+      <div class="hero__aksi">
+        <LinkButton href={wa} icon="pesan" external>Konsultasi Gratis</LinkButton>
+        <LinkButton href="#pilihan-pelatihan" variant="kedua">Lihat Pilihan Pelatihan</LinkButton>
+      </div>
+    </div>
+  </section>
+  <section class="bagian wadah pelatihan-pemilih" id="pilihan-pelatihan" aria-labelledby="j-pilihan">
+    <h2 id="j-pilihan">Pelatihan Mana yang Sesuai dengan Kebutuhan Anda?</h2>
+    <p class="bagian__sub">Pilih kebutuhan yang paling mendekati tujuan Anda untuk melihat jalur layanan yang dapat dipertimbangkan.</p>
+    <TrainingChooser client:load />
+    <p class="teks-sekunder">Jika kebutuhan Anda mencakup keduanya, bentuk kegiatan dapat ditentukan melalui konsultasi.</p>
+  </section>
+  <section class="bagian bagian--muda" id="khusus" aria-labelledby="j-khusus">
+    <div class="wadah">
+      <p class="pelatihan-eyebrow">Pengembangan Kompetensi</p>
+      <h2 id="j-khusus">Pelatihan Khusus</h2>
+      <h3 class="pelatihan-subjudul">Pembelajaran AI yang Relevan dengan Kebutuhan Anda</h3>
+      <div class="pelatihan-isi">{p.khusus_isi.map((teks) => <p>{teks}</p>)}</div>
+      <ul class="pelatihan-fokus">{p.khusus_fokus.map((teks) => <li>{teks}</li>)}</ul>
+      <LinkButton href={wa} icon="pesan" external>Konsultasi Gratis</LinkButton>
+      <div class="pelatihan-workflow">
+        <h3>Empat Langkah Konsultasi Pelatihan</h3>
+        <ol class="alur" role="list">
+          {p.alur_konsultasi.map((l, i) => (
+            <li style={`--alur-urutan:${i}`}>
+              <span class="alur__nomor">{i + 1}</span>
+              <h4>{l.judul}</h4>
+              <p class="teks-sekunder">{l.deskripsi}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+  <section class="bagian wadah" id="workshop" aria-labelledby="j-workshop">
+    <p class="pelatihan-eyebrow">Eksplorasi AI untuk Organisasi</p>
+    <h2 id="j-workshop">Workshop &amp; Seminar untuk Bisnis</h2>
+    <h3 class="pelatihan-subjudul">Mengenal Potensi AI dalam Proses Bisnis</h3>
+    <div class="pelatihan-isi">{p.workshop_isi.map((teks) => <p>{teks}</p>)}</div>
+    <ul class="pelatihan-fokus">{p.workshop_fokus.map((teks) => <li>{teks}</li>)}</ul>
+    <LinkButton href={wa} icon="pesan" external>Tanya Workshop Bisnis</LinkButton>
+  </section>
+  <section class="bagian wadah pelatihan-reguler" id="reguler" aria-labelledby="j-reguler">
+    <div class="segera">
+      <p class="pelatihan-eyebrow">Coming Soon</p>
+      <h2 id="j-reguler">Pelatihan Reguler</h2>
+      <p class="teks-sekunder">{p.reguler}</p>
+    </div>
+  </section>
+  <Contact
+    headingId="j-kontak-pelatihan"
+    title="Diskusikan Kebutuhan Pelatihan AI Anda"
+    text="Baik untuk pengembangan kompetensi maupun eksplorasi peluang AI di organisasi, UBAYA AI Center terbuka untuk mendiskusikan bentuk kegiatan yang sesuai dengan kebutuhan Anda."
+  />
+</PublicLayout>

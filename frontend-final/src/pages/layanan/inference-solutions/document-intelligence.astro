@@ -1,0 +1,17 @@
+---
+import '../../../styles/document-intelligence.css';
+import DocNext from '../../../demos/DocNext';
+import PublicLayout from '../../../layouts/PublicLayout.astro';
+import { Breadcrumb, Contact } from '../../../public/Common';
+import { konten } from '../../../shared/content';
+
+const d = konten.document_intelligence;
+---
+<PublicLayout title={`${d.judul} (Demo Konsep)`} description={d.disclaimer} page="document-intelligence" noindex simulation={false}>
+  <Breadcrumb items={[{ label: 'Inference and Solutions', href: '/layanan/inference-solutions' }, { label: d.judul }]} />
+  <DocNext client:load />
+  <Contact
+    title="Punya Proses Bisnis yang Ingin Dibantu AI?"
+    text="Diskusikan kebutuhan pengolahan dokumen, integrasi sistem, atau implementasi AI di lingkungan internal perusahaan bersama UBAYA AI Center."
+  />
+</PublicLayout>

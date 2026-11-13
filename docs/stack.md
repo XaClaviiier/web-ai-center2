@@ -26,7 +26,7 @@ Kriteria selesai per fase: \[Lihat requirement.md §8\].
 * Embla-carousel: Library Carousel  
 * TanStack Query: pengambilan data server dan cache di browser.  
 * Bun: tooling dependency, build, dan pengujian frontend.  
-* Pemilih tanggal \[terbuka\]: belum ditentukan apakah komponen kalender shadcn/ui memenuhi semua aturan (format `DD-MM-YYYY`, bahasa Indonesia, minggu mulai Senin, tanggal setelah hari ini nonaktif) atau `prototype/assets/js/kalender.js` diterjemahkan langsung.
+* Pemilih tanggal: **diputuskan** kalender `prototype/assets/js/kalender.js` diterjemahkan langsung ke React (`frontend-final/admin/src/Calendar.tsx`), bukan komponen kalender shadcn/ui (format `DD-MM-YYYY`, bahasa Indonesia, minggu mulai Senin, tanggal setelah hari ini nonaktif).
 
 ## 3. Backend
 
@@ -222,3 +222,31 @@ Prototype adalah acuan visual dan alur, bukan basis kode implementasi \[Lihat §
 **Tidak disimulasikan:** penghapusan otomatis trash setelah 30 hari, pembersihan file yatim, cache, dan ETag.
 
 **Batas `file://`:** prototype memakai `?slug=` pada halaman detail, sedangkan rute akhir adalah `/berita/:slug` dan `/dokumentasi/:slug` \[Lihat §3\]. Halaman 404 hanya tampil di sisi client; status HTTP 404 tidak bisa ditiru.
+
+## 11. frontend-final
+
+Implementasi frontend dari `prototype/` sesuai §2, berada di `frontend-final/` (branch `frontend`). Status per 13 November 2026: halaman publik dan admin berjalan dengan API simulasi; backend, integrasi, dan E2E belum dikerjakan. Build lulus (`astro check`, `tsc` admin, 42 halaman statis, build admin). Belum diuji di perangkat mobile nyata, dan kinerja bola neural belum diukur.
+
+**Struktur:** `src/pages/` (rute Astro), `src/public/` (komponen publik, `behavior.ts` untuk navbar/scrollspy, `neural-sphere.ts` untuk bola hero), `src/demos/` (JejakAlumni, ImplanGigi, DocNext), `src/shared/` (tipe, `seed.json`, format, UI bersama), `src/simulation/` (API tiruan, panel), `src/components/ui/` (primitif shadcn), `admin/` (aplikasi React + Vite, root `admin/`, base `/admin/`), `scripts/` (dev dan preview).
+
+**Perintah** (Bun lokal di `frontend-final/.tooling/package/bin/bun.exe`, tidak ada di PATH dan tidak di-commit): `bun install`, `bun run dev` (Astro :4321, admin Vite :5174, `/admin` diteruskan Astro agar satu origin), `bun run check`, `bun run build` (keluaran `dist/public` dan `dist/public/admin`), `bun run preview` (file statis, fallback SPA hanya `/admin/*`, selain itu `404.html` berstatus 404).
+
+**Keputusan yang diambil saat implementasi:**
+
+* TypeScript **6.0.3**, bukan 7.0.2: `astro check` menolak TypeScript 7 (error "does not currently support TypeScript 7.0"). Naikkan kembali setelah dukungan Astro tersedia (`@astrojs/ts-content-mapper`).
+* Tailwind v4 tanpa preflight agar CSS prototype tidak tertimpa; CSS prototype dipakai sebagai acuan token dan komponen. Varian `Button` shadcn dipetakan ke kelas `.tombol` prototype.
+* Pemilih tanggal: kalender `kalender.js` diterjemahkan ke `admin/src/Calendar.tsx` (bukan komponen kalender shadcn/ui).
+* Aset di `public/assets/{img,fonts}`; build admin memakai URL aset akar situs (`/assets/...`).
+
+**Simulasi:** `src/simulation/` meniru API (jeda 300 ms, data di memori, kembali ke awal saat refresh atau keluar), panel Simulasi, dan pemilihan akun pengganti Keycloak (`/admin/?simulation=login`). Panel Simulasi tidak dipasang di tiga halaman demo (tidak memakai API). Seluruh `src/simulation/` dibuang saat integrasi; ganti `api` dengan panggilan `/api/*`.
+
+**Perilaku yang berbeda dari prototype:**
+
+* Carousel memakai Embla: slide bergeser dan dapat di-swipe (prototype: memudar, hanya panah). Aturan autoplay tetap.
+* Daftar Berita dan Dokumentasi dirender dengan `client:only="react"` karena membaca `?q`/`?page` saat render pertama: tanpa JavaScript area daftar kosong (header, navbar, footer tetap ada).
+* Halaman detail berita dan dokumentasi dibuat statis hanya untuk slug di `seed.json`. Slug lain dan 404 HTTP ditangani Go saat integrasi \[RP-12\].
+* Efek bola neural dan durasi mint tertentu hanya aktif di layar ≥64rem (dibaca saat pasang); angka di `design.md` bagian 1.
+
+**Aset:** `tentang-kami-hero.webp` dan `tentang-kami-ruang-demo.webp` dikompres dari foto kamera (sumber ±4 MB). `ruang-pelatihan.jpg` dan `ruang-diskusi.jpg` hanya 1000×625 px; `ruang-pelatihan.jpg` tampak pecah pada slot tinggi \[terbuka: menunggu foto asli\].
+
+**Hasil perubahan visual dan perilaku sesi ini** dicatat di `design.md` (HERO-FULL, parameter bola, hero Pelatihan dan Tentang Kami, TYPO-01G) dan `requirement.md` §4.1 (carousel testimoni 5 detik).

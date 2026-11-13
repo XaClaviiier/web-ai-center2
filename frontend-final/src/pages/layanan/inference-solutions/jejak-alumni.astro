@@ -1,0 +1,15 @@
+---
+import '../../../styles/jejak-alumni.css';
+import JejakAlumni from '../../../demos/JejakAlumni';
+import PublicLayout from '../../../layouts/PublicLayout.astro';
+import { Breadcrumb, Contact } from '../../../public/Common';
+import { konten } from '../../../shared/content';
+---
+<PublicLayout title="JejakAlumni (Demo Konsep)" description={konten.jejak_alumni.disclaimer} page="jejak-alumni" noindex simulation={false}>
+  <Breadcrumb items={[{ label: 'Inference and Solutions', href: '/layanan/inference-solutions' }, { label: 'JejakAlumni' }]} />
+  <JejakAlumni client:load />
+  <Contact
+    title="Ingin membahas data lulusan di institusi Anda?"
+    text="Ceritakan kebutuhan evaluasi lulusan Anda. Tim UBAYA AI Center dapat membantu membahas langkah berikutnya."
+  />
+</PublicLayout>
