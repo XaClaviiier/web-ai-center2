@@ -55,7 +55,7 @@ Sengaja tidak dipakai: ORM (GORM dan sejenisnya), framework web selain Chi, libr
 | ------- | ----- | ---- | ------- |
 | PostgreSQL | `postgres:15` | 5432 | Database utama. |
 | Redis | `redis:7-alpine` | 6379 | Session, lock, rate limiter, cache (prefix `session:`, `lock:`, `ratelimit:`, `cache:`). |
-| RustFS | `rustfs/rustfs:latest` | 9000 (S3), 9001 (konsol) | Penyimpanan gambar. Tag `latest` disarankan dikunci ke versi tertentu agar build ulang tidak berubah diam-diam. |
+| RustFS | `rustfs/rustfs:1.0.3` | 9000 (S3), 9001 (konsol) | Penyimpanan gambar. Sejak 2026-11-14 tag dikunci ke **1.0.3** di compose pengguna (sebelumnya `latest`, yang saat itu menunjuk biner 1.0.3 yang sama; image ID `9ca9559533b5`, build 2026-10-17). Dicek: tag `1.0.3` ada di Docker Hub; data dev dan akses `/media` normal; suite tes lulus (lihat `perubahan-kode.md`). |
 | Keycloak | (belum ada) | | Menunggu pihak pengelola. Sementara memakai login development (`APP_ENV=development`, lihat `docs/security.md` §1). |
 
 Compose dikelola pengguna sendiri; backend tidak membawa compose.

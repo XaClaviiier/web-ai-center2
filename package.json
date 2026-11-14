@@ -2,9 +2,9 @@
   "name": "web-ai-center",
   "private": true,
   "version": "0.1.0",
-  "description": "UBAYA AI Center. Dependensi di root hanya untuk tes Node (jsdom): prototype/tests dan scripts/tests. Aplikasi: backend/ (Go) dan web/ (hasil scripts/bangun-web.cjs dari prototype/).",
+  "description": "UBAYA AI Center. Dependensi di root untuk tes Node (jsdom) dan Playwright: scripts/tests dan scripts/e2e. Aplikasi: backend/ (Go) dan web/ (hasil scripts/bangun-web-final.cjs dari frontend-final/).",
   "scripts": {
-    "bangun-web": "node scripts/bangun-web.cjs",
+    "bangun-web": "node scripts/bangun-web-final.cjs",
     "test:web": "node scripts/tests/web.test.cjs",
     "test:api": "bun test scripts/tests/api.test.ts",
     "test:e2e": "playwright test -c scripts/e2e/playwright.config.cjs"

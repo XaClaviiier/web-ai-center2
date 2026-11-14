@@ -1,7 +1,7 @@
 # Rencana: Menggabungkan `frontend-final/` (branch `frontend`) dengan backend Go (branch `Fullstack`)
 
 > Berkas ini disimpan di `docs/backend/PLAN-MERGE-FULLSTACK.md` atas permintaan eksplisit pengguna (pengecualian dari aturan "jangan menyunting `.md` di `docs/`", berlaku hanya untuk berkas ini bersama `perubahan-kode.md`, `req.md`, `schema-baru.md`). Isi lama (merge prototipe HTML/CSS/JS ke backend) digantikan oleh rencana ini; riwayat langkah lama ada di `docs/backend/perubahan-kode.md` dan git.
-> **Status (2026-11-13): langkah 1-7 SELESAI (backend, build `web/`, SEO kerangka, CSP; smoke test browser lulus). Langkah 7 (e2e Playwright) SELESAI. Sisa: langkah 8 (ditunda; jalur lama dibiarkan sebagai referensi atas keputusan pengguna) dan tes Node lama (`scripts/tests`, `prototype/tests`).** Rincian dan verifikasi: `docs/backend/perubahan-kode.md`.
+> **Status (2026-11-14): langkah 1-8 SELESAI (backend, build `web/`, SEO kerangka, CSP, e2e, tes Node, klien API dipindah ke `frontend-final/`, jalur lama dihapus).** Rincian dan verifikasi: `docs/backend/perubahan-kode.md`.
 
 ## 1. Konteks
 
@@ -70,7 +70,7 @@ Keputusan: (1) opsi (a) skrip pascabuild/salinan kerja di `scripts/`; (2) Bun di
 | 5 | Sisip SEO Go pada kerangka detail Astro generik; slug tidak ada → 404 + noindex | agen | SELESAI |
 | 6 | Sesuaikan CSP (`middleware.go`) agar Astro/React berjalan tanpa pelanggaran, tanpa melonggarkan berlebihan | agen | SELESAI (hash skrip + `blob:`) |
 | 7 | Perbarui `scripts/e2e/*` (selektor DOM berubah) dan jalankan ulang | agen | SELESAI (spec lulus; lihat perubahan-kode.md) |
-| 8 | Hapus jalur lama (`bangun-web.cjs`, `scripts/tambahan-web/`, `prototype/` bila tak dipakai) | atas keputusan pengguna | DITUNDA (2026-11-13: pengguna memutuskan jalur lama dibiarkan sebagai referensi) |
+| 8 | Hapus jalur lama (`bangun-web.cjs`, `scripts/tambahan-web/`, `prototype/`, `web-deprecated/`) | pengguna | SELESAI (2026-11-14) |
 
 ## 7. Verifikasi
 

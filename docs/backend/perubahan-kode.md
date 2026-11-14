@@ -17,6 +17,22 @@ Aturan lengkap ada di `CLAUDE.md` bagian "Pencatatan perubahan". Ringkasnya: ber
 
 ## Entri
 
+### 2026-11-14: Image RustFS dikunci ke 1.0.3 (verifikasi data dan perilaku)
+- **Status verifikasi: LENGKAP.** Tidak ada kode aplikasi yang berubah.
+- **Keputusan pengguna:** compose pengguna kini memakai `rustfs/rustfs:1.0.3` (sebelumnya `rustfs/rustfs:latest`). Versi `latest` yang berjalan saat dicek adalah biner `rustfs 1.0.3` (build 2026-10-17), image ID `9ca9559533b5`; image ID container baru sama persis, jadi isinya identik. Tag `1.0.3` terkonfirmasi ada di Docker Hub (`docker manifest inspect`).
+- **File (diubah):** `docs/backend/req.md` §4 (baris RustFS: tag `1.0.3` beserta ID image), `README.md` (tabel stack: RustFS 1.0.3; langkah 1 "Menjalankan proyek": versi image semua layanan, database dibuat manual, bucket dev otomatis di development dan harus dibuat dulu di production, bucket tes otomatis), `backend/.env.example` (dua baris komentar usang tentang `bangun-web.cjs` dihapus; berkas tetap ISO-8859 + CRLF).
+- **Verifikasi:** container `isolated_web_test-rustfs-1` = `rustfs/rustfs:1.0.3`, `rustfs --version` = 1.0.3. Data dev utuh: berita 1, dokumentasi 1 (3 gambar), testimoni 1, tim 1, log 3, migrasi versi 3; objek gambar lama dilayani `GET /media/...` 200 (png 91.702 B, jpg 70.373 B); `/api/health` ok. `go test -p 1 ./... -count=1` -> semua paket ok (exit 0). E2E Playwright (server uji port 8080, `JOBS_ENABLED=false`, dua akun, upload/hapus gambar ke RustFS 1.0.3) -> 36 lulus dalam satu run bersih (9,6 menit). Data uji `[E2E]` dibersihkan (51 baris log dihapus), jumlah baris data dev kembali ke semula; server uji dihentikan dan exe sementara dihapus.
+- **Rujukan docs:** `docs/backend/req.md` §4. Tidak ada penyimpangan dari `docs/`.
+
+### 2026-11-14: Jalur lama dihapus (langkah 8 rencana merge), README dan aturan frontend-final di CLAUDE.md
+- **Status verifikasi: LENGKAP** untuk tes yang relevan (lihat bawah); tidak ada kode aplikasi yang berubah.
+- **Keputusan pengguna:** folder yang tidak dipakai dihapus kecuali `frontend-final/` (menggantikan keputusan 2026-11-13 "dibiarkan sebagai referensi"). Pemutus: pengguna.
+- **File (dihapus):** `prototype/` (prototipe lama beserta `prototype/tests/*`), `web-deprecated/` (hasil build prototipe; tidak ter-track git, versi lamanya ada di riwayat sebagai `web/`), `scripts/tambahan-web/`, `scripts/bangun-web.cjs`. `prototype/` dan `scripts/*` yang dihapus ter-track git sehingga dapat dipulihkan dari riwayat. Tidak ada rujukan dari kode aktif (dicek dengan grep sebelum dihapus). `output/` (artefak tes Playwright, ter-ignore) dan `docs/_arsip/` (dokumen) tidak disentuh.
+- **File (diubah):** `package.json` (skrip `bangun-web` kini menjalankan `scripts/bangun-web-final.cjs`; deskripsi diperbarui), `README.md` (baris folder lama dihapus), `CLAUDE.md` (rujukan jalur lama dihapus), `docs/backend/PLAN-MERGE-FULLSTACK.md` (langkah 8 SELESAI, header status). Komentar di `frontend-final/` yang menyebut `prototype` (README, `admin/src/context.ts`, `seed.json`) sengaja tidak diubah; perubahan di `frontend-final/` menunggu konfirmasi pengguna.
+- **Dokumentasi proyek:** `README.md` root ditulis (gambaran aplikasi, stack berversi, struktur folder, prasyarat, cara menjalankan dan menguji). `CLAUDE.md`: ditambahkan aturan wajib mengubah `frontend-final/` (konfirmasi dulu, jaga tampilan, catat, build lalu replace `web/`).
+- **Verifikasi:** `node scripts/tests/web.test.cjs` -> 10 tes lulus; `bun test scripts/tests/api.test.ts` -> 16 tes lulus; `go test ./cmd/...` -> ok. Build ulang tidak diperlukan (`frontend-final/` dan `web/` tidak berubah).
+- **Rujukan docs:** `docs/backend/PLAN-MERGE-FULLSTACK.md` §6 langkah 8. Dokumen `docs/` lain (`stack.md`, `design.md`, dll.) masih menyebut `prototype/` sebagai sumber desain; tidak diedit (aturan CLAUDE.md), dilaporkan ke pengguna.
+
 ### 2026-11-14: Klien API nyata dipindah langsung ke frontend-final/ (overlay dan patch dihapus)
 - **Status verifikasi: LENGKAP** (build, tes statis/unit, tes Go yang membaca `web/`, dan e2e Playwright dijalankan setelah perubahan terakhir; suite Go penuh dijalankan sebelum rename `src/api`).
 - **Keputusan pengguna:** `frontend-final/` boleh diedit langsung (mencabut larangan sebelumnya) agar tidak ada penengah antara sumber frontend dan `web/`. Pemutus: pengguna.
