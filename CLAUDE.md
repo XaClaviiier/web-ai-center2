@@ -14,7 +14,7 @@ Baca `docs/stack.md` dan `docs/backend/PLAN-MERGE-FULLSTACK.md` sebelum mengubah
 
 ## Dokumen perencanaan (`docs/`, bahasa Indonesia)
 
-`requirement.md` (kebutuhan, rute, status draft/posted), `stack.md` (stack, routing, penandaan `[RP-xx]` untuk bagian yang bergantung reverse proxy, kontrak API di §9), `database.md` (skema dan field), `security.md` (session, CSRF, rate limit, sanitasi), `design.md`. Dokumen lama ada di `docs/_arsip/`. `docs/backend/` dan `CLAUDE.md` ikut di-track git (agar ikut ke branch `Fullstack`); `backend/.env` tetap di-`.gitignore` dan tidak boleh pernah ikut. Skema database: `docs/database.md`.
+`requirement.md` (kebutuhan, rute, status draft/posted), `stack.md` (stack, routing, penandaan `[RP-xx]` untuk bagian yang bergantung reverse proxy, kontrak API di §9), `database.md` (skema dan field), `security.md` (session, CSRF, rate limit, sanitasi), `design.md`. Dokumen lama ada di `docs/_arsip/`. `docs/backend/` ikut di-track git (agar ikut ke branch `Fullstack`); `CLAUDE.md` dan `backend/.env` di-`.gitignore` (CLAUDE.md hanya lokal) dan `.env` tidak boleh pernah ikut. Skema database: `docs/database.md`.
 
 Keputusan penting dari dokumen: satu origin tanpa CORS (`ALLOWED_ORIGINS` hanya untuk cek header `Origin` CSRF); URL gambar lewat `/media/*`; berita/dokumentasi punya `status`, `version` (optimistic locking, 409 bila basi), soft delete; endpoint admin `/api/admin/:sumber/:id`, endpoint publik memakai `slug`; konten Layanan/Pelatihan di-hardcode di frontend.
 

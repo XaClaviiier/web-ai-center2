@@ -20,8 +20,7 @@ coverage/
 # referensi skema/kontrak lama, hanya lokal
 docs/backend/01-kontrak-api.md
 docs/backend/Schema.md
-web-deprecated/
-prototype/
+CLAUDE.md
 
 # laporan lighthouse hanya lokal, tidak ikut repo
 lighthouse_report/
