@@ -1,0 +1,84 @@
+---
+import { konten, image } from '../shared/content';
+import { Icon } from '../shared/ui';
+
+interface Props {
+  /** Kunci menu halaman ini (prototype: index, layanan, berita, dokumentasi, tim, tentang-kami, 404). */
+  aktif: string;
+}
+
+const { aktif } = Astro.props;
+const MENU = [
+  { kunci: 'index', label: 'Beranda', href: '/' },
+  { kunci: 'layanan', label: 'Layanan', sub: [{ label: 'Pelatihan', href: '/layanan/pelatihan' }, { label: 'Inference and Solutions', href: '/layanan/inference-solutions' }] },
+  { kunci: 'contoh-aplikasi', label: 'Contoh Aplikasi', href: '/layanan/inference-solutions#portofolio' },
+  { kunci: 'kabar', label: 'Kabar', sub: [{ label: 'Berita', href: '/berita' }, { label: 'Galeri Dokumentasi', href: '/dokumentasi' }] },
+  { kunci: 'tim', label: 'Tim', href: '/tim' },
+  { kunci: 'tentang-kami', label: 'Tentang Kami', href: '/tentang-kami' },
+];
+// Keadaan awal sama dengan aturAktif() di behavior.ts, agar benar sebelum script berjalan.
+const induk = aktif === 'berita' || aktif === 'dokumentasi' ? 'kabar' : aktif;
+const jalur = Astro.url.pathname.replace(/\/+$/, '') || '/';
+---
+<header class="nav" data-menu-aktif={aktif}>
+  <div class="wadah nav__dalam">
+    <span class="nav__permukaan" aria-hidden="true"></span>
+    <a class="nav__logo" href="/" aria-label="UBAYA AI Center, ke Beranda">
+      <span class="nav__logo-penuh"><img src={image('AI-Center_Logo.png')} alt="" width="440" height="116" /></span>
+      <span class="nav__logo-simbol"><img src={image('AI-Center_Logo.png')} alt="" width="440" height="116" /></span>
+    </a>
+    <button class="nav__burger" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="menu-utama">
+      <Icon name="menu" size={24} />
+    </button>
+    <nav class="nav__navigasi" aria-label="Utama">
+      <ul class="nav__menu" id="menu-utama">
+        {MENU.map((m) => m.sub
+          ? (
+            <li class="nav__punya-sub">
+              <button
+                class="nav__tautan"
+                type="button"
+                aria-expanded="false"
+                aria-controls={`menu-${m.kunci}`}
+                data-nav={m.kunci}
+                data-aktif={m.kunci === induk ? 'ya' : undefined}
+              >
+                {m.label}<Icon name="bawah" size={16} />
+              </button>
+              <ul class="nav__sub" id={`menu-${m.kunci}`} hidden>
+                {m.sub.map((s) => <li><a href={s.href} aria-current={jalur === s.href ? 'page' : undefined}>{s.label}</a></li>)}
+              </ul>
+            </li>
+          )
+          : (
+            <li>
+              <a class="nav__tautan" href={m.href} data-nav={m.kunci} aria-current={m.kunci === induk ? 'page' : undefined}>{m.label}</a>
+            </li>
+          ))}
+      </ul>
+    </nav>
+    <a
+      class="nav__cta"
+      href={konten.kontak.whatsapp_url}
+      target="_blank"
+      rel="noopener"
+      aria-label="Diskusikan Kebutuhan AI melalui WhatsApp (tab baru)"
+    >Diskusikan Kebutuhan AI</a>
+  </div>
+</header>
+<noscript>
+  <style>.nav { display: none; }</style>
+  <nav class="nav-sans-js wadah" aria-label="Navigasi utama tanpa JavaScript">
+    <a href="/" aria-label="UBAYA AI Center, ke Beranda"><img src={image('AI-Center_Logo.png')} alt="" width="152" height="40" /></a>
+    <ul>
+      {MENU.map((m) => (
+        <li>
+          {m.sub
+            ? <details><summary>{m.label}</summary><ul>{m.sub.map((s) => <li><a href={s.href}>{s.label}</a></li>)}</ul></details>
+            : <a href={m.href}>{m.label}</a>}
+        </li>
+      ))}
+    </ul>
+    <a class="nav__cta" href={konten.kontak.whatsapp_url} target="_blank" rel="noopener">Diskusikan Kebutuhan AI</a>
+  </nav>
+</noscript>

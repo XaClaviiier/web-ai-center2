@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Masuk (development) | UBAYA AI Center</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/admin/masuk.css">
+</head>
+<body>
+  <main>
+    <p class="label-dev">Hanya untuk development</p>
+    <h1>Masuk ke admin</h1>
+    <p>Halaman ini hanya tersedia saat server berjalan dalam mode development. Di produksi, langkah ini adalah login Keycloak.</p>
+    <form id="form-masuk" novalidate>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <p id="galat-masuk" role="alert" hidden></p>
+      <button type="submit">Masuk</button>
+    </form>
+    <a href="/admin/">Batal</a>
+  </main>
+  <script src="/admin/masuk.js"></script>
+</body>
+</html>

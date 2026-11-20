@@ -1,0 +1,6 @@
+/* Tailwind v4 tanpa preflight agar gaya prototype (base.css) tidak tertimpa. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@source "../../admin/src";
+@source "../";

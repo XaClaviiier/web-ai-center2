@@ -1,6 +1,26 @@
-# Database — AI Center UBAYA CMS
+# Database — UBAYA AI Center CMS
 
-Dilebur dari `docs/_arsip/00-detail-rencana-web.md` dan `docs/_arsip/01-kontrak-api.md`. Skema lama (`D:\aicenter\notes\ext-database.md`) hanya dipakai untuk detail yang sudah diverifikasi terhadap plan.
+## Log Aktivitas — rancangan produksi, belum diimplementasikan
+
+Disetujui 11 November 2026. `created_by`/`updated_by` pada §3.6 tidak menggantikan riwayat aktivitas: keduanya hanya menunjukkan pembuat/pengubah terakhir. Tabel terpisah `log_aktivitas` direncanakan dengan struktur berikut. Prototype memakai padanan di memori, bukan tabel database nyata.
+
+| Kolom | Rencana tipe/isi |
+|---|---|
+| id | bigint identity, unik dan tidak dipakai ulang |
+| terjadi_pada | timestamptz dari server, API ISO 8601 UTC |
+| pengguna_sub | text, identitas stabil dari sesi terverifikasi |
+| username | text, snapshot username saat kejadian |
+| jenis | text, tambah/ubah/hapus |
+| aksi | text, tambah/ubah/post/retract/restore/hapus/hapus_permanen |
+| modul | text, berita/dokumentasi/testimoni/tim |
+| item_id | bigint, ID sasaran tanpa cascade delete ke log |
+| label_item | text, snapshot judul/nama ringkas, maksimal 140 unit UTF-16 pada prototype |
+
+Deskripsi dibentuk dari aksi/modul/label/ID dengan templat tetap. Tidak menyimpan payload, isi berita/testimoni, password atau token. Label dan username tetap tersedia setelah sasaran dihapus/diubah. Perubahan foto dicatat sebagai perubahan item induk.
+
+Rencana server: perubahan data dan INSERT log berada dalam transaksi PostgreSQL yang sama; kegagalan salah satunya menggagalkan transaksi. Urutan `(terjadi_pada DESC, id DESC)`, indeks sesuai urutan dan kebutuhan filter; range tanggal Jakarta dikonversi ke batas UTC [awal hari, awal hari sesudah tanggal akhir). Kebijakan retensi/akses operasional ditentukan sebelum implementasi backend, bukan disamakan dengan trash konten 30 hari. Nama JSON produksi mengikuti konvensi camelCase pada §2; prototype tetap memakai snake_case seperti data tiruan lainnya.
+
+Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak-api.md`) tersedia di riwayat Git, commit `5928f05` (tag `arsip-docs-v1`). Skema lama (`D:\aicenter\notes\ext-database.md`, di luar repo) hanya dipakai untuk detail yang sudah diverifikasi terhadap plan.
 
 ## 1. Ruang lingkup
 
@@ -16,7 +36,8 @@ Dilebur dari `docs/_arsip/00-detail-rencana-web.md` dan `docs/_arsip/01-kontrak-
 * `id`: `bigint generated always as identity`.  
 * `status`: `text` dengan `CHECK (status IN ('draft','posted'))`.  
 * Timestamp sistem: `timestamptz`; di API berformat ISO 8601 UTC.  
-* `tanggal_publikasi`: tipe `date`; di API dikirim dan diterima sebagai `DD-MM-YYYY`; format lain ditolak `400`. Tampilan di UI juga `DD-MM-YYYY`.
+* `tanggal_publikasi`: tipe `date`; di API dikirim dan diterima sebagai `DD-MM-YYYY`; format lain ditolak `400`. Tampilan di UI juga `DD-MM-YYYY`. Tanggal harus ada di kalender dan tidak boleh setelah hari ini; backend menolaknya dengan `400`. Zona waktu acuan yang menentukan "hari ini" \[terbuka\]: tanggal lokal perangkat bisa berbeda dari tanggal server. Rancangan ini tidak mendukung posting terjadwal. Item lama yang sudah bertanggal masa depan tetap tampil apa adanya, tetapi tidak bisa disimpan sampai tanggalnya diperbaiki; aturan untuk data serupa saat migrasi \[terbuka\].  
+* `judul` Berita dan `judul` kegiatan Dokumentasi: maksimal 70 karakter. Panjang dihitung sebagai `String.length` pada nilai yang sudah di-trim (spasi dihitung, emoji dihitung 2), sama dengan atribut `maxlength` HTML. Judul lama yang melebihi 70 tetap boleh disimpan selama judulnya tidak diubah. \[Belum diterapkan: kode `src/` dan `server/` masih memakai batas 200. Sebelum diterapkan, periksa judul live yang lebih dari 70 karakter.\] Batas ini tidak berlaku untuk judul modul kursus, hero, inference, nama layanan, atau nama tim.
 
 ## 3. Entitas
 
@@ -154,9 +175,17 @@ Edit hanya untuk data berstatus draft (konten yang sudah terbit di-Retract dulu)
 
 Kolom `version` dicek saat Simpan. Semua perubahan diterapkan dalam satu request dan satu transaksi bersama pengecekan `version`, lalu `version` dinaikkan. Jika versi tidak cocok, backend mengembalikan `409 Conflict`. `version` naik 1 setiap Simpan, Post, dan Retract.
 
+**Perilaku di antarmuka admin**
+
+* Item yang dikunci pengguna lain: tombol Hapus dan Post nonaktif; Edit berganti "Lihat" untuk mode baca saja.  
+* Sesi edit berakhir (heartbeat gagal): Simpan nonaktif, isian tetap ada di form, dan pengguna diminta menyalin lalu memuat ulang. Batas waktu pengguna diam \[terbuka\].  
+* Konten posted harus di-Retract sebelum diedit \[terbuka, perlu didiskusikan sebelum backend karena berdampak ke API; lihat requirement.md §5\].
+
 ## 5. Penyimpanan gambar (RustFS)
 
 ### 5.1 Dokumentasi
+
+File di RustFS memakai nama unik yang tidak berubah: `dokumentasi/{id}/{uuid}.ext`, mengikuti pola Berita, Testimoni, dan Tim. \[RP-11\]
 
 **Tambah dan Edit**
 

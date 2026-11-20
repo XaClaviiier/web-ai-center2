@@ -1,0 +1,71 @@
+/* Token desain. Warna dan font dari docs/design.md; nama token dan nilai bertanda
+   "turunan" dibuat di prototype karena design.md belum menetapkannya (lihat CATATAN.md). */
+@font-face { font-family: "Cabinet Grotesk"; src: url("/assets/fonts/CabinetGrotesk-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Cabinet Grotesk"; src: url("/assets/fonts/CabinetGrotesk-ExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "General Sans"; src: url("/assets/fonts/GeneralSans-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "General Sans"; src: url("/assets/fonts/GeneralSans-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "General Sans"; src: url("/assets/fonts/GeneralSans-SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "General Sans"; src: url("/assets/fonts/GeneralSans-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("/assets/fonts/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
+:root {
+  /* Warna dari design.md */
+  --warna-putih: #FFFFFF;
+  --warna-langit: #D8EBF8;
+  --warna-biru-terang: #0674FD;
+  --warna-biru: #2547F4;
+  --warna-navy: #0A2240;
+  --warna-overlay: #0000006B;
+  --warna-mint: #3CFBC5;
+  --warna-kuning: #F3D502;
+  --warna-hijau: #0C7C6C;
+  --warna-oranye: #FF6B2C;
+
+  /* Turunan */
+  --warna-teks: var(--warna-navy);
+  --warna-teks-sekunder: rgba(10, 34, 64, .72);
+  --warna-teks-di-navy: rgba(255, 255, 255, .78);
+  --warna-garis: rgba(10, 34, 64, .14);
+  --warna-langit-muda: #F1F7FC;
+  --warna-biru-tekan: #1B37C9;
+  --warna-galat: #B23F0D;
+  --warna-galat-latar: #FFF0E9;
+
+  /* Font dari design.md */
+  --font-judul: "Cabinet Grotesk", "General Sans", sans-serif;
+  --font-isi: "General Sans", sans-serif;
+  --font-data: "Geist Mono", monospace;
+
+  /* Turunan: skala */
+  --teks-kecil: .875rem;
+  --teks-isi: 1rem;
+  --teks-besar: 1.1875rem;
+  --judul-3: 1.375rem;
+  --judul-2: clamp(1.875rem, 1.3rem + 2.2vw, 3rem);
+  --judul-1: clamp(2.5rem, 1.5rem + 4.4vw, 5rem);
+
+  --jarak-1: .25rem;
+  --jarak-2: .5rem;
+  --jarak-3: .75rem;
+  --jarak-4: 1rem;
+  --jarak-5: 1.5rem;
+  --jarak-6: 2rem;
+  --jarak-7: 3rem;
+  --jarak-8: 4.5rem;
+  --jarak-9: 7rem;
+
+  --radius-kecil: .5rem;
+  --radius-sedang: .875rem;
+  --radius-besar: 1.5rem;
+  --radius-penuh: 999px;
+
+  --bayangan-kecil: 0 1px 2px rgba(10, 34, 64, .08), 0 2px 6px rgba(10, 34, 64, .05);
+  --bayangan-sedang: 0 8px 24px rgba(10, 34, 64, .12);
+  --bayangan-besar: 0 18px 50px rgba(10, 34, 64, .24);
+
+  --lebar-isi: 75rem;
+  --lebar-baca: 44rem;
+  --gerak-keluar: cubic-bezier(.16, 1, .3, 1);
+  --gerak-cepat: 160ms;
+  --gerak-sedang: 420ms;
+}

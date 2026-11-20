@@ -1,0 +1,234 @@
+package admin
+
+import (
+	"time"
+	"errors"
+	"strings"
+	"testing"
+)
+
+func TestSlug(t *testing.T) {
+	cases := []struct{ judul, want string }{
+		{"Pelatihan AI untuk Dosen", "pelatihan-ai-untuk-dosen"},
+		{"  Spasi   Berlebih  ", "spasi-berlebih"},
+		{"Kerja Sama: UBAYA & Mitra (2026)!", "kerja-sama-ubaya-mitra-2026"},
+		{"Café Résumé Naïve", "cafe-resume-naive"},
+		{"Ünïcödé Çāñ", "unicode-can"},
+		{"---Judul---", "judul"},
+		{"a_b/c\\d.e", "a-b-c-d-e"},
+		{"UPPER lower 123", "upper-lower-123"},
+		{"", ""},
+		{"!!!", ""},
+		{"日本語", ""},
+		{"Judul 日本語 campur", "judul-campur"},
+		{"<script>alert(1)</script>", "script-alert-1-script"},
+		{"../../etc/passwd", "etc-passwd"},
+	}
+	for _, c := range cases {
+		if got := Slug(c.judul); got != c.want {
+			t.Errorf("Slug(%q) = %q, diharapkan %q", c.judul, got, c.want)
+		}
+	}
+}
+
+func TestSlugDipotongDanTidakBerakhirDenganTandaHubung(t *testing.T) {
+	got := Slug(strings.Repeat("kata ", 100))
+	if len(got) > BatasSlug {
+		t.Fatalf("panjang %d melebihi %d", len(got), BatasSlug)
+	}
+	if strings.HasSuffix(got, "-") || strings.HasPrefix(got, "-") {
+		t.Errorf("tidak boleh diawali/diakhiri tanda hubung: %q", got)
+	}
+	// dipotong tepat di tanda hubung
+	got = Slug(strings.Repeat("a", BatasSlug-1) + " b")
+	if strings.HasSuffix(got, "-") || len(got) > BatasSlug {
+		t.Errorf("pemotongan di batas salah: %q (%d)", got, len(got))
+	}
+}
+
+func TestBarisSatu(t *testing.T) {
+	ok := map[string]string{
+		"Judul Biasa":         "Judul Biasa",
+		"  rapat   spasi  ":   "rapat spasi",
+		"dua\nbaris\tdan tab": "dua baris dan tab",
+		"Kuliah Tamu é":       "Kuliah Tamu é",
+	}
+	for in, want := range ok {
+		got, err := barisSatu("judul", in, 50)
+		if err != nil || got != want {
+			t.Errorf("%q: dapat %q %v, diharapkan %q", in, got, err, want)
+		}
+	}
+	buruk := map[string]string{
+		"":                         "wajib",
+		"   \n\t ":                 "wajib",
+		"ab\x00cd":                 "tidak diizinkan",
+		"ab\x07cd":                 "tidak diizinkan",
+		"ab\x1bcd":                 "tidak diizinkan",
+		string([]byte{0xff, 0xfe}): "UTF-8",
+		strings.Repeat("x", 51):    "maksimal 50",
+	}
+	for in, pesan := range buruk {
+		_, err := barisSatu("judul", in, 50)
+		var e *ErrInput
+		if !errors.As(err, &e) || !strings.Contains(e.Pesan, pesan) {
+			t.Errorf("%q: diharapkan ErrInput memuat %q, dapat %v", in, pesan, err)
+		}
+	}
+	if _, err := barisSatu("judul", strings.Repeat("é", 50), 50); err != nil {
+		t.Errorf("batas dihitung per karakter, bukan byte: %v", err)
+	}
+}
+
+func TestBanyakBaris(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"satu paragraf", "satu paragraf"},
+		{"a\r\nb", "a\nb"},
+		{"a\rb", "a\nb"},
+		{"p1\n\np2", "p1\n\np2"},
+		{"p1\n\n\n\n\np2", "p1\n\np2"},
+		{"\n\n  awal dan akhir  \n\n", "awal dan akhir"},
+		{"kolom\tbertab", "kolom\tbertab"},
+		{"p1\r\n\r\n\r\n\r\np2", "p1\n\np2"},
+	}
+	for _, c := range cases {
+		got, err := banyakBaris("isi", c.in, 100)
+		if err != nil || got != c.want {
+			t.Errorf("%q: dapat %q %v, diharapkan %q", c.in, got, err, c.want)
+		}
+	}
+	for _, in := range []string{"", " \n\n ", "a\x00b", "a\x1bb", strings.Repeat("x", 101)} {
+		if _, err := banyakBaris("isi", in, 100); err == nil {
+			t.Errorf("%q seharusnya ditolak", in)
+		}
+	}
+}
+
+func TestTanggal(t *testing.T) {
+	// Masukan DD-MM-YYYY; hasil YYYY-MM-DD (bentuk internal).
+	for in, want := range map[string]string{"09-11-2026": "2026-11-09", " 28-02-2026 ": "2026-02-28", "29-02-2024": "2024-02-29"} {
+		if got, err := tanggal("t", in); err != nil || got != want {
+			t.Errorf("%q: %q %v", in, got, err)
+		}
+	}
+	for _, in := range []string{"", "01-13-2026", "30-02-2026", "29-02-2025", "2026-11-09", "09/11/2026", "kemarin", "09-11-2026T00:00:00Z", "00-00-0000"} {
+		if _, err := tanggal("t", in); err == nil {
+			t.Errorf("%q seharusnya ditolak", in)
+		}
+	}
+}
+
+// Batas "hari ini" memakai WIB: 12-11-2026 23:30 UTC sudah 13-11-2026 di Jakarta.
+func TestTanggalBatasHariIniWIB(t *testing.T) {
+	asli := sekarang
+	defer func() { sekarang = asli }()
+	sekarang = func() time.Time { return time.Date(2026, 11, 12, 23, 30, 0, 0, time.UTC) }
+	for _, in := range []string{"12-11-2026", "13-11-2026"} {
+		if _, err := tanggal("t", in); err != nil {
+			t.Errorf("%q harus diterima: %v", in, err)
+		}
+	}
+	if _, err := tanggal("t", "14-11-2026"); err == nil {
+		t.Error("besok (WIB) harus ditolak")
+	}
+	sekarang = func() time.Time { return time.Date(2026, 11, 12, 16, 59, 0, 0, time.UTC) } // 23:59 WIB
+	if _, err := tanggal("t", "13-11-2026"); err == nil {
+		t.Error("13-11-2026 masih besok pada 12 Nov 23:59 WIB, harus ditolak")
+	}
+}
+
+func TestValidasiBerita(t *testing.T) {
+	ok := MentahBerita{Judul: "  Judul   Berita ", Isi: "Paragraf satu.\r\n\r\n\r\nParagraf dua.", TanggalPublikasi: "09-11-2026", Gambar: "berita/x.png"}
+	in, err := ValidasiBerita(ok)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if in.Judul != "Judul Berita" || in.Isi != "Paragraf satu.\n\nParagraf dua." || in.TanggalPublikasi != "2026-11-09" {
+		t.Errorf("hasil perapian salah: %+v", in)
+	}
+
+	ubah := map[string]func(m *MentahBerita){
+		"judul kosong":          func(m *MentahBerita) { m.Judul = "" },
+		"judul terlalu panjang": func(m *MentahBerita) { m.Judul = strings.Repeat("a", BatasJudul+1) },
+		"isi kosong":            func(m *MentahBerita) { m.Isi = "  " },
+		"isi terlalu panjang":   func(m *MentahBerita) { m.Isi = strings.Repeat("a", BatasIsi+1) },
+		"tanggal salah":         func(m *MentahBerita) { m.TanggalPublikasi = "besok" },
+		"tanggal kosong":        func(m *MentahBerita) { m.TanggalPublikasi = "" },
+		"tanggal masa depan":    func(m *MentahBerita) { m.TanggalPublikasi = "01-01-2999" },
+		"gambar kosong":         func(m *MentahBerita) { m.Gambar = "" },
+	}
+	for nama, f := range ubah {
+		m := ok
+		f(&m)
+		_, err := ValidasiBerita(m)
+		var e *ErrInput
+		if !errors.As(err, &e) {
+			t.Errorf("%s: diharapkan ErrInput, dapat %v", nama, err)
+		}
+	}
+	// tepat di batas diterima
+	m := ok
+	m.Judul = strings.Repeat("a", BatasJudul)
+	m.Isi = strings.Repeat("b", BatasIsi)
+	if _, err := ValidasiBerita(m); err != nil {
+		t.Errorf("tepat di batas harus diterima: %v", err)
+	}
+}
+
+// Batas judul 70 (sama dengan frontend). Judul BARU lebih panjang ditolak; judul lama yang tidak diubah boleh tetap
+// (lihat TestUbahJudulLamaDiAtasBatas).
+func TestBatasJudulTujuhPuluh(t *testing.T) {
+	if BatasJudul != 70 {
+		t.Fatalf("BatasJudul = %d, harus 70", BatasJudul)
+	}
+	if _, err := barisSatu("judul", strings.Repeat("a", 70), BatasJudul); err != nil {
+		t.Errorf("70 karakter harus lolos: %v", err)
+	}
+	if _, err := barisSatu("judul", strings.Repeat("a", 71), BatasJudul); err == nil {
+		t.Error("71 karakter harus ditolak")
+	}
+}
+
+func TestJudulBoleh(t *testing.T) {
+	lama := strings.Repeat("l", 90)
+	kasus := []struct {
+		nama, judul, judulLama string
+		ok                     bool
+	}{
+		{"buat: 70 lolos", strings.Repeat("a", 70), "", true},
+		{"buat: 71 ditolak", strings.Repeat("a", 71), "", false},
+		{"simpan: judul lama panjang tidak diubah", lama, lama, true},
+		{"simpan: lama + spasi berlebih (dirapikan sama)", "  " + lama + "  ", lama, true},
+		{"simpan: judul panjang diubah ditolak", lama + "x", lama, false},
+		{"simpan: panjang lain ditolak", strings.Repeat("m", 91), lama, false},
+		{"simpan: dipendekkan lolos", strings.Repeat("a", 70), lama, true},
+		{"simpan: kosong ditolak", "  ", lama, false},
+		{"simpan: karakter kontrol ditolak", lama[:10] + "\x00", lama, false},
+	}
+	for _, k := range kasus {
+		_, err := judulBoleh("judul", k.judul, k.judulLama)
+		if (err == nil) != k.ok {
+			t.Errorf("%s: ok=%v err=%v", k.nama, k.ok, err)
+		}
+	}
+}
+
+func TestFormatTersembunyiDitolak(t *testing.T) {
+	// titik kode dirangkai lewat string(rune(...)) agar berkas sumber bebas karakter tak tampak
+	sisip := func(cp rune) string { return "a" + string(rune(cp)) + "b" }
+	tolak := []string{sisip(0x202E), sisip(0x200B), sisip(0x2066), sisip(0x200E), sisip(0x2060), string(rune(0xFEFF)) + "awal", sisip(0x00AD)}
+	for _, in := range tolak {
+		if _, err := barisSatu("judul", in, 50); err == nil {
+			t.Errorf("barisSatu(%q) harus ditolak", in)
+		}
+		if _, err := banyakBaris("isi", "x\n\n"+in, 50); err == nil {
+			t.Errorf("banyakBaris(%q) harus ditolak", in)
+		}
+	}
+	// ZWJ/ZWNJ tetap boleh (urutan emoji, beberapa aksara)
+	for _, in := range []string{sisip(0x200D), sisip(0x200C)} {
+		if _, err := barisSatu("judul", in, 50); err != nil {
+			t.Errorf("barisSatu(%q) harus diterima: %v", in, err)
+		}
+	}
+}

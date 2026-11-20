@@ -1,0 +1,12 @@
+---
+// Kerangka halaman detail berita untuk Go (docs/stack.md bagian 3): Go mengganti tiga penanda <!--seo:...--> per slug.
+// scripts/bangun-web-final.cjs memindahkan hasil build ini ke web/berita/_kerangka/index.html.
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import { NewsDetail } from '../../public/Lists';
+---
+<PublicLayout title={null} page="berita-detail" kerangka>
+  <Fragment slot="head" set:html="<!--seo:head-->" />
+  <div data-seo-konten><Fragment set:html="<!--seo:konten-->" /></div>
+  <NewsDetail client:only="react" slug="" />
+  <Fragment set:html="<!--seo:data-->" />
+</PublicLayout>
