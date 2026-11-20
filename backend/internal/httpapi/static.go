@@ -17,10 +17,9 @@ import (
 // DepsStatic adalah dependensi penyajian frontend statis (folder web/, hasil build frontend-final). Satu origin
 // dengan API (docs/stack.md). nil = tidak dipasang (tes API murni).
 type DepsStatic struct {
-	Dir           string // STATIC_DIR
-	DevLoginAktif bool   // /admin/masuk hanya dilayani saat true (APP_ENV=development)
-	Halaman404    []byte // isi 404.html bila ada (nil = halaman 404 bawaan)
-	NamaSitus     string
+	Dir        string // STATIC_DIR
+	Halaman404 []byte // isi 404.html bila ada (nil = halaman 404 bawaan)
+	NamaSitus  string
 }
 
 // rutaStatis memetakan URL bersih ke berkas di STATIC_DIR. Tabel eksplisit: tidak ada tebakan ekstensi, sehingga
@@ -75,29 +74,6 @@ func pasangStatic(r chi.Router, d DepsStatic) {
 	for _, p := range []string{"/admin", "/admin/"} {
 		r.Get(p, admin)
 		r.Head(p, admin)
-	}
-	// Halaman masuk development: di luar development berperilaku seperti path tak dikenal (404).
-	masuk := func(w http.ResponseWriter, req *http.Request) {
-		if !h.d.DevLoginAktif {
-			h.tulis404(w, req)
-			return
-		}
-		h.layaniBerkas(w, req, "admin/masuk.html", "no-store")
-	}
-	r.Get("/admin/masuk", masuk)
-	r.Head("/admin/masuk", masuk)
-	// Aset halaman masuk development; ikut 404 di luar development agar halamannya tidak terlihat.
-	for _, f := range []string{"masuk.css", "masuk.js"} {
-		f := f
-		berkas := func(w http.ResponseWriter, req *http.Request) {
-			if !h.d.DevLoginAktif {
-				h.tulis404(w, req)
-				return
-			}
-			h.layaniBerkas(w, req, "admin/"+f, "no-store")
-		}
-		r.Get("/admin/"+f, berkas)
-		r.Head("/admin/"+f, berkas)
 	}
 }
 

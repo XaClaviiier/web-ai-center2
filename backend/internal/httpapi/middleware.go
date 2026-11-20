@@ -53,8 +53,8 @@ func pulihkanPanic(log *slog.Logger) func(http.Handler) http.Handler {
 // inline kecil untuk hidrasi island; hash SHA-256-nya dihitung saat build (scripts/bangun-web-final.cjs, web/csp-hash-skrip.txt)
 // dan diberikan lewat hashSkrip, sehingga script-src tidak butuh 'unsafe-inline' atau nonce (data-awal dan JSON-LD berupa
 // blok data, bukan skrip). frame-src hanya mengizinkan peta Google di halaman Tentang Kami (iframe maps.google.com yang
-// dialihkan ke www.google.com); style-src memakai 'unsafe-inline' karena frontend mengatur properti CSS lewat atribut style
-// dan /admin/masuk memuat blok <style>. blob: di img-src/connect-src untuk pratinjau gambar yang baru dipilih admin dan
+// dialihkan ke www.google.com); style-src memakai 'unsafe-inline' karena frontend mengatur properti CSS lewat atribut style.
+// blob: di img-src/connect-src untuk pratinjau gambar yang baru dipilih admin dan
 // pembacaannya saat Simpan (URL blob: dibuat browser dari berkas lokal pengguna). frame-ancestors 'none' mencegah clickjacking. /media menetapkan CSP-nya sendiri
 // (default-src 'none'; sandbox) yang menimpa nilai ini karena diset belakangan di handler.
 func kebijakanKonten(hashSkrip []string) string {

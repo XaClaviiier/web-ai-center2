@@ -59,17 +59,17 @@ func siapkanWeb(t *testing.T) (dir string) {
 	return dir
 }
 
-func routerStatis(t *testing.T, devLogin bool, seoDeps *DepsSEO) http.Handler {
+func routerStatis(t *testing.T, seoDeps *DepsSEO) http.Handler {
 	t.Helper()
 	dir := siapkanWeb(t)
 	return NewRouter(Deps{
 		Log: slog.New(slog.NewTextHandler(io.Discard, nil)), DB: pingerPalsu{}, Konten: kontenPalsu{}, SEO: seoDeps,
-		Static: &DepsStatic{Dir: dir, DevLoginAktif: devLogin, Halaman404: []byte(`<html><head></head><body>kustom 404</body></html>`), NamaSitus: "AI Center"},
+		Static: &DepsStatic{Dir: dir, Halaman404: []byte(`<html><head></head><body>kustom 404</body></html>`), NamaSitus: "AI Center"},
 	})
 }
 
 func TestStaticRuteBersih(t *testing.T) {
-	h := routerStatis(t, false, nil)
+	h := routerStatis(t, nil)
 	for rute, berkas := range rutaUji {
 		rec := panggil(h, http.MethodGet, rute)
 		if rec.Code != http.StatusOK {
@@ -92,7 +92,7 @@ func TestStaticRuteBersih(t *testing.T) {
 }
 
 func TestStaticETagDanHEAD(t *testing.T) {
-	h := routerStatis(t, false, nil)
+	h := routerStatis(t, nil)
 	rec := panggil(h, http.MethodGet, "/tim")
 	etag := rec.Header().Get("ETag")
 	req := httptest.NewRequest(http.MethodGet, "/tim", nil)
@@ -109,7 +109,7 @@ func TestStaticETagDanHEAD(t *testing.T) {
 }
 
 func TestStaticPathTakDikenalMenjadi404HTML(t *testing.T) {
-	h := routerStatis(t, false, nil)
+	h := routerStatis(t, nil)
 	// Termasuk nama berkas mentah: hanya URL bersih yang dilayani.
 	for _, p := range []string{"/acak", "/index.html", "/berita.html", "/layanan", "/layanan/pelatihan/", "/tim/", "/admin/lain", "/berita/", "/media"} {
 		rec := panggil(h, http.MethodGet, p)
@@ -130,7 +130,7 @@ func TestStaticPathTakDikenalMenjadi404HTML(t *testing.T) {
 }
 
 func TestStatic404DiBawahAPITetapJSON(t *testing.T) {
-	h := routerStatis(t, false, nil)
+	h := routerStatis(t, nil)
 	for _, p := range []string{"/api/acak", "/api/admin/tidak-ada"} {
 		rec := panggil(h, http.MethodGet, p)
 		if rec.Code != http.StatusNotFound && rec.Code != http.StatusUnauthorized {
@@ -146,7 +146,7 @@ func TestStatic404DiBawahAPITetapJSON(t *testing.T) {
 }
 
 func TestStaticAset(t *testing.T) {
-	h := routerStatis(t, false, nil)
+	h := routerStatis(t, nil)
 	kasus := map[string]string{
 		"/assets/css/a.css":     "text/css",
 		"/assets/js/a.js":       "text/javascript",
@@ -169,7 +169,7 @@ func TestStaticAset(t *testing.T) {
 }
 
 func TestStaticAsetTanpaDaftarDirektoriDanTraversal(t *testing.T) {
-	h := routerStatis(t, false, nil)
+	h := routerStatis(t, nil)
 	for _, p := range []string{
 		"/assets", "/assets/", "/assets/css", "/assets/css/", // direktori
 		"/assets/tidak-ada.css",
@@ -188,7 +188,7 @@ func TestStaticAsetTanpaDaftarDirektoriDanTraversal(t *testing.T) {
 }
 
 func TestStaticAdminTidakDiCache(t *testing.T) {
-	h := routerStatis(t, false, nil)
+	h := routerStatis(t, nil)
 	for _, p := range []string{"/admin", "/admin/"} {
 		rec := panggil(h, http.MethodGet, p)
 		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "admin") {
@@ -200,23 +200,23 @@ func TestStaticAdminTidakDiCache(t *testing.T) {
 	}
 }
 
-func TestStaticMasukHanyaDiDevelopment(t *testing.T) {
-	dev := panggil(routerStatis(t, true, nil), http.MethodGet, "/admin/masuk")
-	if dev.Code != http.StatusOK || !strings.Contains(dev.Body.String(), "masuk") || dev.Header().Get("Cache-Control") != "no-store" {
-		t.Errorf("development: %d cc=%q body=%q", dev.Code, dev.Header().Get("Cache-Control"), dev.Body.String())
-	}
-	prod := panggil(routerStatis(t, false, nil), http.MethodGet, "/admin/masuk")
-	if prod.Code != http.StatusNotFound || !strings.Contains(prod.Body.String(), "kustom 404") {
-		t.Errorf("production: %d %q (mau 404 HTML)", prod.Code, prod.Body.String())
-	}
-	if strings.Contains(prod.Body.String(), "<html>masuk") {
-		t.Error("production membocorkan halaman masuk")
+// Halaman masuk development (login password) sudah dihapus: berkas lama yang masih ada di web/ tidak dilayani.
+func TestStaticHalamanMasukDevelopmentTidakAda(t *testing.T) {
+	h := routerStatis(t, nil)
+	for _, rute := range []string{"/admin/masuk", "/admin/masuk.css", "/admin/masuk.js"} {
+		rec := panggil(h, http.MethodGet, rute)
+		if rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "kustom 404") {
+			t.Errorf("%s: %d %q (mau 404 HTML)", rute, rec.Code, rec.Body.String())
+		}
+		if strings.Contains(rec.Body.String(), "<html>masuk") || strings.Contains(rec.Body.String(), "var m=1") {
+			t.Errorf("%s: membocorkan berkas halaman masuk lama", rute)
+		}
 	}
 }
 
 // /berita (daftar, statis) dan /berita/{slug} (SEO) hidup berdampingan.
 func TestStaticBerdampinganDenganRuteSEO(t *testing.T) {
-	h := routerStatis(t, false, &DepsSEO{BaseURL: "https://situs.test", NamaSitus: "AI Center"})
+	h := routerStatis(t, &DepsSEO{BaseURL: "https://situs.test", NamaSitus: "AI Center"})
 	if rec := panggil(h, http.MethodGet, "/berita"); rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "berita/index.html") {
 		t.Errorf("/berita: %d %q", rec.Code, rec.Body.String())
 	}
@@ -249,7 +249,7 @@ func TestStaticDirKosongTidakPanik(t *testing.T) {
 
 // Bundel ber-hash (/_astro, /admin/assets) di-cache lama dan immutable; halaman tidak.
 func TestStaticBundelBerHashImmutable(t *testing.T) {
-	h := routerStatis(t, false, nil)
+	h := routerStatis(t, nil)
 	for _, rute := range []string{"/_astro/app.AbC123.js", "/admin/assets/index-XyZ.js"} {
 		rec := panggil(h, http.MethodGet, rute)
 		if rec.Code != http.StatusOK || !strings.Contains(rec.Header().Get("Cache-Control"), "immutable") {
@@ -258,18 +258,5 @@ func TestStaticBundelBerHashImmutable(t *testing.T) {
 	}
 	if rec := panggil(h, http.MethodGet, "/_astro/../rahasia.txt"); rec.Code == http.StatusOK && strings.Contains(rec.Body.String(), "RAHASIA") {
 		t.Error("traversal lewat /_astro berhasil")
-	}
-}
-
-// Aset halaman masuk development ikut 404 di luar development.
-func TestStaticAsetMasukHanyaDevelopment(t *testing.T) {
-	for _, dev := range []bool{true, false} {
-		h := routerStatis(t, dev, nil)
-		for _, rute := range []string{"/admin/masuk.css", "/admin/masuk.js"} {
-			rec := panggil(h, http.MethodGet, rute)
-			if (rec.Code == http.StatusOK) != dev {
-				t.Errorf("dev=%v %s: status %d", dev, rute, rec.Code)
-			}
-		}
 	}
 }

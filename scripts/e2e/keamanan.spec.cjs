@@ -2,25 +2,30 @@
    upload, traversal, header. Berjalan terhadap server dev lokal dengan data uji berlabel [E2E-PW]. */
 'use strict';
 const { test, expect, request: pwRequest } = require('@playwright/test');
-const { BASE, PW, LABEL, PNG, klienAdmin, buatBerita, bersihkan, masukUI } = require('./bantu.cjs');
+const { BASE, KC_USER, KC_PASS, LABEL, PNG, klienAdmin, buatBerita, bersihkan, masukUI } = require('./bantu.cjs');
 
 test.describe.configure({ mode: 'serial' });
-test.skip(!PW, 'PW (ADMIN_PASSWORD) tidak di-set');
+test.skip(!KC_USER || !KC_PASS, 'KC_USER/KC_PASS tidak di-set');
 
 let k;
-test.beforeAll(async () => { k = await klienAdmin(PW); await bersihkan(k); });
+test.beforeAll(async () => { k = await klienAdmin(); await bersihkan(k); });
 test.afterAll(async () => { await bersihkan(k); await k.tutup(); });
 
-test('tanpa login: API admin 401; tulis tanpa Origin 403', async () => {
+test('tanpa login: API admin 401; login development sudah dihapus; login Keycloak memakai PKCE S256', async () => {
   const anon = await pwRequest.newContext({ baseURL: BASE });
   expect((await anon.get('/api/admin/berita')).status()).toBe(401);
   expect((await anon.get('/api/auth/me')).status()).toBe(401);
   expect((await anon.get('/api/admin/log-aktivitas')).status()).toBe(401);
-  // dev-login tanpa Origin (CSRF login) ditolak
-  const tanpaOrigin = await anon.post('/api/auth/dev-login', { data: { password: PW } });
-  expect(tanpaOrigin.status()).toBe(403);
-  const asing = await anon.post('/api/auth/dev-login', { data: { password: PW }, headers: { Origin: 'http://evil.example' } });
-  expect(asing.status()).toBe(403);
+  // jalan pintas password tidak ada lagi; tanpa Origin ditolak lebih dulu oleh pemeriksaan Origin (403)
+  expect((await anon.post('/api/auth/dev-login', { data: { password: 'x' } })).status()).toBe(403);
+  expect((await anon.post('/api/auth/dev-login', { data: { password: 'x' }, headers: { Origin: BASE } })).status()).toBe(404);
+  const login = await anon.get('/api/auth/login', { maxRedirects: 0 });
+  expect(login.status()).toBe(302);
+  expect(login.headers()['cache-control']).toContain('no-store');
+  expect(new URL(login.headers().location).searchParams.get('code_challenge_method')).toBe('S256');
+  const ikat = login.headers()['set-cookie'] ?? '';
+  expect(ikat, 'cookie pengikat login').toMatch(/HttpOnly/i);
+  expect(ikat).toMatch(/SameSite=Lax/i);
   await anon.dispose();
 });
 
@@ -140,7 +145,7 @@ test('kontrol kunci: heartbeat dan lepas tidak bisa dipakai tanpa memegang kunci
 
 test('header keamanan: nosniff, X-Frame-Options, CSP same-origin, Referrer-Policy pada HTML, API, admin; /media tetap CSP ketat', async () => {
   const anon = await pwRequest.newContext({ baseURL: BASE });
-  for (const p of ['/', '/admin', '/admin/masuk', '/berita', '/api/health', '/api/berita', '/halaman-tidak-ada', '/sitemap.xml']) {
+  for (const p of ['/', '/admin', '/berita', '/api/health', '/api/berita', '/halaman-tidak-ada', '/sitemap.xml']) {
     const h = (await anon.get(p)).headers();
     expect(h['x-content-type-options'], `nosniff ${p}`).toBe('nosniff');
     expect(h['x-frame-options'], `XFO ${p}`).toBe('DENY');
@@ -158,7 +163,7 @@ test('CSP tidak merusak halaman: tanpa pelanggaran CSP di beranda, berita, admin
   const pelanggaran = [];
   page.on('console', (m) => { if (/Content Security Policy|Refused to/i.test(m.text())) pelanggaran.push(m.text()); });
   page.on('pageerror', (e) => pelanggaran.push(e.message));
-  for (const u of ['/', '/berita', '/dokumentasi', '/tim', '/tentang-kami', '/layanan/pelatihan', '/layanan/inference-solutions/perencanaan-implan-gigi', '/layanan/inference-solutions/jejak-alumni', '/layanan/inference-solutions/document-intelligence', '/admin/masuk']) {
+  for (const u of ['/', '/berita', '/dokumentasi', '/tim', '/tentang-kami', '/layanan/pelatihan', '/layanan/inference-solutions/perencanaan-implan-gigi', '/layanan/inference-solutions/jejak-alumni', '/layanan/inference-solutions/document-intelligence']) {
     await page.goto(u);
     await page.waitForLoadState('networkidle');
   }

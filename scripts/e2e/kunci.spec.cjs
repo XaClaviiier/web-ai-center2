@@ -1,13 +1,18 @@
-/* Dua admin saling mengunci (soft lock) dan optimistic locking. Dilewati bila PW2 (ADMIN_PASSWORD_2) kosong. */
+/* Dua admin saling mengunci (soft lock) dan optimistic locking. Dilewati bila akun Keycloak kedua (KC_USER2/KC_PASS2) kosong. */
 'use strict';
 const { test, expect } = require('@playwright/test');
-const { PW, PW2, LABEL, klienAdmin, buatBerita, bersihkan, masukUI } = require('./bantu.cjs');
+const { KC_USER, KC_PASS, KC_USER2, KC_PASS2, LABEL, klienAdmin, buatBerita, bersihkan, masukUI } = require('./bantu.cjs');
 
 test.describe.configure({ mode: 'serial' });
-test.skip(!PW || !PW2, 'PW dan PW2 harus di-set');
+test.skip(!KC_USER || !KC_PASS || !KC_USER2 || !KC_PASS2, 'KC_USER/KC_PASS dan KC_USER2/KC_PASS2 (akun berbeda) harus di-set');
 
 let a, b;
-test.beforeAll(async () => { a = await klienAdmin(PW); b = await klienAdmin(PW2); await bersihkan(a); });
+test.beforeAll(async () => {
+  a = await klienAdmin(KC_USER, KC_PASS);
+  b = await klienAdmin(KC_USER2, KC_PASS2);
+  expect(b.sesi.sub, 'KC_USER2 harus akun Keycloak yang berbeda').not.toBe(a.sesi.sub);
+  await bersihkan(a);
+});
 test.afterAll(async () => { await bersihkan(a); await a.tutup(); await b.tutup(); });
 
 test('kunci: akun B ditolak 423 saat A mengedit; setelah dilepas B boleh; PUT tanpa kunci 423', async () => {
@@ -54,7 +59,7 @@ test('UI: B melihat banner baca-saja saat A memegang kunci', async ({ browser })
   expect((await a.panggil('POST', `${url}/lock`)).status()).toBe(200);
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
-  await masukUI(page, PW2);
+  await masukUI(page, KC_USER2, KC_PASS2);
   await page.goto('/admin/#/berita');
   await expect(page.locator('tr', { hasText: item.judul })).toContainText('Sedang diedit oleh');
   await page.goto(`/admin/#/berita/${item.id}/edit`);

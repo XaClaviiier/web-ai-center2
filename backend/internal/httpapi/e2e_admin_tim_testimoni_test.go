@@ -53,7 +53,7 @@ func siapkanE2EAdmin(t *testing.T) *e2eAdmin {
 	})
 
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	a.e = siapkanAuthDenganMedia(t, func(d *DepsAuth) { d.AdminPassword2 = passDev2 }, s3, func(d *Deps) {
+	a.e = siapkanAuthDenganMedia(t, nil, s3, func(d *Deps) {
 		d.DB, d.Konten = st, st
 		d.Admin = DepsAdmin{
 			Berita:      admin.BeritaLayanan{Repo: st.AdminBerita(), Media: s3, Log: log},

@@ -1,8 +1,9 @@
-/* Konfigurasi e2e Playwright. Server HARUS sudah berjalan (APP_ENV=development, JOBS_ENABLED=false) dan
-   ALLOWED_ORIGINS harus memuat BASE_URL. Variabel lingkungan:
+/* Konfigurasi e2e Playwright. Server HARUS sudah berjalan (APP_ENV=development, JOBS_ENABLED=false) dengan Keycloak aktif,
+   dan ALLOWED_ORIGINS harus memuat BASE_URL. Login lewat form Keycloak sungguhan. Variabel lingkungan:
      BASE_URL  (default http://localhost:8080)
-     PW        password admin (ADMIN_PASSWORD)
-     PW2       password akun dev kedua (ADMIN_PASSWORD_2), opsional: tes dua akun dilewati bila kosong
+     KC_USER, KC_PASS            akun Keycloak ber-role direktur/pegawai (wajib untuk spec admin)
+     KC_USER2, KC_PASS2          akun ber-role kedua yang berbeda, opsional: tes dua akun dilewati bila kosong
+     KC_USER_TANPA_ROLE, KC_PASS_TANPA_ROLE  akun tanpa role CMS, opsional: tes akses_ditolak dilewati bila kosong
    Data uji berlabel "[E2E-PW]" dibuat dan dibersihkan oleh tes itu sendiri (hanya baris berlabel itu).
    Artefak (tangkapan layar, trace) ditulis ke output/playwright/. */
 const path = require('node:path');

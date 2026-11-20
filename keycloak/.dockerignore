@@ -1,0 +1,4 @@
+**
+!Dockerfile
+!keycloak.conf
+!entrypoint.sh

@@ -24,7 +24,7 @@ const rel = (p) => path.relative(W, p).split(path.sep).join('/');
 const berkas = semuaBerkas(W);
 const html = berkas.filter((f) => f.endsWith('.html'));
 const kerangka = html.filter((f) => rel(f).includes('/_kerangka/'));
-const halaman = html.filter((f) => !kerangka.includes(f) && rel(f) !== 'admin/masuk.html');
+const halaman = html.filter((f) => !kerangka.includes(f));
 const teks = (f) => fs.readFileSync(f, 'utf8');
 
 let jumlah = 0;
@@ -32,7 +32,7 @@ const tes = (nama, fn) => { fn(); jumlah++; console.log('ok  ' + nama); };
 
 tes('keluaran build lengkap: halaman publik, admin, kerangka detail, hash CSP', () => {
   for (const p of ['index.html', '404.html', 'tim/index.html', 'berita/index.html', 'dokumentasi/index.html', 'tentang-kami/index.html',
-    'layanan/pelatihan/index.html', 'layanan/inference-solutions/index.html', 'admin/index.html', 'admin/masuk.html', 'admin/masuk.js', 'admin/masuk.css',
+    'layanan/pelatihan/index.html', 'layanan/inference-solutions/index.html', 'admin/index.html',
     'berita/_kerangka/index.html', 'dokumentasi/_kerangka/index.html', 'csp-hash-skrip.txt']) assert(fs.existsSync(path.join(W, p)), `${p} tidak ada`);
   assert(berkas.some((f) => rel(f).startsWith('_astro/')), 'aset ber-hash /_astro/ tidak ada');
   assert(berkas.some((f) => rel(f).startsWith('admin/assets/')), 'aset admin tidak ada');
@@ -87,7 +87,7 @@ tes('semua href/src internal menunjuk berkas yang ada (selain /api dan /media)',
 // Rute yang dilayani Go: halaman statis (berkas index.html), detail berita/dokumentasi, admin, media, api.
 const rutaSah = (u) => {
   const p = u.split(/[?#]/)[0];
-  if (p === '/' || p === '/admin' || p === '/admin/' || p === '/admin/masuk') return true;
+  if (p === '/' || p === '/admin' || p === '/admin/') return true;
   if (/^\/(berita|dokumentasi)\/[^/]+$/.test(p) && p !== '/berita/_kerangka' && p !== '/dokumentasi/_kerangka') return true;
   if (p.startsWith('/media/') || p.startsWith('/api/')) return true;
   return fs.existsSync(path.join(W, p, 'index.html')) || fs.existsSync(path.join(W, p));
@@ -124,20 +124,19 @@ tes('CSP: setiap skrip inline eksekusi punya hash di csp-hash-skrip.txt; tidak a
   assert(dipakai > 0, 'tidak ada skrip inline sama sekali: hash CSP seharusnya terpakai');
 });
 
-tes('admin: index.html memuat bundel modul; masuk.html hanya formulir password tanpa akun tiruan', () => {
+tes('admin: index.html memuat bundel modul; tanpa halaman masuk password', () => {
   const idx = teks(path.join(W, 'admin', 'index.html'));
   assert.match(idx, /<script type="module"[^>]*src="\/admin\/assets\/[^"]+\.js"/);
   assert.match(idx, /id="root"|id="app"/);
-  const masuk = teks(path.join(W, 'admin', 'masuk.html'));
-  assert(masuk.includes('type="password"') && masuk.includes('id="password"') && masuk.includes('/admin/masuk.js'));
-  assert(!/akun=/.test(masuk));
+  for (const p of ['masuk.html', 'masuk.js', 'masuk.css']) assert(!fs.existsSync(path.join(W, 'admin', p)), `admin/${p} masih ada`);
+  assert(!html.some((f) => /type="password"/.test(teks(f))), 'formulir password masih ada');
 });
 
-tes('bundel admin memakai klien nyata, bukan simulasi (rujuk /api/auth/me, /api/admin, CSRF)', () => {
+tes('bundel admin memakai klien nyata dan login Keycloak (rujuk /api/auth/me, /api/auth/login, /api/admin, CSRF)', () => {
   const js = berkas.filter((f) => rel(f).startsWith('admin/assets/') && f.endsWith('.js')).map(teks).join('\n');
-  for (const s of ['/api/auth/me', '/api/admin/', 'X-CSRF-Token', '/api/admin/upload']) assert(js.includes(s), `bundel admin tanpa ${s}`);
+  for (const s of ['/api/auth/me', '/api/auth/login', '?pilih=1', 'galat', '/api/admin/', 'X-CSRF-Token', '/api/admin/upload']) assert(js.includes(s), `bundel admin tanpa ${s}`);
   assert(!/[?&]akun=/.test(js), 'pemilih akun tiruan masih ada');
-  assert(js.includes('/admin/masuk'), 'pengalihan ke halaman masuk tidak ada');
+  assert(!js.includes('/admin/masuk') && !js.includes('dev-login'), 'rujukan login development masih ada');
 });
 
 console.log(`\n${jumlah} tes lulus`);

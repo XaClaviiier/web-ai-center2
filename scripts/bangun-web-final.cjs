@@ -5,7 +5,7 @@
      1. `bun install --frozen-lockfile` (kecuali --tanpa-install) dan `bun --bun run build` langsung di `frontend-final/`
         (astro check + tsc + astro build + vite admin). `dist/` dan `.astro/` di sana ter-ignore git.
      2. `web/` dihapus lalu diisi `dist/public`; kerangka detail dipindah ke `web/{berita,dokumentasi}/_kerangka/index.html`;
-        halaman masuk development (`frontend-final/admin-masuk/`) ditambahkan ke `web/admin/`; hash CSP skrip inline ditulis.
+        hash CSP skrip inline ditulis.
    Jangan menyunting `web/` dengan tangan. Alat: Bun (variabel BUN_BIN untuk path khusus). */
 'use strict';
 const fs = require('node:fs');
@@ -49,7 +49,6 @@ for (const sumber of ['berita', 'dokumentasi']) {
   }
 }
 
-for (const nama of ['masuk.html', 'masuk.css', 'masuk.js']) fs.copyFileSync(path.join(SUMBER, 'admin-masuk', nama), path.join(WEB, 'admin', nama));
 // CSP: Astro memasang skrip inline kecil (hidrasi island). Hash SHA-256-nya ditulis ke web/csp-hash-skrip.txt dan dibaca Go
 // untuk script-src, sehingga 'unsafe-inline' tidak dipakai. Skrip bertipe data (JSON) bukan skrip yang dieksekusi.
 const hash = new Set();

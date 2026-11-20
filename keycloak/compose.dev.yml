@@ -1,0 +1,45 @@
+# Standalone local stack, NOT an overlay on compose.yml. Never expose to a LAN.
+name: ai-center-identity-dev
+services:
+  keycloak-db:
+    image: postgres:18.6-trixie@sha256:3a4264520e121176619f54ff867d12774bc81e95e7b84db58d63bccdb6144b81
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD_FILE: /run/secrets/keycloak_db_password
+    secrets: [keycloak_db_password]
+    volumes: [keycloak_pg_dev:/var/lib/postgresql]
+    networks: [identity_db]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U keycloak -d keycloak']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  keycloak:
+    build: .
+    command: [start-dev, --import-realm]
+    environment:
+      # Go CMS memakai 8080; Keycloak dev dipindah ke 8180 agar tidak bentrok.
+      KC_HOSTNAME: http://localhost:8180
+      KC_HTTP_ENABLED: 'true'
+      CMS_CALLBACK_URL: http://localhost:8080/api/auth/callback
+    secrets: [keycloak_db_password]
+    volumes:
+      - ${KEYCLOAK_OPERATOR_CONFIG_FILE:?Operator runtime config file required}:/run/operator/keycloak.conf:ro
+      - ./config:/opt/keycloak/data/import:ro
+    ports: ['127.0.0.1:8180:8080']
+    networks: [edge, identity_db]
+    depends_on:
+      keycloak-db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 1536m
+    pids_limit: 256
+networks:
+  edge: {}
+  identity_db: {internal: true}
+volumes:
+  keycloak_pg_dev: {}
+secrets:
+  keycloak_db_password:
+    file: ${KEYCLOAK_DB_PASSWORD_FILE:?Database password file required}

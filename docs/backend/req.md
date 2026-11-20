@@ -32,8 +32,8 @@ Tanggal verifikasi versi: 2026-11-04. Versi dicek lewat `go list -m` (proxy Go) 
 | | `.../aws-sdk-go-v2/service/s3` | **v1.114.6** | Klien S3 untuk RustFS (endpoint kustom, path-style, region ditetapkan `us-east-1` seperti backend lama). |
 | | `.../aws-sdk-go-v2/config` | v1.33.13 | Pemuatan konfigurasi. |
 | | `.../aws-sdk-go-v2/credentials` | v1.20.13 | Kredensial statis dari env. |
-| OIDC (Keycloak) | `github.com/coreos/go-oidc/v3` | **v3.21.0** | Verifikasi ID token (penerbit, tanda tangan, masa berlaku). Dipakai luas (mis. ekosistem Kubernetes). Tarik `go-jose/v4` v4.1.4. Baru dipakai setelah Keycloak siap. |
-| OAuth2 + PKCE | `golang.org/x/oauth2` | **v0.37.0** | Library resmi tim Go; mendukung Authorization Code + PKCE (S256). |
+| OIDC (Keycloak) | `github.com/coreos/go-oidc/v3` | **v3.21.0** | Dipakai sejak 2026-11-20 (`internal/auth/oidc.go`): discovery dengan issuer yang harus sama persis, verifikasi ID token dan access token (RS256 dari JWKS, issuer, audience, masa berlaku; azp, nonce, typ, sub, dan role dicek sendiri). Dipakai luas (mis. ekosistem Kubernetes). Menarik `github.com/go-jose/go-jose/v4` **v4.1.4** (tidak langsung). Rilis terbaru pada tanggal pemasangan. |
+| OAuth2 + PKCE | `golang.org/x/oauth2` | **v0.38.0** | Library resmi tim Go; Authorization Code + PKCE S256 (`GenerateVerifier`, `S256ChallengeOption`, `VerifierOption`) dan grant `refresh_token` untuk penyegaran session di server. Dipasang v0.38.0 (rilis terbaru 2026-11-20; rencana awal v0.37.0); go-oidc v3.21.0 hanya mensyaratkan minimal v0.36.0. |
 | Anti-stampede cache | `golang.org/x/sync` (`singleflight`) | **v0.24.0** | Library resmi tim Go. Sebelumnya hanya dependensi tidak langsung; kini langsung dipakai `internal/cache` agar banyak request bersamaan pada key cache dingin hanya membaca database sekali. `govulncheck`: No vulnerabilities found. Tidak ada masalah kompatibilitas (go 1.27.4).
 | Migrasi skema | `github.com/pressly/goose/v3` | **v3.29.0** | Migrasi SQL berurutan, bisa dipakai sebagai library maupun CLI. |
 
@@ -42,7 +42,7 @@ Dependensi transitif yang ikut terbawa (hasil `go mod tidy` pada modul uji): `go
 ## 3. Standard library yang dipakai (tanpa dependensi tambahan)
 
 - `log/slog`: log terstruktur (detail error hanya ke log, bukan ke klien).
-- `crypto/rand`: ID session acak 256 bit dan token CSRF; `crypto/subtle`: perbandingan password/token waktu-konstan (login development).
+- `crypto/rand`: ID session acak 256 bit, token CSRF, state/nonce/pengikat login OIDC; `crypto/subtle`: perbandingan token waktu-konstan (CSRF, nonce, pengikat login); `crypto/aes` + `crypto/cipher`: AES-256-GCM untuk refresh token Keycloak di session Redis; `crypto/sha256`: key transaksi login `oidc:login:{sha256(state)}` dan hash cookie pengikat.
 - `net/http` (`DetectContentType`): cek tipe gambar dari isi file (jpg/png/webp), ukuran dibatasi 2 MB.
 - `encoding/json`, `net/http/httptest`, `testing`: serialisasi dan pengujian.
 - `os` (`Getenv`): konfigurasi dari environment variable; validasi dan nilai default ditulis sendiri di paket `config`.
@@ -54,9 +54,9 @@ Sengaja tidak dipakai: ORM (GORM dan sejenisnya), framework web selain Chi, libr
 | Layanan | Image | Port | Catatan |
 | ------- | ----- | ---- | ------- |
 | PostgreSQL | `postgres:15` | 5432 | Database utama. |
-| Redis | `redis:7-alpine` | 6379 | Session, lock, rate limiter, cache (prefix `session:`, `lock:`, `ratelimit:`, `cache:`). |
+| Redis | `redis:7-alpine` | 6379 | Session, lock, rate limiter, cache (prefix `session:`, `lock:`, `ratelimit:`, `cache:`), serta login Keycloak: transaksi login `oidc:login:` (TTL 5 menit, GETDEL) dan kunci penyegaran token `session-segar:` (SET NX). |
 | RustFS | `rustfs/rustfs:1.0.3` | 9000 (S3), 9001 (konsol) | Penyimpanan gambar. Sejak 2026-11-14 tag dikunci ke **1.0.3** di compose pengguna (sebelumnya `latest`, yang saat itu menunjuk biner 1.0.3 yang sama; image ID `9ca9559533b5`, build 2026-10-17). Dicek: tag `1.0.3` ada di Docker Hub; data dev dan akses `/media` normal; suite tes lulus (lihat `perubahan-kode.md`). |
-| Keycloak | (belum ada) | | Menunggu pihak pengelola. Sementara memakai login development (`APP_ENV=development`, lihat `docs/security.md` §1). |
+| Keycloak | dikelola di `keycloak/` (realm `ai-center`, klien confidential `ai-center-cms`) | 8180 (dev) | Satu-satunya cara login admin sejak 2026-11-20 (login development dengan password dihapus). Backend butuh `KEYCLOAK_ISSUER`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET_FILE`, `SESSION_ENCRYPTION_KEY_FILE`; discovery dijalankan saat start, gagal = server tidak start. Tes memakai penyedia OIDC tiruan (`httptest`) sehingga tidak butuh Keycloak berjalan. |
 
 Compose dikelola pengguna sendiri; backend tidak membawa compose.
 
@@ -85,6 +85,7 @@ Tes memakai layanan Docker di atas, tetapi data dev tidak pernah disentuh:
 - **Temuan 2026-11-11: GO-2026-6859** (`net/http` di pustaka standar, "HTTP/1 server crash due to MaxBytesReader header race"), ditemukan ulang oleh `govulncheck` setelah database kerentanan diperbarui; ditemukan di Go 1.27.3 dan diperbaiki di **Go 1.27.4**. Relevan karena kode memakai `http.MaxBytesReader` (upload, body JSON admin, login). Hasil `govulncheck` bersih yang dicatat di atas (2026-11-02 sampai 2026-11-09) tidak lagi berlaku untuk toolchain 1.27.3. Perbaikan: `go 1.27.4` di `go.mod` (toolchain otomatis, tanpa menyentuh instalasi sistem). Verifikasi: `govulncheck ./...` = No vulnerabilities found; seluruh tes (242) lulus dengan toolchain 1.27.4. Aturan perawatan tambahan: jalankan `govulncheck ./...` di awal setiap sesi kerja, bukan hanya saat menambah dependensi, karena advisori baru bisa terbit kapan saja.
 - Catatan kompatibilitas RustFS: klien S3 memakai path-style, region `us-east-1`, dan checksum permintaan/respons SDK hanya bila diwajibkan (`RequestChecksumCalculation`/`ResponseChecksumValidation` = `WhenRequired`); tanpa itu SDK baru menambahkan header checksum yang tidak selalu didukung server S3 non-AWS.
 - Semua versi di atas adalah rilis terbaru yang stabil pada tanggal verifikasi (tanpa pra-rilis). Catatan: proxy Go menunjukkan `pgx` v5.12.0 dirilis 2026-10-31, sangat baru. Bila ada masalah kompatibilitas, turunkan ke v5.11.x lalu cek lagi dengan `govulncheck`.
+- Pembaruan 2026-11-20 (login Keycloak): ditambah dependensi langsung **`github.com/coreos/go-oidc/v3` v3.21.0** dan **`golang.org/x/oauth2` v0.38.0** (tidak langsung: `github.com/go-jose/go-jose/v4` v4.1.4) lewat `go get` + `go mod tidy`. Alasan: verifikasi token OIDC dan Authorization Code + PKCE tidak ditulis sendiri; keduanya library yang paling luas dipakai untuk keperluan ini di Go dan sudah direncanakan sejak awal (§2). Kompatibilitas: go-oidc v3.21.0 mensyaratkan go 1.25 dan oauth2 >= v0.36.0, sesuai `go 1.27.4`. `govulncheck ./...` (golang.org/x/vuln v1.10.0) setelah penambahan: **No vulnerabilities found**.
 - Aturan perawatan: versi dikunci lewat `go.mod`/`go.sum`; naikkan versi hanya dengan `go get <modul>@<versi>`, jalankan ulang `govulncheck ./...` dan tes, lalu perbarui dokumen ini.
 
 ## 6. Hal yang belum diputuskan

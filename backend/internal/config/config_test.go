@@ -1,12 +1,44 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 )
+
+const (
+	rahasiaKlienUji = "rahasia-klien-uji"
+	kunciSesiUji    = "0123456789abcdef0123456789ABCDEF" // 32 byte
+)
+
+// Berkas rahasia uji (dibuat sekali per paket di TestMain).
+var berkasRahasia, berkasKunci, berkasSpasi, berkasKunciPendek string
+
+func TestMain(m *testing.M) {
+	dir, err := os.MkdirTemp("", "config-uji-")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	tulis := func(nama, isi string) string {
+		p := filepath.Join(dir, nama)
+		if err := os.WriteFile(p, []byte(isi), 0o600); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return p
+	}
+	berkasRahasia = tulis("rahasia.txt", rahasiaKlienUji+"\n")
+	berkasKunci = tulis("kunci.bin", kunciSesiUji)
+	berkasSpasi = tulis("spasi.txt", " \r\n")
+	berkasKunciPendek = tulis("pendek.bin", kunciSesiUji[:31])
+	kode := m.Run()
+	_ = os.RemoveAll(dir)
+	os.Exit(kode)
+}
 
 func lookupDari(m map[string]string) Lookup {
 	return func(k string) (string, bool) {
@@ -17,28 +49,33 @@ func lookupDari(m map[string]string) Lookup {
 
 func dasarDev() map[string]string {
 	return map[string]string{
-		"APP_ENV":           "development",
-		"DATABASE_URL":      "postgres://u:p@localhost:5432/x",
-		"REDIS_URL":         "redis://:p@localhost:6379/0",
-		"RUSTFS_ENDPOINT":   "http://localhost:9000",
-		"RUSTFS_ACCESS_KEY": "ak",
-		"RUSTFS_SECRET_KEY": "sk",
-		"RUSTFS_BUCKET":     "ai-center-images",
-		"ADMIN_PASSWORD":    "rahasia",
+		"APP_ENV":                     "development",
+		"DATABASE_URL":                "postgres://u:p@localhost:5432/x",
+		"REDIS_URL":                   "redis://:p@localhost:6379/0",
+		"RUSTFS_ENDPOINT":             "http://localhost:9000",
+		"RUSTFS_ACCESS_KEY":           "ak",
+		"RUSTFS_SECRET_KEY":           "sk",
+		"RUSTFS_BUCKET":               "ai-center-images",
+		"KEYCLOAK_ISSUER":             "http://localhost:8180/realms/ai-center",
+		"KEYCLOAK_CLIENT_SECRET_FILE": berkasRahasia,
+		"SESSION_ENCRYPTION_KEY_FILE": berkasKunci,
 	}
 }
 
 func dasarProd() map[string]string {
 	return map[string]string{
-		"APP_ENV":           "production",
-		"DATABASE_URL":      "postgres://u:p@db:5432/x",
-		"REDIS_URL":         "redis://:p@redis:6379/0",
-		"RUSTFS_ENDPOINT":   "http://rustfs:9000",
-		"RUSTFS_ACCESS_KEY": "ak",
-		"RUSTFS_SECRET_KEY": "sk",
-		"RUSTFS_BUCKET":     "ai-center-images",
-		"PUBLIC_BASE_URL":   "https://ai-center.example.com/",
-		"ALLOWED_ORIGINS":   "https://ai-center.example.com",
+		"APP_ENV":                     "production",
+		"DATABASE_URL":                "postgres://u:p@db:5432/x",
+		"REDIS_URL":                   "redis://:p@redis:6379/0",
+		"RUSTFS_ENDPOINT":             "http://rustfs:9000",
+		"RUSTFS_ACCESS_KEY":           "ak",
+		"RUSTFS_SECRET_KEY":           "sk",
+		"RUSTFS_BUCKET":               "ai-center-images",
+		"PUBLIC_BASE_URL":             "https://ai-center.example.com/",
+		"ALLOWED_ORIGINS":             "https://ai-center.example.com",
+		"KEYCLOAK_ISSUER":             "https://sso.example.com/realms/ai-center",
+		"KEYCLOAK_CLIENT_SECRET_FILE": berkasRahasia,
+		"SESSION_ENCRYPTION_KEY_FILE": berkasKunci,
 	}
 }
 
@@ -47,8 +84,13 @@ func TestLoadDevelopmentDefault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("galat tak terduga: %v", err)
 	}
-	if cfg.Port != 8080 || cfg.SessionCookieName != "session" || cfg.SessionCookieSecure || !cfg.DevLoginAktif {
+	if cfg.Port != 8080 || cfg.SessionCookieName != "session" || cfg.SessionCookieSecure {
 		t.Fatalf("default dev salah: %+v", cfg)
+	}
+	if cfg.KeycloakIssuer != "http://localhost:8180/realms/ai-center" || cfg.KeycloakClientID != "ai-center-cms" ||
+		cfg.KeycloakRedirectURL != "http://localhost:8080/api/auth/callback" || cfg.KeycloakClientSecret != rahasiaKlienUji ||
+		string(cfg.SessionEncryptionKey) != kunciSesiUji {
+		t.Fatalf("Keycloak salah: issuer=%q klien=%q redirect=%q", cfg.KeycloakIssuer, cfg.KeycloakClientID, cfg.KeycloakRedirectURL)
 	}
 	if cfg.SessionIdleTTL != time.Hour || cfg.SessionAbsoluteTTL != 8*time.Hour || cfg.RateLimitLoginPerMinute != 10 {
 		t.Fatalf("default TTL/batas login salah: %v %v %d", cfg.SessionIdleTTL, cfg.SessionAbsoluteTTL, cfg.RateLimitLoginPerMinute)
@@ -120,11 +162,34 @@ func TestLoadProduksiMemaksaCookieAman(t *testing.T) {
 	if err != nil {
 		t.Fatalf("galat tak terduga: %v", err)
 	}
-	if cfg.SessionCookieName != NamaCookieProduksi || !cfg.SessionCookieSecure || cfg.DevLoginAktif {
-		t.Fatalf("produksi harus __Host-session + Secure tanpa dev login: %+v", cfg)
+	if cfg.SessionCookieName != NamaCookieProduksi || !cfg.SessionCookieSecure {
+		t.Fatalf("produksi harus __Host-session + Secure: %+v", cfg)
 	}
 	if cfg.PublicBaseURL != "https://ai-center.example.com" {
 		t.Fatalf("slash akhir harus dibuang: %q", cfg.PublicBaseURL)
+	}
+	if cfg.KeycloakRedirectURL != "https://ai-center.example.com/api/auth/callback" {
+		t.Fatalf("redirect Keycloak: %q", cfg.KeycloakRedirectURL)
+	}
+	m := dasarProd()
+	m["KEYCLOAK_CLIENT_ID"] = "klien-lain"
+	if cfg, err := Load(lookupDari(m)); err != nil || cfg.KeycloakClientID != "klien-lain" {
+		t.Fatalf("KEYCLOAK_CLIENT_ID: %q %v", cfg.KeycloakClientID, err)
+	}
+}
+
+// Galat validasi tidak pernah memuat isi berkas rahasia.
+func TestLoadGalatTidakMembocorkanRahasia(t *testing.T) {
+	m := dasarDev()
+	m["SESSION_ENCRYPTION_KEY_FILE"] = berkasRahasia // isi rahasia klien, panjang salah
+	m["KEYCLOAK_CLIENT_SECRET_FILE"] = berkasKunciPendek
+	m["KEYCLOAK_ISSUER"] = "http://keycloak.example.com/realms/x"
+	_, err := Load(lookupDari(m))
+	if err == nil {
+		t.Fatal("harus galat")
+	}
+	if strings.Contains(err.Error(), rahasiaKlienUji) || strings.Contains(err.Error(), kunciSesiUji[:31]) {
+		t.Errorf("galat membocorkan isi berkas: %v", err)
 	}
 }
 
@@ -151,7 +216,17 @@ func TestLoadGalat(t *testing.T) {
 		{"batas login negatif", func(m map[string]string) { m["RATE_LIMIT_LOGIN_PER_MINUTE"] = "-1" }, dasarDev, "RATE_LIMIT_LOGIN_PER_MINUTE"},
 		{"PORT bukan angka", func(m map[string]string) { m["PORT"] = "abc" }, dasarDev, "PORT"},
 		{"PORT di luar rentang", func(m map[string]string) { m["PORT"] = "70000" }, dasarDev, "PORT"},
-		{"dev tanpa ADMIN_PASSWORD", func(m map[string]string) { delete(m, "ADMIN_PASSWORD") }, dasarDev, "ADMIN_PASSWORD wajib"},
+		{"tanpa KEYCLOAK_ISSUER", func(m map[string]string) { delete(m, "KEYCLOAK_ISSUER") }, dasarDev, "KEYCLOAK_ISSUER wajib"},
+		{"issuer bukan URL", func(m map[string]string) { m["KEYCLOAK_ISSUER"] = "localhost:8180/realms/x" }, dasarDev, "KEYCLOAK_ISSUER"},
+		{"issuer dengan query", func(m map[string]string) { m["KEYCLOAK_ISSUER"] = "https://sso.example.com/realms/x?a=b" }, dasarDev, "bukan URL issuer"},
+		{"dev issuer http bukan lokal", func(m map[string]string) { m["KEYCLOAK_ISSUER"] = "http://keycloak.example.com/realms/x" }, dasarDev, "http hanya diizinkan untuk localhost"},
+		{"produksi issuer http", func(m map[string]string) { m["KEYCLOAK_ISSUER"] = "http://localhost:8180/realms/x" }, dasarProd, "di production harus https"},
+		{"tanpa berkas secret", func(m map[string]string) { delete(m, "KEYCLOAK_CLIENT_SECRET_FILE") }, dasarDev, "KEYCLOAK_CLIENT_SECRET_FILE wajib"},
+		{"berkas secret tidak ada", func(m map[string]string) { m["KEYCLOAK_CLIENT_SECRET_FILE"] = berkasRahasia + ".hilang" }, dasarDev, "tidak dapat dibaca"},
+		{"berkas secret hanya spasi", func(m map[string]string) { m["KEYCLOAK_CLIENT_SECRET_FILE"] = berkasSpasi }, dasarDev, "KEYCLOAK_CLIENT_SECRET_FILE: berkas kosong"},
+		{"tanpa berkas kunci", func(m map[string]string) { delete(m, "SESSION_ENCRYPTION_KEY_FILE") }, dasarProd, "SESSION_ENCRYPTION_KEY_FILE wajib"},
+		{"kunci bukan 32 byte", func(m map[string]string) { m["SESSION_ENCRYPTION_KEY_FILE"] = berkasKunciPendek }, dasarDev, "tepat 32 byte"},
+		{"kunci berisi teks berbaris baru", func(m map[string]string) { m["SESSION_ENCRYPTION_KEY_FILE"] = berkasRahasia }, dasarDev, "tepat 32 byte"},
 		{"origin dengan path", func(m map[string]string) { m["ALLOWED_ORIGINS"] = "https://a.example.com/x" }, dasarDev, "ALLOWED_ORIGINS"},
 		{"produksi nama cookie salah", func(m map[string]string) { m["SESSION_COOKIE_NAME"] = "session" }, dasarProd, "__Host-session"},
 		{"produksi Secure=false", func(m map[string]string) { m["SESSION_COOKIE_SECURE"] = "false" }, dasarProd, "harus true"},
@@ -245,21 +320,20 @@ func TestLoadLimiterAdminDanProxyTepercaya(t *testing.T) {
 	}
 }
 
-func TestLoadLockDanAkunDevKedua(t *testing.T) {
+func TestLoadLock(t *testing.T) {
 	cfg, err := Load(lookupDari(dasarDev()))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.LockTTL != 5*time.Minute || cfg.LockHeartbeat != time.Minute || cfg.AdminPassword2 != "" {
-		t.Fatalf("default salah: %v %v %q", cfg.LockTTL, cfg.LockHeartbeat, cfg.AdminPassword2)
+	if cfg.LockTTL != 5*time.Minute || cfg.LockHeartbeat != time.Minute {
+		t.Fatalf("default salah: %v %v", cfg.LockTTL, cfg.LockHeartbeat)
 	}
 	m := dasarDev()
 	m["LOCK_TTL_SECONDS"] = "120"
 	m["LOCK_HEARTBEAT_SECONDS"] = "30"
-	m["ADMIN_PASSWORD_2"] = "beda-dengan-pertama"
 	cfg, err = Load(lookupDari(m))
-	if err != nil || cfg.LockTTL != 2*time.Minute || cfg.LockHeartbeat != 30*time.Second || cfg.AdminPassword2 != "beda-dengan-pertama" {
-		t.Fatalf("nilai env: %+v %v", cfg, err)
+	if err != nil || cfg.LockTTL != 2*time.Minute || cfg.LockHeartbeat != 30*time.Second {
+		t.Fatalf("nilai env: %v %v %v", cfg.LockTTL, cfg.LockHeartbeat, err)
 	}
 
 	galat := func(ubah func(map[string]string), mau string) {
@@ -272,7 +346,6 @@ func TestLoadLockDanAkunDevKedua(t *testing.T) {
 	}
 	galat(func(m map[string]string) { m["LOCK_HEARTBEAT_SECONDS"] = "300" }, "LOCK_HEARTBEAT_SECONDS harus lebih kecil")
 	galat(func(m map[string]string) { m["LOCK_TTL_SECONDS"] = "0" }, "LOCK_TTL_SECONDS")
-	galat(func(m map[string]string) { m["ADMIN_PASSWORD_2"] = m["ADMIN_PASSWORD"] }, "ADMIN_PASSWORD_2 harus berbeda")
 }
 
 func TestLoadSEODefaultDanEnv(t *testing.T) {

@@ -3,17 +3,18 @@ package httpapi
 import (
 	"cmp"
 	"context"
-	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"golang.org/x/oauth2"
 
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/auth"
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/ratelimit"
@@ -22,7 +23,6 @@ import (
 // Kode galat auth (stabil untuk klien).
 const (
 	kodeBelumLogin        = "unauthenticated"
-	kodePasswordSalah     = "invalid_credentials"
 	kodeCSRFTidakValid    = "csrf_invalid"
 	kodeOriginTidakSah    = "origin_invalid"
 	kodeTerlaluSering     = "rate_limited"
@@ -30,29 +30,54 @@ const (
 	kodeRequestTidakSah   = "invalid_request"
 )
 
+// Kode galat login yang dikirim ke halaman admin lewat /admin/?galat=<kode> (stabil untuk klien).
+const (
+	galatAksesDitolak     = "akses_ditolak"     // terverifikasi tetapi tidak punya role direktur/pegawai
+	galatLoginKedaluwarsa = "login_kedaluwarsa" // state/pengikat tidak ada, kedaluwarsa, atau dipakai ulang
+	galatLoginGagal       = "login_gagal"       // galat penyedia, token/tanda tangan/claim tidak sah, jaringan
+)
+
 const (
 	headerCSRF     = "X-CSRF-Token"
-	batasBodyLogin = 1024 // byte
 	bucketLogin    = "login"
+	bucketCallback = "login-callback"
+	halamanAdmin   = "/admin/"
+	// batasAkhiriSSO membatasi panggilan logout ke Keycloak agar logout lokal tidak tertahan lama.
+	batasAkhiriSSO = 3 * time.Second
 )
 
 // Sesi adalah kebijakan session yang dibutuhkan handler (diimplementasikan *auth.Manager; palsu di tes).
 type Sesi interface {
-	Buat(ctx context.Context, ident auth.Identitas) (string, auth.Session, error)
+	Buat(ctx context.Context, ident auth.Identitas, tok auth.Token) (string, auth.Session, error)
+	// Validasi memeriksa session, menyegarkan token bila perlu, dan memperpanjang idle.
 	Validasi(ctx context.Context, id string) (auth.Session, error)
+	// Baca memeriksa session tanpa menyegarkan token (logout tidak boleh tertahan oleh penyedia identitas).
+	Baca(ctx context.Context, id string) (auth.Session, error)
 	Hapus(ctx context.Context, id string) error
+}
+
+// PenyediaLogin adalah penyedia identitas OIDC (diimplementasikan *auth.OIDC).
+type PenyediaLogin interface {
+	URLMasuk(state, nonce, verifier string, pilihAkun bool) string
+	Tukar(ctx context.Context, kode, verifier, nonce string) (auth.Identitas, auth.Token, error)
+	AkhiriSSO(ctx context.Context, refresh string) error
+}
+
+// PenyimpanLogin menyimpan transaksi login sampai callback (diimplementasikan auth.RedisTransaksi).
+type PenyimpanLogin interface {
+	Simpan(ctx context.Context, state string, t auth.TransaksiLogin, ttl time.Duration) error
+	// Ambil mengambil sekaligus menghapus transaksi; auth.ErrTransaksiTidakAda bila tidak ada.
+	Ambil(ctx context.Context, state string) (auth.TransaksiLogin, error)
 }
 
 // DepsAuth adalah dependensi dan konfigurasi endpoint auth.
 type DepsAuth struct {
-	Sesi    Sesi
-	Limiter ratelimit.Limiter
+	Sesi      Sesi
+	Limiter   ratelimit.Limiter
+	OIDC      PenyediaLogin
+	Transaksi PenyimpanLogin
 
-	DevLoginAktif bool // hanya true bila APP_ENV=development
-	AdminPassword string
-	// Akun dev kedua (opsional; kosong = nonaktif), identitasnya dev-admin-2.
-	AdminPassword2 string
-	BatasLogin     int // request per menit per IP
+	BatasLogin int // request per menit per IP, untuk /login dan /callback masing-masing
 
 	CookieName   string
 	CookieSecure bool
@@ -60,12 +85,6 @@ type DepsAuth struct {
 
 	AllowedOrigins []string
 }
-
-// identitasDev adalah pengguna tunggal login development (semua pengguna sama haknya; role hanya label).
-var identitasDev = auth.Identitas{Sub: "dev-admin", Nama: "Admin Dev", Role: "pegawai", Username: "admin.dev"}
-
-// identitasDev2 adalah akun dev kedua agar fitur dua-admin (mis. soft lock) bisa dicoba di development.
-var identitasDev2 = auth.Identitas{Sub: "dev-admin-2", Nama: "Admin Dev 2", Role: "pegawai", Username: "admin.dev2"}
 
 type ctxKey int
 
@@ -82,18 +101,18 @@ type authHandler struct {
 	DepsAuth
 }
 
-// routerAuth mendaftarkan /api/auth/*. dev-login hanya didaftarkan bila DevLoginAktif (selain itu 404 biasa).
+// routerAuth mendaftarkan /api/auth/*: login dan callback Keycloak, logout, me.
 func (h authHandler) routerAuth(r chi.Router) {
 	r.Use(noStore)
 	r.Use(cekOrigin(h.AllowedOrigins))
-	if h.DevLoginAktif {
-		r.Post("/dev-login", h.devLogin)
-	}
-	r.With(h.wajibLogin, wajibCSRF).Post("/logout", h.logout)
+	r.Get("/login", h.login)
+	r.Get("/callback", h.callback)
+	r.With(h.wajibSessionTanpaSegar, wajibCSRF).Post("/logout", h.logout)
 	r.With(h.wajibLogin).Get("/me", h.me)
 }
 
 type sesiJSON struct {
+	Sub       string `json:"sub"`
 	Nama      string `json:"nama"`
 	Username  string `json:"username"`
 	Role      string `json:"role"`
@@ -101,55 +120,120 @@ type sesiJSON struct {
 }
 
 func bentukSesi(s auth.Session) sesiJSON {
-	return sesiJSON{Nama: s.Nama, Username: cmp.Or(s.Username, s.Sub), Role: s.Role, CSRFToken: s.CSRFToken}
+	return sesiJSON{Sub: s.Sub, Nama: s.Nama, Username: cmp.Or(s.Username, s.Sub), Role: s.Role, CSRFToken: s.CSRFToken}
 }
 
-func (h authHandler) devLogin(w http.ResponseWriter, r *http.Request) {
-	keputusan, err := h.Limiter.Hit(r.Context(), bucketLogin, ipKlien(r), h.BatasLogin)
-	if err != nil {
+// login memulai Authorization Code + PKCE: transaksi (verifier, nonce, hash pengikat) disimpan di Redis dengan key
+// dari state, cookie pengikat dipasang di browser, lalu browser dialihkan ke Keycloak.
+func (h authHandler) login(w http.ResponseWriter, r *http.Request) {
+	if !h.batasiLogin(w, r, bucketLogin, false) {
+		return
+	}
+	state, err1 := auth.TokenAcak()
+	nonce, err2 := auth.TokenAcak()
+	ikatan, err3 := auth.TokenAcak()
+	if err := errors.Join(err1, err2, err3); err != nil {
 		h.galatSession(w, r, err)
 		return
 	}
-	if !keputusan.Diizinkan {
-		w.Header().Set("Retry-After", strconv.Itoa(keputusan.TungguDetik))
-		tulisGalat(w, http.StatusTooManyRequests, kodeTerlaluSering, "Terlalu banyak percobaan login, coba lagi nanti")
+	verifier := oauth2.GenerateVerifier()
+	t := auth.TransaksiLogin{Verifier: verifier, Nonce: nonce, HashIkatan: auth.Hash(ikatan)}
+	if err := h.Transaksi.Simpan(r.Context(), state, t, auth.MasaTransaksiLogin); err != nil {
+		h.galatSession(w, r, err)
+		return
+	}
+	http.SetCookie(w, h.cookieIkatan(ikatan, int(auth.MasaTransaksiLogin.Seconds())))
+	http.Redirect(w, r, h.OIDC.URLMasuk(state, nonce, verifier, r.URL.Query().Get("pilih") == "1"), http.StatusFound)
+}
+
+// callback menyelesaikan login. Semua kegagalan dialihkan ke /admin/?galat=<kode>; kode, token, dan state tidak
+// pernah dicatat di log.
+func (h authHandler) callback(w http.ResponseWriter, r *http.Request) {
+	// Cookie pengikat selalu dibuang: transaksi hanya sekali pakai, berhasil atau gagal.
+	http.SetCookie(w, h.cookieIkatan("", -1))
+	if !h.batasiLogin(w, r, bucketCallback, true) {
+		return
+	}
+	q := r.URL.Query()
+	state := q.Get("state")
+	if state == "" {
+		h.gagalLogin(w, r, galatLoginKedaluwarsa, nil)
+		return
+	}
+	// GETDEL: state yang sama tidak bisa dipakai dua kali, juga bila percobaan ini gagal.
+	t, err := h.Transaksi.Ambil(r.Context(), state)
+	if errors.Is(err, auth.ErrTransaksiTidakAda) {
+		h.gagalLogin(w, r, galatLoginKedaluwarsa, nil)
+		return
+	}
+	if err != nil {
+		h.gagalLogin(w, r, galatLoginGagal, err)
+		return
+	}
+	c, err := r.Cookie(h.namaCookieIkatan())
+	if err != nil || subtle.ConstantTimeCompare([]byte(auth.Hash(c.Value)), []byte(t.HashIkatan)) != 1 {
+		h.gagalLogin(w, r, galatLoginKedaluwarsa, nil)
+		return
+	}
+	if q.Get("error") != "" {
+		h.gagalLogin(w, r, galatLoginGagal, errors.New("penyedia identitas mengembalikan galat otorisasi"))
+		return
+	}
+	kode := q.Get("code")
+	if kode == "" {
+		h.gagalLogin(w, r, galatLoginGagal, errors.New("callback tanpa kode otorisasi"))
+		return
+	}
+	ident, tok, err := h.OIDC.Tukar(r.Context(), kode, t.Verifier, t.Nonce)
+	if errors.Is(err, auth.ErrAksesDitolak) {
+		h.gagalLogin(w, r, galatAksesDitolak, nil)
+		return
+	}
+	if err != nil {
+		h.gagalLogin(w, r, galatLoginGagal, err)
 		return
 	}
 
-	var body struct {
-		Password string `json:"password"`
-	}
-	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, batasBodyLogin))
-	if err := dec.Decode(&body); err != nil {
-		tulisGalat(w, http.StatusBadRequest, kodeRequestTidakSah, "Body harus JSON berisi password")
-		return
-	}
-	// Kedua perbandingan selalu dijalankan (waktu konstan, tidak membocorkan akun mana yang cocok).
-	cocok1 := passwordCocok(body.Password, h.AdminPassword)
-	cocok2 := h.AdminPassword2 != "" && passwordCocok(body.Password, h.AdminPassword2)
-	ident := identitasDev
-	switch {
-	case cocok1:
-	case cocok2:
-		ident = identitasDev2
-	default:
-		tulisGalat(w, http.StatusUnauthorized, kodePasswordSalah, "Password salah")
-		return
-	}
-
-	// ID session selalu baru; session lama pada request yang sama (bila ada) dibuang.
+	// ID session selalu baru; session lama pada browser yang sama (bila ada) dibuang.
 	if c, err := r.Cookie(h.CookieName); err == nil {
 		if err := h.Sesi.Hapus(r.Context(), c.Value); err != nil {
 			h.log.Warn("gagal menghapus session lama", "err", err)
 		}
 	}
-	id, sess, err := h.Sesi.Buat(r.Context(), ident)
+	id, _, err := h.Sesi.Buat(r.Context(), ident, tok)
 	if err != nil {
-		h.galatSession(w, r, err)
+		h.gagalLogin(w, r, galatLoginGagal, err)
 		return
 	}
 	http.SetCookie(w, h.cookie(id, int(h.CookieMaxAge.Seconds())))
-	tulisJSON(w, http.StatusOK, bentukSesi(sess))
+	http.Redirect(w, r, halamanAdmin, http.StatusFound)
+}
+
+// batasiLogin menerapkan batas per IP. alihkan=true (callback): penolakan dialihkan ke halaman admin.
+func (h authHandler) batasiLogin(w http.ResponseWriter, r *http.Request, bucket string, alihkan bool) bool {
+	keputusan, err := h.Limiter.Hit(r.Context(), bucket, ipKlien(r), h.BatasLogin)
+	switch {
+	case err != nil && alihkan:
+		h.gagalLogin(w, r, galatLoginGagal, err)
+	case err != nil:
+		h.galatSession(w, r, err)
+	case keputusan.Diizinkan:
+		return true
+	case alihkan:
+		h.gagalLogin(w, r, galatLoginGagal, nil)
+	default:
+		w.Header().Set("Retry-After", strconv.Itoa(keputusan.TungguDetik))
+		tulisGalat(w, http.StatusTooManyRequests, kodeTerlaluSering, "Terlalu banyak percobaan login, coba lagi nanti")
+	}
+	return false
+}
+
+// gagalLogin mengalihkan ke halaman admin dengan kode galat. err (bila ada) dicatat tanpa isi query.
+func (h authHandler) gagalLogin(w http.ResponseWriter, r *http.Request, kode string, err error) {
+	if err != nil {
+		h.log.Warn("login gagal", "kode", kode, "err", err, "request_id", middleware.GetReqID(r.Context()))
+	}
+	http.Redirect(w, r, halamanAdmin+"?galat="+url.QueryEscape(kode), http.StatusFound)
 }
 
 func (h authHandler) me(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +241,9 @@ func (h authHandler) me(w http.ResponseWriter, r *http.Request) {
 	tulisJSON(w, http.StatusOK, bentukSesi(s))
 }
 
+// logout menghapus session lokal lalu (upaya terbaik, batas waktu pendek) mengakhiri session SSO Keycloak.
 func (h authHandler) logout(w http.ResponseWriter, r *http.Request) {
+	s, _ := SessionDariContext(r.Context())
 	c, err := r.Cookie(h.CookieName)
 	if err == nil {
 		if err := h.Sesi.Hapus(r.Context(), c.Value); err != nil {
@@ -166,18 +252,40 @@ func (h authHandler) logout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.SetCookie(w, h.cookie("", -1))
+	if s.Refresh != "" && h.OIDC != nil {
+		ctx, batal := context.WithTimeout(context.WithoutCancel(r.Context()), batasAkhiriSSO)
+		if err := h.OIDC.AkhiriSSO(ctx, s.Refresh); err != nil {
+			h.log.Warn("gagal mengakhiri session SSO Keycloak", "err", err, "request_id", middleware.GetReqID(r.Context()))
+		}
+		batal()
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// wajibLogin memvalidasi cookie session (dan memperpanjang idle). Tanpa session sah: 401; Redis bermasalah: 503.
+// wajibLogin memvalidasi cookie session (menyegarkan token bila perlu, memperpanjang idle). Tanpa session sah: 401;
+// Redis atau penyedia identitas tidak terjangkau: 503.
 func (h authHandler) wajibLogin(next http.Handler) http.Handler {
+	return h.wajibSession(next, true)
+}
+
+// wajibSessionTanpaSegar sama seperti wajibLogin tetapi tanpa penyegaran token (untuk logout).
+func (h authHandler) wajibSessionTanpaSegar(next http.Handler) http.Handler {
+	return h.wajibSession(next, false)
+}
+
+func (h authHandler) wajibSession(next http.Handler, segarkan bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie(h.CookieName)
 		if err != nil {
 			tulisGalat(w, http.StatusUnauthorized, kodeBelumLogin, "Belum login atau session berakhir")
 			return
 		}
-		sess, err := h.Sesi.Validasi(r.Context(), c.Value)
+		var sess auth.Session
+		if segarkan {
+			sess, err = h.Sesi.Validasi(r.Context(), c.Value)
+		} else {
+			sess, err = h.Sesi.Baca(r.Context(), c.Value)
+		}
 		if errors.Is(err, auth.ErrTidakAda) {
 			http.SetCookie(w, h.cookie("", -1)) // buang cookie basi
 			tulisGalat(w, http.StatusUnauthorized, kodeBelumLogin, "Belum login atau session berakhir")
@@ -206,12 +314,34 @@ func (h authHandler) cookie(nilai string, maxAge int) *http.Cookie {
 	}
 }
 
+// namaCookieIkatan mengikuti pola cookie session: awalan __Host- (wajib Secure, Path=/, tanpa Domain) di production.
+func (h authHandler) namaCookieIkatan() string {
+	if strings.HasPrefix(h.CookieName, "__Host-") {
+		return "__Host-login"
+	}
+	return "login"
+}
+
+// cookieIkatan mengikat transaksi login ke browser yang memulainya. SameSite=Lax: ikut terkirim pada navigasi
+// GET tingkat atas kembali dari Keycloak.
+func (h authHandler) cookieIkatan(nilai string, maxAge int) *http.Cookie {
+	return &http.Cookie{
+		Name:     h.namaCookieIkatan(),
+		Value:    nilai,
+		Path:     "/",
+		MaxAge:   maxAge,
+		HttpOnly: true,
+		Secure:   h.CookieSecure,
+		SameSite: http.SameSiteLaxMode,
+	}
+}
+
 func (h authHandler) galatSession(w http.ResponseWriter, r *http.Request, err error) {
-	h.log.Error("penyimpanan session bermasalah", "err", err, "path", r.URL.Path, "request_id", middleware.GetReqID(r.Context()))
+	h.log.Error("layanan session bermasalah", "err", err, "path", r.URL.Path, "request_id", middleware.GetReqID(r.Context()))
 	tulisGalat(w, http.StatusServiceUnavailable, kodeSessionBermasalah, "Layanan session sedang tidak tersedia")
 }
 
-// — middleware bersama (dipakai juga oleh route admin nanti) ——————————————————
+// — middleware bersama (dipakai juga oleh route admin) ——————————————————————
 
 func metodeAman(m string) bool {
 	return m == http.MethodGet || m == http.MethodHead || m == http.MethodOptions
@@ -258,10 +388,4 @@ func wajibCSRF(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-// passwordCocok membandingkan dalam waktu konstan (lewat hash agar panjang tidak bocor).
-func passwordCocok(masukan, benar string) bool {
-	a, b := sha256.Sum256([]byte(masukan)), sha256.Sum256([]byte(benar))
-	return subtle.ConstantTimeCompare(a[:], b[:]) == 1
 }

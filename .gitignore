@@ -32,3 +32,5 @@ skills-lock.json
 # artefak tes e2e Playwright (tangkapan layar, trace, hasil)
 output/
 
+# Keycloak operator credentials, keys and local test accounts
+keycloak/secrets/

@@ -48,9 +48,8 @@ func TestIPDariXFF(t *testing.T) {
 func TestLoginMemakaiIPKlienDariProxyTepercaya(t *testing.T) {
 	e := siapkanAuth(t, nil, func(d *Deps) { d.ProxyTepercaya = proxyUji() })
 	dari := func(remote, xff string) string {
-		req := httptest.NewRequest(http.MethodPost, "/api/auth/dev-login", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/auth/login", nil)
 		req.RemoteAddr = remote
-		req.Header.Set("Origin", originSah)
 		if xff != "" {
 			req.Header.Set("X-Forwarded-For", xff)
 		}
@@ -67,10 +66,9 @@ func TestLoginMemakaiIPKlienDariProxyTepercaya(t *testing.T) {
 
 func TestTanpaProxyTepercayaHeaderDiabaikan(t *testing.T) {
 	e := siapkanAuth(t, nil)
-	req := httptest.NewRequest(http.MethodPost, "/api/auth/dev-login", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/login", nil)
 	req.RemoteAddr = "10.0.0.5:5000"
 	req.Header.Set("X-Forwarded-For", "1.2.3.4")
-	req.Header.Set("Origin", originSah)
 	e.h.ServeHTTP(httptest.NewRecorder(), req)
 	if e.limiter.id != "10.0.0.5" {
 		t.Errorf("default aman: IP harus alamat koneksi, dapat %q", e.limiter.id)

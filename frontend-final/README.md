@@ -16,6 +16,6 @@ Bun is vendored locally at `.tooling/package/bin/bun.exe` (not on PATH).
 
 ## API client
 
-`src/api/api.ts` is the real client for the Go backend (`/api/*`, same origin, HttpOnly session cookie, `X-CSRF-Token` on writes, image upload on Save, soft lock). The old in-memory simulation panel and account picker are in `deprecated/` (not built). The temporary dev login page is `admin-masuk/` (replaced by Keycloak later).
+`src/api/api.ts` is the real client for the Go backend (`/api/*`, same origin, HttpOnly session cookie, `X-CSRF-Token` on writes, image upload on Save, soft lock). The old in-memory simulation panel and account picker are in `deprecated/` (not built). Login is Keycloak via the backend: the admin navigates to `/api/auth/login` when `/api/auth/me` returns 401; a failed callback returns to `/admin/?galat=<kode>` and shows a message without redirecting again.
 
 Known limits versus production: detail pages for news and documentation are one generic skeleton (`src/pages/{berita,dokumentasi}/kerangka-seo.astro`) served by Go for every slug, which injects the SEO head and initial data; HTTP 404 status for unknown slugs comes from Go, and exists in `preview` only as a static fallback.

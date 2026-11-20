@@ -7,7 +7,7 @@ Situs web UBAYA AI Center: halaman publik (beranda, berita, dokumentasi, tim, te
 - **Publik:** halaman statis hasil build Astro. Halaman detail berita/dokumentasi memakai satu kerangka; Go menyisipkan `<title>`, meta, Open Graph, JSON-LD, dan data awal per slug (SEO), lalu React mengambil alih tampilan.
 - **Admin (`/admin`):** aplikasi React satu halaman. Alur konten: draft, Post, Retract, trash, pulihkan, hapus permanen. Penguncian edit (soft lock) dan `version` (optimistic locking) mencegah dua admin saling menimpa.
 - **Gambar:** diunggah lewat `/api/admin/upload`, disimpan di RustFS (S3), dilayani publik lewat `/media/*`.
-- **Login:** sementara `dev-login` (hanya `APP_ENV=development`) lewat `/admin/masuk`. Keycloak menyusul.
+- **Login:** Keycloak (OIDC Authorization Code + PKCE). `/admin/` tanpa session diarahkan ke Keycloak; hanya client role `direktur`/`pegawai` pada client `ai-center-cms` yang diterima. Konfigurasi dan langkah operator: `keycloak/README.md`.
 
 ## Stack
 
@@ -24,7 +24,7 @@ Situs web UBAYA AI Center: halaman publik (beranda, berita, dokumentasi, tim, te
 | Animasi/UI | GSAP 3.15.1, motion 14.13.0, Embla 8.6.0, Radix UI | lihat `frontend-final/package.json` |
 | Build frontend, tes unit | Bun | >= 1.4.4 (terpasang 1.4.3 memberi peringatan, tetap jalan) |
 | Tes end-to-end | Playwright | 1.65.0 |
-| Autentikasi produksi (belum) | Keycloak (OIDC) | menunggu pengelola |
+| Autentikasi | Keycloak (OIDC; go-oidc + x/oauth2 di backend) | 26.8.1 (`keycloak/`) |
 
 Versi backend lengkap, alasan pemilihan, dan hasil `govulncheck`: `docs/backend/req.md`. Skema database: `docs/backend/schema-baru.md`.
 
@@ -49,7 +49,7 @@ Versi backend lengkap, alasan pemilihan, dan hasil `govulncheck`: `docs/backend/
 ## Menjalankan proyek
 
 1. **Layanan:** nyalakan PostgreSQL (`postgres:15`), Redis (`redis:7-alpine`), dan RustFS (`rustfs/rustfs:1.0.3`, kunci versinya; jangan `latest`) di Docker. Buat database `ai_center` (dan `ai_center_test` untuk tes) secara manual (`CREATE DATABASE`); server tidak membuatnya. Bucket RustFS dibuat otomatis oleh server di development (di production harus dibuat dulu), dan bucket tes `ai-center-test` dibuat otomatis oleh tes.
-2. **Konfigurasi:** salin `backend/.env.example` ke `backend/.env`, lalu isi (koneksi database/Redis/RustFS, `ADMIN_PASSWORD`, `STATIC_DIR` mengarah ke folder `web/`). `backend/.env` ter-ignore git dan tidak boleh di-commit.
+2. **Konfigurasi:** salin `backend/.env.example` ke `backend/.env`, lalu isi (koneksi database/Redis/RustFS, `KEYCLOAK_*`, `SESSION_ENCRYPTION_KEY_FILE`, `STATIC_DIR` mengarah ke folder `web/`). Keycloak dev (port 8180), client secret, kunci session, dan akun uji disiapkan sesuai `keycloak/README.md`. `backend/.env` dan `keycloak/secrets/` ter-ignore git dan tidak boleh di-commit.
 3. **Migrasi database:**
    ```
    cd backend
@@ -65,7 +65,7 @@ Versi backend lengkap, alasan pemilihan, dan hasil `govulncheck`: `docs/backend/
    cd backend
    go run ./cmd/api                               # http://localhost:8080
    ```
-   Admin: `http://localhost:8080/admin/`, masuk dengan `ADMIN_PASSWORD` (hanya `APP_ENV=development`). Di development, set `JOBS_ENABLED=false` agar job pembersihan tidak menyentuh bucket dev.
+   Admin: `http://localhost:8080/admin/` (login lewat Keycloak). Di development, set `JOBS_ENABLED=false` agar job pembersihan tidak menyentuh bucket dev.
 
 ## Tes
 
@@ -78,7 +78,7 @@ govulncheck ./...
 # dari akar repo
 node scripts/tests/web.test.cjs                # tes statis atas web/ (REBUILD=1 untuk build ulang dulu)
 bun test scripts/tests/api.test.ts             # klien API dengan fetch palsu
-npm run test:e2e                               # Playwright; server harus jalan (BASE_URL, PW=ADMIN_PASSWORD, PW2=ADMIN_PASSWORD_2 opsional)
+npm run test:e2e                               # Playwright; server + Keycloak harus jalan (BASE_URL, KC_USER/KC_PASS, KC_USER2/KC_PASS2 untuk tes dua akun)
 ```
 
 Tes memakai `ai_center_test`, Redis DB 15, dan bucket `ai-center-test`; data dev tidak disentuh. Spec e2e admin memberi jeda sekitar 61 detik agar batas tulis admin tidak terlampaui.
