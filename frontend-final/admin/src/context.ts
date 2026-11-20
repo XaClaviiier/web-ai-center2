@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, type RefObject } from 'react';
 import { ApiError, type Account } from '../../src/shared/types';
 
 export const PESAN_TANPA_PERUBAHAN = 'Tidak ada perubahan yang disimpan.';
-export const URL_LOGIN = '/admin/masuk';
+/** Login Keycloak lewat backend (navigasi halaman penuh, bukan fetch). */
+export const URL_LOGIN = '/api/auth/login';
 
 export interface ConfirmOptions {
   judul: string;

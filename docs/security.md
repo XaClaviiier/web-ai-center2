@@ -12,19 +12,17 @@ Dokumen aktif. Riwayat perencanaan awal (`00-detail-rencana-web.md`, `01-kontrak
 
 ## 1. Akses dan login
 
-Keycloak mengelola pengguna dan role; aplikasi tidak punya manajemen role sendiri. Semua pengguna yang berhasil login dapat menambah, mengubah, dan menghapus konten. Hanya pengguna dengan role `direktur` atau `pegawai` pada client CMS yang boleh login; lainnya `403`. \[menunggu konfirmasi Keycloak\]
+Keycloak mengelola pengguna dan role; aplikasi tidak punya manajemen role sendiri. Semua pengguna yang berhasil login dapat menambah, mengubah, dan menghapus konten. Hanya pengguna dengan client role `direktur` atau `pegawai` pada client `ai-center-cms` (realm `ai-center`) yang diterima; lainnya tidak mendapat session dan diarahkan ke `/admin/?galat=akses_ditolak`. Role ditampilkan `direktur` bila pengguna memiliki keduanya.
 
-**Login:** browser diarahkan ke Keycloak (OIDC Authorization Code \+ PKCE). Setelah berhasil, backend menukar kode dengan token di sisi server dan memvalidasi `state`, penerbit (issuer), tanda tangan, dan masa berlaku. \[menunggu konfirmasi Keycloak\]
+**Login:** browser diarahkan ke Keycloak (OIDC Authorization Code \+ PKCE S256, scope `openid`). `state` disimpan di Redis (`oidc:login:{hash}`, 5 menit, dipakai sekali) dan diikat ke cookie binding browser. Backend menukar kode sebagai client confidential lalu memverifikasi ID token (issuer, audience, nonce, tanda tangan RS256, masa berlaku) dan access token (issuer, audience, `azp`, `sub` sama dengan ID token). Role hanya dibaca dari access token terverifikasi. `sub` Keycloak menjadi identitas audit; username Log Aktivitas dari `preferred_username`. Konfigurasi: `keycloak/README.md`.
 
-Endpoint auth: \[Lihat stack.md §9.5\]. \[menunggu konfirmasi Keycloak\]
+Endpoint auth: \[Lihat stack.md §9.5\].
 
-**Login development (sebelum Keycloak siap):** backend Go menyediakan login password yang mengikuti logika mekanisme login yang ada saat ini, tetapi hasilnya adalah cookie session yang sama dengan alur Keycloak (bukan Bearer token), sehingga frontend admin hanya punya satu cara autentikasi. Login ini hanya aktif bila `APP_ENV=development`; server menolak start bila login ini aktif di luar development. Saat Keycloak siap, hanya endpoint login yang diganti.
-
-\[KONFLIK, belum diputuskan\] Catatan prototype menyebut keputusan terbaru bahwa aplikasi tidak memiliki halaman login sendiri, sedangkan paragraf Login development di atas mendefinisikan login password. Tentukan mana yang berlaku sebelum fase backend. Sampai itu jelas, paragraf tersebut tidak dihapus \[Lihat juga stack.md §9.5\].
+**Login development:** dihapus (keputusan 2026-11-20). Development juga memakai Keycloak (`keycloak/compose.dev.yml`, port 8180); tidak ada halaman login password, `ADMIN_PASSWORD`, atau `/api/auth/dev-login`.
 
 ## 2. Session
 
-**Session login:** Key `session:{id}` berisi `sub`, nama, token CSRF, dan waktu dibuat. Cookie hanya berisi ID acak (256 bit). Dibuat setelah login Keycloak berhasil, dihapus saat logout. Pengguna yang dinonaktifkan di Keycloak tetap punya session sampai kedaluwarsa \[Diputuskan pada fase backend: validasi ulang ke Keycloak berkala\]. Idle 1 jam (diperpanjang tiap request), batas mutlak 8 jam; cookie dibuat berumur sama dengan batas mutlak.
+**Session login:** Key `session:{id}` berisi `sub`, nama, username, role, token CSRF, waktu dibuat, masa berlaku access token, dan refresh token Keycloak yang dienkripsi AES-256-GCM (kunci 32 byte dari `SESSION_ENCRYPTION_KEY_FILE`). Cookie hanya berisi ID acak (256 bit). Dibuat setelah login Keycloak berhasil, dihapus saat logout. Saat access token (300 detik) habis, backend me-refresh token dan memeriksa ulang role; akun yang dinonaktifkan atau kehilangan role kehilangan session paling lambat pada refresh berikutnya (`401`). Refresh dikoordinasikan per session lewat kunci Redis; logout yang terjadi bersamaan tidak dapat dihidupkan kembali. Idle 1 jam (diperpanjang tiap request), batas mutlak 8 jam tidak bertambah oleh refresh; cookie dibuat berumur sama dengan batas mutlak.
 
 **Session:** backend membuat session di Redis (detail pada paragraf Session login di atas). Browser hanya menerima ID session acak lewat cookie `HttpOnly`, `Secure`, `SameSite=Lax`, `Path=/` (nama `__Host-session`). Nama cookie dan flag `Secure` diatur lewat environment variable: di production wajib `__Host-session` \+ `Secure` (server menolak start bila tidak); di development boleh nama tanpa prefix `__Host-` dan tanpa `Secure` agar bisa berjalan di http lokal. Mode ditentukan `APP_ENV`; override nama cookie dan `Secure` hanya berlaku bila `APP_ENV=development`; token Keycloak tidak pernah dikirim ke browser. ID session dibuat baru setiap login. Satu origin dengan frontend, sehingga tidak perlu konfigurasi CORS. \[RP-09\] Cookie berumur sama dengan batas mutlak session \[Lihat security.md §2\]. Session yang tidak ditemukan atau sudah kedaluwarsa menghasilkan `401`, lalu frontend mengarahkan pengguna ke login Keycloak.
 
@@ -34,11 +32,11 @@ Endpoint auth: \[Lihat stack.md §9.5\]. \[menunggu konfirmasi Keycloak\]
 
 ## 4. Logout
 
-**Logout:** session dihapus dari Redis dan cookie dibersihkan. \[Lihat security.md §2\]
+**Logout:** session dihapus dari Redis dan cookie dibersihkan, lalu backend mengakhiri session SSO Keycloak secara back-channel memakai refresh token (best effort; kegagalan atau Keycloak mati tidak menghalangi logout lokal). \[Lihat security.md §2\]
 
 ## 5. Proteksi login
 
-**Proteksi login:** password dimasukkan di Keycloak, sehingga pembatasan percobaan login (brute force detection) diatur di Keycloak. Pembatasan percobaan login per akun memakai Brute Force Detection di Keycloak \[nilai: diisi\]. Backend hanya membatasi endpoint mulai login dan callback per IP. \[menunggu keputusan: A-07\] \[menunggu konfirmasi Keycloak\]
+**Proteksi login:** password dimasukkan di Keycloak, sehingga pembatasan percobaan login per akun memakai Brute Force Detection Keycloak (realm: 5 kegagalan, jeda bertambah 60 detik, maksimal 15 menit). Backend membatasi endpoint mulai login dan callback per IP (`RATE_LIMIT_LOGIN_PER_MINUTE`).
 
 ## 6. Rate limiter dan aturan no-cache
 

@@ -181,15 +181,13 @@ export const api = {
     try {
       const s = await minta('GET', '/api/auth/me');
       csrf = s.csrfToken;
-      akunAktif = { id: s.username, sub: s.username, username: s.username, nama: s.nama, role: s.role || null };
+      const sub = s.sub || s.username;
+      akunAktif = { id: sub, sub, username: s.username, nama: s.nama, role: s.role || null };
     } catch (g) {
       if (!(g instanceof ApiError && g.status === 401)) throw g;
       akunAktif = null;
     }
     return akunAktif;
-  },
-  masuk(_idAkun?: string): Account | null {
-    return akunAktif ? { ...akunAktif } : null;
   },
   akun: (): Account | null => (akunAktif ? { ...akunAktif } : null),
   async keluar(): Promise<void> {

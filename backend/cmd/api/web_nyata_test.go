@@ -46,11 +46,11 @@ func TestWebNyataSemuaRuteTersaji(t *testing.T) {
 	}
 	h := httpapi.NewRouter(httpapi.Deps{
 		Log: slog.New(slog.NewTextHandler(io.Discard, nil)), SEO: d,
-		Static: &httpapi.DepsStatic{Dir: dir, DevLoginAktif: true, Halaman404: d.Halaman404, NamaSitus: "AI Center"},
+		Static: &httpapi.DepsStatic{Dir: dir, Halaman404: d.Halaman404, NamaSitus: "AI Center"},
 	})
 	for _, rute := range []string{"/", "/berita", "/dokumentasi", "/tim", "/tentang-kami", "/layanan/pelatihan", "/layanan/inference-solutions",
 		"/layanan/inference-solutions/jejak-alumni", "/layanan/inference-solutions/perencanaan-implan-gigi", "/layanan/inference-solutions/document-intelligence",
-		"/admin", "/admin/", "/admin/masuk", "/admin/masuk.css", "/admin/masuk.js", "/assets/fonts/GeneralSans-Regular.woff2", "/assets/img/AI-Center_Logo.png"} {
+		"/admin", "/admin/", "/assets/fonts/GeneralSans-Regular.woff2", "/assets/img/AI-Center_Logo.png"} {
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, rute, nil))
 		if rec.Code != http.StatusOK || rec.Body.Len() == 0 {

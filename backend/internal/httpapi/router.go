@@ -98,7 +98,7 @@ func NewRouter(d Deps) http.Handler {
 		api.Get("/testimoni", pub.daftarTestimoni)
 		api.Get("/tim", pub.daftarTim)
 
-		// Auth: dev-login (hanya development), logout, me. Keycloak menggantikan dev-login nanti.
+		// Auth: login dan callback Keycloak (OIDC), logout, me.
 		ah := authHandler{log: d.Log, DepsAuth: d.Auth}
 		api.Route("/auth", ah.routerAuth)
 

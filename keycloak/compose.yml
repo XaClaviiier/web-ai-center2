@@ -1,0 +1,56 @@
+name: ai-center-identity
+services:
+  keycloak-db:
+    image: postgres:18.6-trixie@sha256:3a4264520e121176619f54ff867d12774bc81e95e7b84db58d63bccdb6144b81
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD_FILE: /run/secrets/keycloak_db_password
+    secrets: [keycloak_db_password]
+    volumes: [keycloak_pg:/var/lib/postgresql]
+    networks: [identity_db]
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U keycloak -d keycloak']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  keycloak:
+    build: .
+    environment:
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_ORIGIN:?Exact HTTPS identity origin required}
+      KC_HOSTNAME_ADMIN: ${KEYCLOAK_ADMIN_ORIGIN:?Private HTTPS admin origin required}
+      KC_HTTPS_CERTIFICATE_FILE: /run/secrets/identity.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /run/secrets/identity.key
+      CMS_CALLBACK_URL: ${CMS_CALLBACK_URL:?Exact HTTPS CMS callback required}
+    secrets:
+      - keycloak_db_password
+      - source: identity_tls_certificate
+        target: identity.crt
+      - source: identity_tls_key
+        target: identity.key
+    volumes:
+      - ${KEYCLOAK_OPERATOR_CONFIG_FILE:?Operator runtime config file required}:/run/operator/keycloak.conf:ro
+      - ./config:/opt/keycloak/cms-config:ro
+    ports: ['127.0.0.1:8443:8443']
+    networks: [edge, identity_db]
+    depends_on:
+      keycloak-db: {condition: service_healthy}
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 1536m
+    pids_limit: 256
+networks:
+  edge: {}
+  identity_db: {internal: true}
+volumes:
+  keycloak_pg: {}
+secrets:
+  keycloak_db_password:
+    file: ${KEYCLOAK_DB_PASSWORD_FILE:?Database password file required}
+  identity_tls_certificate:
+    file: ${KEYCLOAK_TLS_CERTIFICATE_FILE:?TLS certificate file required}
+  identity_tls_key:
+    file: ${KEYCLOAK_TLS_KEY_FILE:?TLS private key file required}

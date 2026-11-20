@@ -34,7 +34,8 @@ beforeAll(async () => {
 });
 beforeEach(() => { log = []; penangan = () => balas(204); });
 
-const sesiAdmin = (tambah: (r: Req) => Response) => (r: Req) => (r.url === '/api/auth/me' ? balas(200, { nama: 'Admin', username: 'admin.dev', role: 'pegawai', csrfToken: 'tk' }) : tambah(r));
+const SUB = '6f1c2d3e-0000-4000-8000-00000000abcd';
+const sesiAdmin = (tambah: (r: Req) => Response) => (r: Req) => (r.url === '/api/auth/me' ? balas(200, { sub: SUB, nama: 'Admin', username: 'admin.cms', role: 'pegawai', csrfToken: 'tk' }) : tambah(r));
 const beritaAdmin = (o: object = {}) => ({ id: 1, slug: 's', judul: 'Judul', ringkasan: 'R', isi: 'Isi', tanggalPublikasi: '09-11-2026', gambar: { key: 'berita/k.png', url: '/media/berita/k.png' }, status: 'draft', version: 3, dibuatPada: '2026-11-09T00:00:00Z', dibuatOleh: 'u', diubahOleh: 'u', ...o });
 const gagalDengan = async (p: Promise<unknown>) => { try { await p; } catch (g) { return g as any; } throw new Error('seharusnya melempar galat'); };
 
@@ -99,7 +100,7 @@ describe('sesi dan CSRF', () => {
     expect(await api.siapkan()).toBeNull();
     expect(api.akun()).toBeNull();
     penangan = sesiAdmin(() => balas(204));
-    expect(await api.siapkan()).toMatchObject({ nama: 'Admin', username: 'admin.dev', role: 'pegawai' });
+    expect(await api.siapkan()).toEqual({ id: SUB, sub: SUB, nama: 'Admin', username: 'admin.cms', role: 'pegawai' });
     await api.adminHapus('tim', 3);
     const hapus = log.at(-1)!;
     expect([hapus.metode, hapus.url, hapus.headers['X-CSRF-Token']]).toEqual(['DELETE', '/api/admin/tim/3', 'tk']);
@@ -114,6 +115,11 @@ describe('sesi dan CSRF', () => {
   test('galat selain 401 pada /me dilempar ulang', async () => {
     penangan = () => balas(500);
     expect((await gagalDengan(api.siapkan())).status).toBe(500);
+  });
+
+  test('/me tanpa sub: id dan sub memakai username', async () => {
+    penangan = () => balas(200, { nama: 'Lama', username: 'lama', role: 'direktur', csrfToken: 'tk2' });
+    expect(await api.siapkan()).toEqual({ id: 'lama', sub: 'lama', nama: 'Lama', username: 'lama', role: 'direktur' });
   });
 });
 

@@ -142,15 +142,16 @@ Butuh session login (cookie) dan header `X-CSRF-Token` untuk POST/PUT/DELETE \[L
 | \[diisi\] | \[diisi\] | Pasang lock, heartbeat, lepas lock (Berita, Dokumentasi, Testimoni, Tim) |
 | \[diisi\] | \[diisi\] | Unggah gambar \[menunggu keputusan: RP-10\] |
 
-Endpoint autentikasi \[menunggu konfirmasi Keycloak\]:
+Endpoint autentikasi (Keycloak, diputuskan 2026-11-20):
 
 | Method | Path | Aksi |
 |---|---|---|
-| GET | `/api/auth/login` | Mulai alur OIDC (redirect ke Keycloak) |
-| GET | `/api/auth/callback` | Terima kode OIDC, buat session |
-| POST | `/api/auth/logout` | Hapus session |
-| GET | `/api/auth/me` | Info pengguna (nama \+ role) |
-| \[diisi\] | \[diisi\] | Login development (hanya `APP_ENV=development`) \[Lihat security.md §1; KONFLIK belum diputuskan\] |
+| GET | `/api/auth/login` | Mulai alur OIDC (302 ke Keycloak, PKCE S256). `?pilih=1` memaksa form login (ganti akun) |
+| GET | `/api/auth/callback` | Terima kode OIDC, buat session, 302 ke `/admin/`; gagal → 302 `/admin/?galat=akses_ditolak\|login_kedaluwarsa\|login_gagal` |
+| POST | `/api/auth/logout` | Hapus session (CSRF), akhiri SSO Keycloak best effort, `204` |
+| GET | `/api/auth/me` | `{sub, nama, username, role, csrfToken}`; tanpa session `401` |
+
+Tidak ada login development; `/api/auth/dev-login` dan `/admin/masuk` sudah dihapus.
 
 ### 9.6 Skema JSON per entitas
 
@@ -175,7 +176,7 @@ URL gambar di respons: \[menunggu keputusan: RP-11\].
 
 ### 9.8 Environment variable
 
-Nama yang sudah dipakai: `APP_ENV`, `SESSION_COOKIE_NAME`, `SESSION_COOKIE_SECURE`, `DATABASE_URL`, `REDIS_URL`, `RUSTFS_ENDPOINT`, `RUSTFS_ACCESS_KEY`, `RUSTFS_SECRET_KEY`, `RUSTFS_BUCKET`, `ALLOWED_ORIGINS` (pemeriksaan header `Origin` untuk CSRF), `PUBLIC_BASE_URL`, `KEYCLOAK_ISSUER_URL`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`, `KEYCLOAK_REDIRECT_URI` \[menunggu konfirmasi Keycloak\].
+Nama yang sudah dipakai: `APP_ENV`, `SESSION_COOKIE_NAME`, `SESSION_COOKIE_SECURE`, `DATABASE_URL`, `REDIS_URL`, `RUSTFS_ENDPOINT`, `RUSTFS_ACCESS_KEY`, `RUSTFS_SECRET_KEY`, `RUSTFS_BUCKET`, `ALLOWED_ORIGINS` (pemeriksaan header `Origin` untuk CSRF), `PUBLIC_BASE_URL` (callback = `PUBLIC_BASE_URL` + `/api/auth/callback`), `KEYCLOAK_ISSUER`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET_FILE`, `SESSION_ENCRYPTION_KEY_FILE`. Contoh lengkap: `backend/.env.example`.
 
 Nama final \[diisi\] untuk daftar yang sudah disebut di rencana:
 

@@ -1,12 +1,12 @@
-/* Dashboard admin dengan rute hash. Halaman hanya memanggil api.*; login lewat redirect
-   (Keycloak, di sini simulasi pemilihan akun), aplikasi tidak punya form password. */
+/* Dashboard admin dengan rute hash. Halaman hanya memanggil api.*; login lewat redirect Keycloak
+   (/api/auth/login), aplikasi tidak punya form password. */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ConfirmDialog } from '../../src/components/ui/alert-dialog';
 import { Button } from '../../src/components/ui/button';
 import { errorMessage, Icon, State } from '../../src/shared/ui';
-import { image } from '../../src/shared/content';
 import { api } from '../../src/api/api';
-import { AdminContext, is401, PESAN_TANPA_PERUBAHAN, URL_LOGIN, useTitle, type Admin, type ConfirmOptions, type FormGuard } from './context';
+import { AdminContext, is401, PESAN_TANPA_PERUBAHAN, URL_LOGIN, type Admin, type ConfirmOptions, type FormGuard } from './context';
+import { Layar } from './Layar';
 import { ENTITAS, isEntity } from './entities';
 import ListPage from './ListPage';
 import FormPage from './FormPage';
@@ -17,21 +17,6 @@ interface Toast {
   id: number;
   pesan: string;
   galat: boolean;
-}
-
-/* === Layar tanpa kerangka === */
-function Layar({ judul, teks, aksi, galat = false }: { judul: string; teks: string; aksi: ReactNode; galat?: boolean }) {
-  useTitle(`${judul} | Admin UBAYA AI Center`);
-  return (
-    <main className="layar">
-      <div className="layar__kartu">
-        <img className="layar__logo" src={image('AI-Center_Logo.png')} alt="UBAYA AI Center" height={44} />
-        <h1 className={galat ? 'layar__judul layar__judul--galat' : 'layar__judul'}>{judul}</h1>
-        <p className="teks-sekunder">{teks}</p>
-        {aksi}
-      </div>
-    </main>
-  );
 }
 
 function KeBerita() {
@@ -63,7 +48,7 @@ function Rute({ hash }: { hash: string }) {
 }
 
 export default function App() {
-  const [akun] = useState(() => api.masuk(new URLSearchParams(location.search).get('akun') ?? ''));
+  const [akun] = useState(() => api.akun());
   const [rute, setRute] = useState({ hash: location.hash, render: 0 });
   const [sesiHabis, setSesiHabis] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -106,6 +91,7 @@ export default function App() {
         const teks = `Anda perlu masuk kembali untuk mengelola konten.${formAktif.current?.dirty() ? ' Perubahan yang belum disimpan akan hilang.' : ''}`;
         if (!(await konfirmasi({ judul: 'Keluar dari admin?', teks, labelYa: 'Keluar' }))) return;
         formAktif.current = null;
+        // Backend mengakhiri sesi lokal dan SSO Keycloak; /admin/ lalu mengalihkan ke login Keycloak.
         await api.keluar();
         location.href = import.meta.env.BASE_URL;
       },

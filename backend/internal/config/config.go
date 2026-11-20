@@ -1,5 +1,6 @@
 // Package config membaca konfigurasi dari environment variable.
-// Fungsi murni (input lookup -> output Config) supaya mudah diuji tanpa menyentuh os.Environ.
+// Fungsi murni (input lookup -> output Config) supaya mudah diuji tanpa menyentuh os.Environ; satu-satunya efek
+// samping adalah membaca berkas rahasia yang ditunjuk variabel *_FILE.
 package config
 
 import (
@@ -7,6 +8,7 @@ import (
 	"fmt"
 	"net/netip"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +24,11 @@ const (
 
 	portDefault          = 8080
 	namaCookieDevDefault = "session"
+	klienKeycloakDefault = "ai-center-cms"
+	panjangKunciSesi     = 32 // kunci AES-256 mentah di SESSION_ENCRYPTION_KEY_FILE
+
+	// PathCallbackOIDC ditambahkan ke PUBLIC_BASE_URL sebagai redirect_uri Keycloak.
+	PathCallbackOIDC = "/api/auth/callback"
 
 	idleTTLDefaultDetik       = 3600  // 1 jam
 	absoluteTTLDefaultDetik   = 28800 // 8 jam
@@ -92,11 +99,14 @@ type Config struct {
 	// Masa hidup entri cache konten publik di Redis.
 	CacheTTL time.Duration
 
-	// Login development (password) hanya aktif bila APP_ENV=development (security.md §1).
-	DevLoginAktif bool
-	AdminPassword string
-	// Akun admin development kedua (opsional) untuk menguji dua admin yang saling mengunci; kosong = nonaktif.
-	AdminPassword2 string
+	// Keycloak (OIDC, klien confidential): issuer harus sama persis dengan hasil discovery. KeycloakClientSecret
+	// dibaca dari KEYCLOAK_CLIENT_SECRET_FILE; jangan pernah dicatat.
+	KeycloakIssuer       string
+	KeycloakClientID     string
+	KeycloakClientSecret string
+	KeycloakRedirectURL  string // PUBLIC_BASE_URL + /api/auth/callback
+	// Kunci AES-256-GCM (32 byte mentah dari SESSION_ENCRYPTION_KEY_FILE) untuk refresh token di session; jangan dicatat.
+	SessionEncryptionKey []byte
 
 	// Soft lock (docs/database.md §4): masa hidup kunci dan interval heartbeat yang disarankan ke klien.
 	LockTTL       time.Duration
@@ -129,8 +139,6 @@ func Load(lookup Lookup) (Config, error) {
 		AppEnv:          get("APP_ENV"),
 		DatabaseURL:     get("DATABASE_URL"),
 		RedisURL:        get("REDIS_URL"),
-		AdminPassword:   get("ADMIN_PASSWORD"),
-		AdminPassword2:  get("ADMIN_PASSWORD_2"),
 		RustFSEndpoint:  get("RUSTFS_ENDPOINT"),
 		RustFSAccessKey: get("RUSTFS_ACCESS_KEY"),
 		RustFSSecretKey: get("RUSTFS_SECRET_KEY"),
@@ -354,17 +362,32 @@ func Load(lookup Lookup) (Config, error) {
 	cfg.OrphanMinAge = time.Duration(umurYatim) * time.Hour
 	cfg.OrphanMaxDelete = maksYatim
 
-	cfg.DevLoginAktif = cfg.AppEnv == EnvDevelopment
-	if cfg.AdminPassword2 != "" {
-		if !cfg.DevLoginAktif {
-			errs = append(errs, errors.New("ADMIN_PASSWORD_2 hanya boleh diisi di development"))
-		} else if cfg.AdminPassword2 == cfg.AdminPassword {
-			errs = append(errs, errors.New("ADMIN_PASSWORD_2 harus berbeda dari ADMIN_PASSWORD"))
-		}
+	cfg.KeycloakIssuer = get("KEYCLOAK_ISSUER")
+	if err := validasiIssuer(cfg.KeycloakIssuer, produksi); err != nil {
+		errs = append(errs, err)
 	}
-	if cfg.DevLoginAktif && cfg.AdminPassword == "" {
-		errs = append(errs, errors.New("ADMIN_PASSWORD wajib diisi untuk login development"))
+	cfg.KeycloakClientID = get("KEYCLOAK_CLIENT_ID")
+	if cfg.KeycloakClientID == "" {
+		cfg.KeycloakClientID = klienKeycloakDefault
 	}
+	if cfg.PublicBaseURL != "" {
+		cfg.KeycloakRedirectURL = cfg.PublicBaseURL + PathCallbackOIDC
+	}
+	rahasia, err := bacaBerkasRahasia("KEYCLOAK_CLIENT_SECRET_FILE", get("KEYCLOAK_CLIENT_SECRET_FILE"))
+	if err != nil {
+		errs = append(errs, err)
+	}
+	cfg.KeycloakClientSecret = strings.TrimSpace(string(rahasia))
+	if err == nil && cfg.KeycloakClientSecret == "" {
+		errs = append(errs, errors.New("KEYCLOAK_CLIENT_SECRET_FILE: berkas kosong"))
+	}
+	kunci, err := bacaBerkasRahasia("SESSION_ENCRYPTION_KEY_FILE", get("SESSION_ENCRYPTION_KEY_FILE"))
+	if err != nil {
+		errs = append(errs, err)
+	} else if len(kunci) != panjangKunciSesi {
+		errs = append(errs, fmt.Errorf("SESSION_ENCRYPTION_KEY_FILE harus berisi tepat %d byte mentah, dapat %d byte", panjangKunciSesi, len(kunci)))
+	}
+	cfg.SessionEncryptionKey = kunci
 
 	if len(errs) > 0 {
 		return Config{}, fmt.Errorf("konfigurasi tidak valid: %w", errors.Join(errs...))
@@ -421,6 +444,46 @@ func validasiOrigin(nama, nilai string) error {
 		return fmt.Errorf("%s: %q bukan origin http(s)://host[:port]", nama, nilai)
 	}
 	return nil
+}
+
+// validasiIssuer: https wajib di production; di luar production http hanya untuk Keycloak lokal
+// (localhost/127.0.0.1). Issuer dipakai apa adanya (tanpa membuang slash) karena harus sama persis dengan discovery.
+func validasiIssuer(nilai string, produksi bool) error {
+	if nilai == "" {
+		return errors.New("KEYCLOAK_ISSUER wajib diisi")
+	}
+	u, err := url.Parse(nilai)
+	if err != nil || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return fmt.Errorf("KEYCLOAK_ISSUER %q bukan URL issuer yang valid", nilai)
+	}
+	switch {
+	case u.Scheme == "https":
+		return nil
+	case u.Scheme != "http":
+		return fmt.Errorf("KEYCLOAK_ISSUER %q harus memakai https", nilai)
+	case produksi:
+		return errors.New("KEYCLOAK_ISSUER di production harus https")
+	case u.Hostname() == "localhost" || u.Hostname() == "127.0.0.1":
+		return nil
+	default:
+		return fmt.Errorf("KEYCLOAK_ISSUER %q: http hanya diizinkan untuk localhost atau 127.0.0.1", nilai)
+	}
+}
+
+// bacaBerkasRahasia membaca berkas yang ditunjuk variabel nama. Galat hanya menyebut nama variabel dan path,
+// tidak pernah isi berkas.
+func bacaBerkasRahasia(nama, path string) ([]byte, error) {
+	if path == "" {
+		return nil, fmt.Errorf("%s wajib diisi", nama)
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("%s: berkas %q tidak dapat dibaca", nama, path)
+	}
+	if len(b) == 0 {
+		return nil, fmt.Errorf("%s: berkas %q kosong", nama, path)
+	}
+	return b, nil
 }
 
 // parseProxies membaca daftar CIDR atau IP tunggal dipisah koma (mis. "10.0.0.0/8, 192.168.1.5").

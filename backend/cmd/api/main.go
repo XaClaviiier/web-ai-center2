@@ -75,6 +75,25 @@ func jalankan() error {
 		return fmt.Errorf("Redis tidak terjangkau: %w", err)
 	}
 
+	// Keycloak: discovery saat start dengan issuer yang harus sama persis; gagal = server tidak start.
+	sandi, err := auth.BuatSandi(cfg.SessionEncryptionKey)
+	if err != nil {
+		return err
+	}
+	oidcCtx, batalOIDC := context.WithTimeout(ctx, 15*time.Second)
+	penyedia, err := auth.BukaOIDC(oidcCtx, auth.KonfigOIDC{
+		Issuer:       cfg.KeycloakIssuer,
+		ClientID:     cfg.KeycloakClientID,
+		ClientSecret: cfg.KeycloakClientSecret,
+		RedirectURL:  cfg.KeycloakRedirectURL,
+	})
+	batalOIDC()
+	if err != nil {
+		return fmt.Errorf("Keycloak: %w", err)
+	}
+	sesi := auth.NewManager(auth.RedisStore{C: rdb, Sandi: sandi}, cfg.SessionIdleTTL, cfg.SessionAbsoluteTTL)
+	sesi.Penyegar = penyedia
+
 	gambar := media.NewS3(media.S3Config{
 		Endpoint:  cfg.RustFSEndpoint,
 		AccessKey: cfg.RustFSAccessKey,
@@ -104,7 +123,7 @@ func jalankan() error {
 		SEO:                seoDeps,
 		HSTS:               cfg.AppEnv == config.EnvProduction,
 		HashSkrip:          muatHashSkrip(cfg.StaticDir, log),
-		Static:             &httpapi.DepsStatic{Dir: cfg.StaticDir, DevLoginAktif: cfg.DevLoginAktif, Halaman404: seoDeps.Halaman404, NamaSitus: cfg.SiteName},
+		Static:             &httpapi.DepsStatic{Dir: cfg.StaticDir, Halaman404: seoDeps.Halaman404, NamaSitus: cfg.SiteName},
 		Log:                log,
 		DB:                 st,
 		Konten:             st,
@@ -120,11 +139,10 @@ func jalankan() error {
 		LockHeartbeatDetik: int(cfg.LockHeartbeat.Seconds()),
 		Admin:              httpapi.DepsAdmin{Berita: layananBerita, Dokumentasi: layananDokumentasi, Testimoni: layananTestimoni, Tim: layananTim, Log: admin.LogLayanan{Repo: st.AdminLog()}},
 		Auth: httpapi.DepsAuth{
-			Sesi:           auth.NewManager(auth.RedisStore{C: rdb}, cfg.SessionIdleTTL, cfg.SessionAbsoluteTTL),
+			Sesi:           sesi,
 			Limiter:        ratelimit.Redis{C: rdb, Jendela: time.Minute},
-			DevLoginAktif:  cfg.DevLoginAktif,
-			AdminPassword:  cfg.AdminPassword,
-			AdminPassword2: cfg.AdminPassword2,
+			OIDC:           penyedia,
+			Transaksi:      auth.RedisTransaksi{C: rdb},
 			BatasLogin:     cfg.RateLimitLoginPerMinute,
 			CookieName:     cfg.SessionCookieName,
 			CookieSecure:   cfg.SessionCookieSecure,
@@ -185,7 +203,7 @@ func peringatanKonfigurasi(cfg config.Config, log *slog.Logger) {
 		log.Warn("TRUSTED_PROXIES kosong di production: bila server berada di belakang proxy, semua klien terlihat berasal dari IP proxy dan batas laju per-IP dipakai bersama; isi dengan CIDR proxy tepercaya")
 	}
 	if cfg.AppEnv != config.EnvProduction && !hostLokal(cfg.PublicBaseURL) {
-		log.Warn("APP_ENV bukan production padahal PUBLIC_BASE_URL bukan host lokal: login development dan pengaturan longgar mungkin aktif di server publik", "app_env", cfg.AppEnv, "public_base_url", cfg.PublicBaseURL)
+		log.Warn("APP_ENV bukan production padahal PUBLIC_BASE_URL bukan host lokal: pengaturan longgar development (cookie tanpa Secure, issuer http lokal) mungkin aktif di server publik", "app_env", cfg.AppEnv, "public_base_url", cfg.PublicBaseURL)
 	}
 }
 

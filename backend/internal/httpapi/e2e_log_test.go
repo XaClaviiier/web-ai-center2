@@ -40,8 +40,8 @@ func TestE2ELogAktivitas(t *testing.T) {
 	a.harus(a.panggil("PUT", pathT, `{"nama":"X","teks":"y","posisi":"z","foto":null,"version":1}`), 400, "edit posted")
 	a.harus(a.panggil("POST", pathT+"/post", `{"version":99}`), 409, "version basi")
 
-	// akun B (login lain) memakai cookie sendiri
-	b := loginDengan(t, a.e.h, passDev2)
+	// akun B (session lain) memakai cookie sendiri
+	b := loginSebagai(t, a.e, identitasUji2)
 	a.id, a.csrf = b.id, b.csrf
 	a.harus(a.panggil("POST", pathT+"/retract", `{"version":2}`), 200, "retract oleh B")
 	a.harus(a.panggil("DELETE", pathT, ""), 204, "hapus ke trash oleh B")

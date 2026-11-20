@@ -16,10 +16,6 @@ import (
 	"github.com/XaClaviiier/web-ai-center2/backend/internal/testutil"
 )
 
-const passDev2 = "rahasia-dev-dua"
-
-type sesiUji struct{ id, csrf string }
-
 type lingkLock struct {
 	h   http.Handler
 	rdb *redis.Client
@@ -29,38 +25,18 @@ type lingkLock struct {
 	b   sesiUji // dev-admin-2 ("Admin Dev 2")
 }
 
-func loginDengan(t *testing.T, h http.Handler, pass string) sesiUji {
-	t.Helper()
-	rec := kirim(h, http.MethodPost, "/api/auth/dev-login", `{"password":"`+pass+`"}`, opsi{origin: originSah})
-	if rec.Code != http.StatusOK {
-		t.Fatalf("login: %d %s", rec.Code, rec.Body)
-	}
-	var s sesiUji
-	for _, c := range rec.Result().Cookies() {
-		if c.Name == "session" {
-			s.id = c.Value
-		}
-	}
-	var body struct {
-		CSRFToken string `json:"csrfToken"`
-	}
-	_ = json.Unmarshal(rec.Body.Bytes(), &body)
-	s.csrf = body.CSRFToken
-	return s
-}
-
 func siapkanLock(t *testing.T) lingkLock {
 	t.Helper()
 	rdb := testutil.RedisTes(t)
 	svc := &layananPalsu{hasil: contohBerita()}
 	tim := &layananTimPalsu{hasil: admin.Tim{ID: 3}}
-	e := siapkanAuth(t, func(d *DepsAuth) { d.AdminPassword2 = passDev2 }, func(d *Deps) {
+	e := siapkanAuth(t, nil, func(d *Deps) {
 		d.Admin = DepsAdmin{Berita: svc, Tim: tim}
 		d.Lock = &lock.Lock{C: rdb, TTL: time.Minute}
 		d.LockHeartbeatDetik = 20
 		d.Cache = &cache.Cache{C: rdb}
 	})
-	return lingkLock{h: e.h, rdb: rdb, svc: svc, tim: tim, a: loginDengan(t, e.h, passDev), b: loginDengan(t, e.h, passDev2)}
+	return lingkLock{h: e.h, rdb: rdb, svc: svc, tim: tim, a: loginSebagai(t, e, identitasUji), b: loginSebagai(t, e, identitasUji2)}
 }
 
 func (e lingkLock) kirim(t *testing.T, s sesiUji, metode, path, body string) *httptest.ResponseRecorder {
@@ -79,7 +55,7 @@ func peta(t *testing.T, rec *httptest.ResponseRecorder) map[string]any {
 
 const bodyUbahUji = `{"judul":"x","isi":"y","tanggalPublikasi":"09-11-2026","gambar":"berita/3f9c2a10-7b4e-4c6d-9a1f-0123456789ab.png","version":3}`
 
-func TestAkunDevKeduaPunyaIdentitasSendiri(t *testing.T) {
+func TestAkunUjiKeduaPunyaIdentitasSendiri(t *testing.T) {
 	e := siapkanLock(t)
 	for _, c := range []struct {
 		s    sesiUji
@@ -89,14 +65,6 @@ func TestAkunDevKeduaPunyaIdentitasSendiri(t *testing.T) {
 		if rec.Code != 200 || peta(t, rec)["nama"] != c.nama {
 			t.Errorf("me: %d %s (mau %s)", rec.Code, rec.Body, c.nama)
 		}
-	}
-	// Password acak tetap ditolak, juga saat akun kedua tidak dikonfigurasi.
-	if rec := kirim(e.h, http.MethodPost, "/api/auth/dev-login", `{"password":"salah"}`, opsi{origin: originSah}); rec.Code != http.StatusUnauthorized {
-		t.Errorf("password salah harus 401, dapat %d", rec.Code)
-	}
-	tanpa := siapkanAuth(t, nil)
-	if rec := kirim(tanpa.h, http.MethodPost, "/api/auth/dev-login", `{"password":""}`, opsi{origin: originSah}); rec.Code != http.StatusUnauthorized {
-		t.Errorf("password kosong tidak boleh cocok dengan akun kedua yang kosong: %d", rec.Code)
 	}
 }
 
