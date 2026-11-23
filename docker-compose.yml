@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: mydb
+      POSTGRES_DB: ai_center
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     restart: unless-stopped

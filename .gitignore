@@ -34,3 +34,8 @@ output/
 
 # Keycloak operator credentials, keys and local test accounts
 keycloak/secrets/
+
+#Folder db, redis, rustfs
+pgdata/
+redis_data/
+rustfs-data/
