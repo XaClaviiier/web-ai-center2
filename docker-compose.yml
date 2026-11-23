@@ -1,0 +1,42 @@
+#Semua volumes perlu folder masing-masing agar data persistent, perhatikan letaknya
+services:
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: mydb
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+  
+  rustfs:
+    image: rustfs/rustfs:1.0.3    
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./rustfs-data:/data
+    environment:
+      RUSTFS_ACCESS_KEY: ai-center-local
+      RUSTFS_SECRET_KEY: web-ai-center-local-dev      
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_OBS_LOGGER_LEVEL: error
+      RUSTFS_OBS_LOG_DIRECTORY: /data/logs
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis_data:/data
+    command: redis-server --appendonly yes --requirepass "redis-ai-center-local-dev"
+    environment:
+      REDIS_PASSWORD: redis-ai-center-local-dev
