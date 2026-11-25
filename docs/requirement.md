@@ -1,5 +1,7 @@
 # Requirement — UBAYA AI Center CMS
 
+> **Status (25 November 2026):** folder `prototype/` sudah dihapus dari repo pada commit `4f1d5fe` (14 November 2026); implementasinya sekarang `frontend-final/` (sumber) dan `web/` (hasil build). Rujukan ke `prototype/` di dokumen ini adalah catatan keputusan desain fase prototype dan tetap berlaku sebagai sejarah. Isi folder lama dapat dilihat dengan `git show 4f1d5fe^:prototype/<path>`.
+
 ## Log Aktivitas — disetujui 11 November 2026
 
 Bagian admin baru `#/log-aktivitas` menampilkan Tanggal & Waktu, Aktivitas, dan Username, terbaru dahulu. Baca-saja, tanpa tambah/edit/hapus log. Mendukung filter username, jenis aktivitas dan rentang hari Asia/Jakarta; pagination 10 entri per halaman khusus log (daftar CRUD tetap mengikuti aturan sebelumnya).

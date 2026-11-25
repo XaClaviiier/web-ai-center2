@@ -1,5 +1,7 @@
 # Stack — UBAYA AI Center CMS
 
+> **Status (25 November 2026):** folder `prototype/` sudah dihapus dari repo pada commit `4f1d5fe` (14 November 2026); implementasinya sekarang `frontend-final/` (sumber) dan `web/` (hasil build). Rujukan ke `prototype/` di dokumen ini adalah catatan keputusan desain fase prototype dan tetap berlaku sebagai sejarah. Isi folder lama dapat dilihat dengan `git show 4f1d5fe^:prototype/<path>`.
+
 ## Log Aktivitas — tambahan 11 November 2026
 
 Prototype menyediakan `api.adminLog({ page, username, jenis, dari, sampai })`, respons `{ items, page, limit: 10, total, usernames }`. Filter tanggal memakai YYYY-MM-DD dan hari Asia/Jakarta secara inklusif. Urutan terbaru lalu ID menurun; page dibatasi ke halaman tersedia. `usernames` berisi username yang pernah tercatat pada instance halaman untuk pilihan filter. Akses lewat akun aktif simulasi yang memiliki role. Data kosong saat halaman baru/refresh; panel Simulasi tetap mendukung loading/kosong/error/429/401. Tidak menambah dependency atau menghubungkan backend lama.
@@ -191,7 +193,7 @@ Nama final \[diisi\] untuk daftar yang sudah disebut di rencana:
 * Rate limit dan `429`: \[Lihat security.md §6\]  
 * Cache konten: \[Lihat database.md §7\]
 
-## 10. Prototype
+## 10. Prototype (sejarah: folder sudah dihapus, lihat catatan status di atas)
 
 Prototype adalah acuan visual dan alur, bukan basis kode implementasi \[Lihat §1 dan §4\].
 

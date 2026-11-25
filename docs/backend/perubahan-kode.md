@@ -1,6 +1,6 @@
 # Catatan Perubahan Kode
 
-Pencatat perubahan terhadap code base (bukan perubahan dokumen perencanaan). Dipakai bersama aturan di `CLAUDE.md`: setiap perubahan kode dicatat di sini dalam sesi yang sama. Entri terbaru di paling atas.
+Pencatat perubahan terhadap code base (bukan perubahan dokumen perencanaan). Dipakai bersama aturan di `CONTRIBUTING.md`: setiap perubahan kode dicatat di sini dalam sesi yang sama. Entri terbaru di paling atas.
 
 ## Format entri
 
@@ -13,7 +13,7 @@ Pencatat perubahan terhadap code base (bukan perubahan dokumen perencanaan). Dip
 - **Verifikasi:** perintah yang dijalankan dan hasilnya
 ```
 
-Aturan lengkap ada di `CLAUDE.md` bagian "Pencatatan perubahan". Ringkasnya: berkas ini hanya untuk perubahan **major**; perubahan minor yang masih penting dikelompokkan di dalam entri tahap/langkah tempat ia terjadi; library baru dicatat di `req.md`; perubahan struktur/atribut database dicatat di `schema-baru.md`.
+Aturan lengkap ada di `CONTRIBUTING.md` bagian 4 "Pencatatan perubahan". Ringkasnya: berkas ini hanya untuk perubahan **major**; perubahan minor yang masih penting dikelompokkan di dalam entri tahap/langkah tempat ia terjadi; library baru dicatat di `req.md`; perubahan struktur/atribut database dicatat di `schema-baru.md`.
 
 ## Entri
 

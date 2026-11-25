@@ -1,6 +1,6 @@
 # Frontend final — UBAYA AI Center
 
-Implementation of `prototype/` with the stack agreed in `docs/stack.md`: Astro + TypeScript (static public pages), React + Vite (admin at `/admin`), Tailwind CSS v4 (no preflight, prototype CSS kept), shadcn/ui primitives, GSAP/motion, Embla, TanStack Query, Bun.
+Implementation of the former `prototype/` (removed in commit `4f1d5fe`; view with `git show 4f1d5fe^:prototype/<path>`) with the stack agreed in `docs/stack.md`: Astro + TypeScript (static public pages), React + Vite (admin at `/admin`), Tailwind CSS v4 (no preflight, prototype CSS kept), shadcn/ui primitives, GSAP/motion, Embla, TanStack Query, Bun.
 
 ## Commands
 
