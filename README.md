@@ -89,4 +89,4 @@ Session di Redis dengan cookie `HttpOnly`; metode ubah-data wajib `Origin` yang 
 
 ## Dokumen
 
-`docs/stack.md` (stack dan kontrak API), `docs/requirement.md`, `docs/database.md`, `docs/security.md`, `docs/design.md`, dan `docs/backend/` (catatan perubahan, rencana merge, skema). Aturan kerja untuk agen/kontributor ada di `CLAUDE.md`.
+`docs/stack.md` (stack dan kontrak API), `docs/requirement.md`, `docs/database.md`, `docs/security.md`, `docs/design.md`, dan `docs/backend/` (catatan perubahan, rencana merge, skema). Aturan kerja tim ada di `CONTRIBUTING.md`.

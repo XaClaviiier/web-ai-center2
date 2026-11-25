@@ -1,0 +1,10 @@
+# Pemetaan identitas Git: satu nama dan email kanonik per orang (dipakai git log, git shortlog, git blame).
+# Format: Nama Kanonik <email-kanonik> Nama Lama <email-lama>
+#
+# Terkonfirmasi dari riwayat git: nama sama, email kedua adalah alamat noreply GitHub akun yang sama.
+XaClaviiier <angelfongiman@gmail.com> XaClaviiier <101919517+XaClaviiier@users.noreply.github.com>
+
+# USULAN, belum aktif: nama mirip tetapi email berbeda, jadi tidak dapat dipastikan dari git saja.
+# Pemilik identitas mohon mengonfirmasi di PR; setelah dikonfirmasi, hapus tanda # di depan barisnya.
+# Miranda Michelle <mirandamatulatan88@gmail.com> Miranda-spec <mirandamatulatan77@gmail.com>
+# SmexyHarambe <abelcellonata@gmail.com> Harambe <s160423210@student.ubaya.ac.id>

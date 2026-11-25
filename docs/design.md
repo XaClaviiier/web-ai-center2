@@ -1,5 +1,7 @@
 # Design — UBAYA AI Center CMS
 
+> **Status (25 November 2026):** folder `prototype/` sudah dihapus dari repo pada commit `4f1d5fe` (14 November 2026); implementasinya sekarang `frontend-final/` (sumber) dan `web/` (hasil build). Rujukan ke `prototype/` di dokumen ini adalah catatan keputusan desain fase prototype dan tetap berlaku sebagai sejarah. Isi folder lama dapat dilihat dengan `git show 4f1d5fe^:prototype/<path>`.
+
 ## Log Aktivitas admin — 11 November 2026
 
 Menu Log Aktivitas ditambahkan setelah Tim pada navigasi admin yang sama. Rute `#/log-aktivitas` memakai kerangka, token warna, tipografi, tabel, tombol, empty/error/loading state yang tersedia. Tidak ada kolom aksi atau kontrol modifikasi log. Label Simulasi dan keterangan hilang setelah refresh terlihat di atas filter.
