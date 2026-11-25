@@ -66,6 +66,7 @@ Versi backend lengkap, alasan pemilihan, dan hasil `govulncheck`: `docs/backend/
    go run ./cmd/api                               # http://localhost:8080
    ```
    Admin: `http://localhost:8080/admin/` (login lewat Keycloak). Di development, set `JOBS_ENABLED=false` agar job pembersihan tidak menyentuh bucket dev.
+6. **Data contoh (opsional, dev saja):** `cd backend && go run ./cmd/seed` mengisi berita, dokumentasi, tim, dan testimoni contoh dengan gambar placeholder. Aman diulang; menolak berjalan di `APP_ENV=production`. Hapus dengan `DELETE FROM <tabel> WHERE created_by = 'seed-dev'`.
 
 ## Tes
 
