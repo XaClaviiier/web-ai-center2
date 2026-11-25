@@ -260,6 +260,9 @@ func Load(lookup Lookup) (Config, error) {
 		}
 	} else if err := validasiOrigin("PUBLIC_BASE_URL", cfg.PublicBaseURL); err != nil {
 		errs = append(errs, err)
+	} else if produksi && !strings.HasPrefix(cfg.PublicBaseURL, "https://") {
+		// Cookie __Host-session + Secure tidak disimpan browser lewat http: login gagal tanpa pesan jelas.
+		errs = append(errs, errors.New("PUBLIC_BASE_URL di production harus https"))
 	}
 
 	origins, err := parseOrigins(get("ALLOWED_ORIGINS"))
@@ -268,6 +271,13 @@ func Load(lookup Lookup) (Config, error) {
 	}
 	if produksi && len(origins) == 0 {
 		errs = append(errs, errors.New("ALLOWED_ORIGINS wajib diisi di production"))
+	}
+	if produksi {
+		for _, o := range origins {
+			if !strings.HasPrefix(o, "https://") {
+				errs = append(errs, fmt.Errorf("ALLOWED_ORIGINS di production harus https: %q", o))
+			}
+		}
 	}
 	cfg.AllowedOrigins = origins
 
