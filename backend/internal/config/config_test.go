@@ -232,6 +232,8 @@ func TestLoadGalat(t *testing.T) {
 		{"produksi Secure=false", func(m map[string]string) { m["SESSION_COOKIE_SECURE"] = "false" }, dasarProd, "harus true"},
 		{"produksi tanpa PUBLIC_BASE_URL", func(m map[string]string) { delete(m, "PUBLIC_BASE_URL") }, dasarProd, "PUBLIC_BASE_URL wajib"},
 		{"produksi tanpa ALLOWED_ORIGINS", func(m map[string]string) { delete(m, "ALLOWED_ORIGINS") }, dasarProd, "ALLOWED_ORIGINS wajib"},
+		{"produksi PUBLIC_BASE_URL http", func(m map[string]string) { m["PUBLIC_BASE_URL"] = "http://cms.example.com" }, dasarProd, "PUBLIC_BASE_URL di production harus https"},
+		{"produksi ALLOWED_ORIGINS http", func(m map[string]string) { m["ALLOWED_ORIGINS"] = "https://cms.example.com,http://lain.example.com" }, dasarProd, "ALLOWED_ORIGINS di production harus https"},
 	}
 	for _, c := range cases {
 		t.Run(c.nama, func(t *testing.T) {
