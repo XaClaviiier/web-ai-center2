@@ -1,1 +1,2 @@
 /keycloak/entrypoint.sh text eol=lf
+/keycloak/siapkan-dev.sh text eol=lf
