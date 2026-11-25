@@ -1,0 +1,15 @@
+# Konteks build backend/Dockerfile (dari akar repo): hanya backend/ dan web/ yang dipakai.
+.git
+**/node_modules
+frontend-final
+docs
+scripts
+keycloak
+pgdata
+redis_data
+rustfs-data
+output
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
