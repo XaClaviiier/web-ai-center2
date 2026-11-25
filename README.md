@@ -87,6 +87,10 @@ Tes memakai `ai_center_test`, Redis DB 15, dan bucket `ai-center-test`; data dev
 
 Session di Redis dengan cookie `HttpOnly`; metode ubah-data wajib `Origin` yang diizinkan dan header `X-CSRF-Token`; rate limit per IP/akun; CSP ketat tanpa `unsafe-inline` (skrip inline Astro diizinkan lewat hash); tipe gambar diperiksa dari isi file. Detail: `docs/security.md`.
 
+## Deploy
+
+Image production: `docker build -f backend/Dockerfile -t ai-center-cms:<git-sha> .` dari akar repo. Langkah lengkap (TLS, rahasia, migrasi, rilis, rollback): `docs/deploy.md`.
+
 ## Dokumen
 
-`docs/stack.md` (stack dan kontrak API), `docs/requirement.md`, `docs/database.md`, `docs/security.md`, `docs/design.md`, dan `docs/backend/` (catatan perubahan, rencana merge, skema). Aturan kerja untuk agen/kontributor ada di `CLAUDE.md`.
+`docs/deploy.md` (deploy production), `docs/stack.md` (stack dan kontrak API), `docs/requirement.md`, `docs/database.md`, `docs/security.md`, `docs/design.md`, dan `docs/backend/` (catatan perubahan, rencana merge, skema). Aturan kerja untuk agen/kontributor ada di `CLAUDE.md`.
