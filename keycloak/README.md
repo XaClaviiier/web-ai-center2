@@ -41,6 +41,8 @@ Pakai `localhost` secara konsisten (bukan `127.0.0.1`); issuer dan cookie bergan
    - **Clients → ai-center-cms → Credentials**: salin secret ke `keycloak/secrets/cms-client-secret.txt`.
    - **Users**: buat pengguna (isi nama), atur password, lalu **Role mapping → Assign role → Filter by clients → ai-center-cms → `direktur`/`pegawai`**.
 4. Buat kunci enkripsi session (tepat 32 byte acak), misalnya `openssl rand -out keycloak/secrets/session-key.bin 32`.
+
+   Langkah 3-4 untuk dev lokal dapat diotomatiskan: `bash keycloak/siapkan-dev.sh` menyalin client secret, membuat kunci session, dan membuat akun uji `uji-direktur`, `uji-pegawai`, dan `uji-tanpa-role` (password di `keycloak/secrets/akun-uji.txt`).
 5. Di `backend/.env` (salin dari `backend/.env.example`), isi:
    ```dotenv
    PUBLIC_BASE_URL=http://localhost:8080

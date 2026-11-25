@@ -81,18 +81,25 @@ async function bersihkan(k) {
   return n;
 }
 
+/** Jalankan `aksi` yang memicu GET /api/auth/login. Bila dibalas 429 (RATE_LIMIT_LOGIN_PER_MINUTE per IP),
+    tunggu Retry-After lalu buka /admin/ lagi; paling banyak 4 kali ulang. */
+async function lewatiBatasLogin(page, aksi) {
+  for (let i = 0; ; i++) {
+    const login = page.waitForResponse((r) => new URL(r.url()).pathname === '/api/auth/login', { timeout: 15_000 }).catch(() => null);
+    await aksi();
+    const res = await login;
+    if (res?.status() !== 429 || i >= 4) return;
+    await tidur(((Number.parseInt(res.headers()['retry-after'], 10) || 30) + 1) * 1000);
+    aksi = () => page.goto('/admin/');
+  }
+}
+
 /** Login lewat Keycloak: buka /admin/ (dialihkan ke /api/auth/login lalu form Keycloak), isi form, tunggu admin tampil.
     Batas login per IP (RATE_LIMIT_LOGIN_PER_MINUTE) bisa terlampaui oleh banyak login berurutan: 429 ditunggu lalu diulang.
     Bila SSO Keycloak konteks ini masih aktif, form dilewati. */
 async function masukUI(page, user = KC_USER, pass = KC_PASS) {
   if (!user || !pass) throw new Error('KC_USER/KC_PASS (atau KC_USER2/KC_PASS2) tidak di-set');
-  for (let i = 0; ; i++) {
-    const login = page.waitForResponse((r) => new URL(r.url()).pathname === '/api/auth/login', { timeout: 15_000 }).catch(() => null);
-    await page.goto('/admin/');
-    const res = await login;
-    if (res?.status() !== 429 || i >= 4) break;
-    await tidur(((Number.parseInt(res.headers()['retry-after'], 10) || 30) + 1) * 1000);
-  }
+  await lewatiBatasLogin(page, () => page.goto('/admin/'));
   const tombol = page.locator('#kc-login');
   await page.locator('#kc-login, nav.samping').first().waitFor();
   if (await tombol.isVisible()) {
@@ -104,4 +111,4 @@ async function masukUI(page, user = KC_USER, pass = KC_PASS) {
   await page.locator('nav.samping').waitFor();
 }
 
-module.exports = { BASE, KC_USER, KC_PASS, KC_USER2, KC_PASS2, LABEL, PNG, klienAdmin, buatBerita, bersihkan, masukUI, tidur, hariIni };
+module.exports = { BASE, KC_USER, KC_PASS, KC_USER2, KC_PASS2, LABEL, PNG, klienAdmin, buatBerita, bersihkan, masukUI, lewatiBatasLogin, tidur, hariIni };

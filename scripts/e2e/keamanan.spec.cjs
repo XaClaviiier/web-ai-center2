@@ -43,12 +43,13 @@ test('CSRF: tulis admin tanpa token atau Origin asing ditolak; dengan keduanya l
   expect((await k.panggil('POST', '/api/auth/logout', { tanpaCsrf: true })).status()).toBe(403);
 });
 
-test('cookie sesi: HttpOnly, SameSite=Lax, tidak terbaca JavaScript', async ({ page, context }) => {
+test('cookie sesi: HttpOnly, SameSite=Lax, tidak terbaca JavaScript', async ({ page, context, browserName }) => {
   await masukUI(page);
   const c = (await context.cookies()).find((x) => /session/.test(x.name));
   expect(c, 'cookie sesi ada').toBeTruthy();
   expect(c.httpOnly).toBe(true);
-  expect(c.sameSite).toBe('Lax');
+  // WebKit Playwright di Windows tidak mendukung SameSite dan selalu melapor "None"; server tetap mengirim Lax.
+  if (!(browserName === 'webkit' && process.platform === 'win32')) expect(c.sameSite).toBe('Lax');
   expect(c.path).toBe('/');
   test.info().annotations.push({ type: 'dev', description: `nama=${c.name} secure=${c.secure} (production wajib __Host-session + Secure; tidak diuji di mode development)` });
   expect(await page.evaluate(() => document.cookie)).not.toMatch(/session/);

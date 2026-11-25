@@ -41,19 +41,20 @@ Versi backend lengkap, alasan pemilihan, dan hasil `govulncheck`: `docs/backend/
 ## Prasyarat
 
 - Go 1.27.x (toolchain 1.27.4 diunduh otomatis oleh `go.mod`)
-- Docker untuk PostgreSQL 15, Redis 7, dan RustFS (compose dikelola sendiri; repo tidak membawa compose)
+- Docker untuk PostgreSQL 15, Redis 7, dan RustFS (`docker-compose.yml` di akar repo) serta Keycloak dev (`keycloak/compose.dev.yml`)
 - Bun >= 1.4.4 (build frontend). Build memakai `bun --bun` karena Astro 7 menolak Node di bawah 22.23.4
 - Node.js (untuk skrip `scripts/*.cjs` dan Playwright) dan `npm install` di akar repo
 - Opsional: `sqlc` v1.31.1 dan `govulncheck`
 
 ## Menjalankan proyek
 
-1. **Layanan:** nyalakan PostgreSQL (`postgres:15`), Redis (`redis:7-alpine`), dan RustFS (`rustfs/rustfs:1.0.3`, kunci versinya; jangan `latest`) di Docker. Buat database `ai_center` (dan `ai_center_test` untuk tes) secara manual (`CREATE DATABASE`); server tidak membuatnya. Bucket RustFS dibuat otomatis oleh server di development (di production harus dibuat dulu), dan bucket tes `ai-center-test` dibuat otomatis oleh tes.
-2. **Konfigurasi:** salin `backend/.env.example` ke `backend/.env`, lalu isi (koneksi database/Redis/RustFS, `KEYCLOAK_*`, `SESSION_ENCRYPTION_KEY_FILE`, `STATIC_DIR` mengarah ke folder `web/`). Keycloak dev (port 8180), client secret, kunci session, dan akun uji disiapkan sesuai `keycloak/README.md`. `backend/.env` dan `keycloak/secrets/` ter-ignore git dan tidak boleh di-commit.
-3. **Migrasi database:**
+1. **Layanan:** dari akar repo, `docker compose up -d` menyalakan PostgreSQL 15 (database `ai_center`), Redis 7, dan RustFS 1.0.3; data tersimpan di `pgdata/`, `redis_data/`, `rustfs-data/` (ter-ignore). Database tes dibuat sekali secara manual: `docker compose exec db psql -U user -d ai_center -c "CREATE DATABASE ai_center_test"`. Bucket RustFS dibuat otomatis oleh server di development (di production harus dibuat dulu), dan bucket tes `ai-center-test` dibuat otomatis oleh tes. Port 5432, 6379, 8080, 8180, 9000, dan 9001 harus bebas.
+2. **Konfigurasi:** salin `backend/.env.example` ke `backend/.env`. Kredensial database/Redis/RustFS di dalamnya sudah cocok dengan `docker-compose.yml`; `ALLOWED_ORIGINS` harus tetap memuat `PUBLIC_BASE_URL` (tanpanya semua tulis admin 403). Keycloak dev (port 8180) disiapkan sesuai `keycloak/README.md`; client secret, kunci session, dan akun uji (`uji-direktur`, `uji-pegawai`, `uji-tanpa-role`) dapat dibuat otomatis dengan `bash keycloak/siapkan-dev.sh` setelah Keycloak jalan. `backend/.env` dan `keycloak/secrets/` ter-ignore git dan tidak boleh di-commit.
+3. **Migrasi database:** `.env` tidak dimuat otomatis ke shell, jadi ambil URL-nya dari berkas. Migrasikan juga database tes:
    ```
    cd backend
-   go run github.com/pressly/goose/v3/cmd/goose@v3.29.0 -dir migrations postgres "$DATABASE_URL" up
+   go run github.com/pressly/goose/v3/cmd/goose@v3.29.0 -dir migrations postgres "$(sed -n 's/^DATABASE_URL=//p' .env | tr -d '\r')" up
+   go run github.com/pressly/goose/v3/cmd/goose@v3.29.0 -dir migrations postgres "$(sed -n 's/^TEST_DATABASE_URL=//p' .env | tr -d '\r')" up
    ```
 4. **Frontend:** `web/` sudah di-commit. Bangun ulang hanya bila `frontend-final/` berubah:
    ```
@@ -78,10 +79,14 @@ govulncheck ./...
 # dari akar repo
 node scripts/tests/web.test.cjs                # tes statis atas web/ (REBUILD=1 untuk build ulang dulu)
 bun test scripts/tests/api.test.ts             # klien API dengan fetch palsu
-npm run test:e2e                               # Playwright; server + Keycloak harus jalan (BASE_URL, KC_USER/KC_PASS, KC_USER2/KC_PASS2 untuk tes dua akun)
+npm run test:e2e                               # Playwright; server + Keycloak harus jalan (BASE_URL, KC_USER/KC_PASS, KC_USER2/KC_PASS2 untuk tes dua akun, KC_USER_TANPA_ROLE/KC_PASS_TANPA_ROLE)
 ```
 
-Tes memakai `ai_center_test`, Redis DB 15, dan bucket `ai-center-test`; data dev tidak disentuh. Spec e2e admin memberi jeda sekitar 61 detik agar batas tulis admin tidak terlampaui.
+Tes memakai `ai_center_test`, Redis DB 15, dan bucket `ai-center-test`; data dev tidak disentuh. Spec e2e admin memberi jeda sekitar 61 detik agar batas tulis admin tidak terlampaui. Tes alur pengguna dengan agen Claude ada di `scripts/e2e-agent/` (lihat README di sana).
+
+Masalah umum di Windows + Docker Desktop:
+- Tes kunci Redis (`TestAntiStampede`, `TestDuaInstanceBersamaanHanyaSatuBekerja`) gagal bila `.env` memakai `localhost`: pakai `127.0.0.1` seperti di `.env.example`.
+- Setelah WSL atau Docker Desktop restart, port container bisa basi (server gagal dengan `EOF` ke Postgres/Redis): jalankan `docker compose restart`.
 
 ## Keamanan singkat
 

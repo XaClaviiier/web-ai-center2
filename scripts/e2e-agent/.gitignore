@@ -1,0 +1,9 @@
+node_modules/
+.env
+# hasil run, trace, ringkasan, laporan (lokal)
+.e2e/results/
+.e2e/summary.md
+.e2e/report.json
+.e2e/timings.json
+# cache replay: lokal dulu; commit hanya setelah tim sepakat (lihat README.md)
+.e2e/cache/
