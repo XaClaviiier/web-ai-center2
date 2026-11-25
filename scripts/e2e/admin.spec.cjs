@@ -2,7 +2,7 @@
    hapus permanen), dokumentasi multi-gambar, tim, testimoni, Log Aktivitas. Satu akun (KC_USER). */
 'use strict';
 const { test, expect, request: pwRequest } = require('@playwright/test');
-const { BASE, KC_USER, KC_PASS, LABEL, PNG, klienAdmin, bersihkan, masukUI, tidur } = require('./bantu.cjs');
+const { BASE, KC_USER, KC_PASS, LABEL, PNG, klienAdmin, bersihkan, masukUI, lewatiBatasLogin, tidur } = require('./bantu.cjs');
 
 test.describe.configure({ mode: 'serial' });
 test.skip(!KC_USER || !KC_PASS, 'KC_USER/KC_PASS (akun Keycloak ber-role) tidak di-set');
@@ -228,9 +228,10 @@ test('Log Aktivitas mencatat aksi di atas dengan username dari sesi', async ({ p
 });
 
 test('keluar: sesi lokal dan SSO Keycloak berakhir; /admin/ kembali meminta kredensial', async ({ page, context }) => {
+  test.setTimeout(240_000); // dua kemungkinan jeda batas login (masuk dan setelah keluar), masing-masing <= 61 detik
   await masukUI(page);
   await page.getByRole('button', { name: 'Keluar' }).click();
-  await page.getByRole('alertdialog').getByRole('button', { name: 'Keluar' }).click();
+  await lewatiBatasLogin(page, () => page.getByRole('alertdialog').getByRole('button', { name: 'Keluar' }).click());
   await page.waitForURL(/\/protocol\/openid-connect\/auth\?/);
   await expect(page.locator('#username')).toBeVisible(); // SSO sudah diakhiri backend: tidak masuk otomatis
   expect((await context.request.get('/api/auth/me')).status()).toBe(401);
