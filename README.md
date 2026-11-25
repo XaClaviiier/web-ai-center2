@@ -93,4 +93,4 @@ Image production: `docker build -f backend/Dockerfile -t ai-center-cms:<git-sha>
 
 ## Dokumen
 
-`docs/deploy.md` (deploy production), `docs/stack.md` (stack dan kontrak API), `docs/requirement.md`, `docs/database.md`, `docs/security.md`, `docs/design.md`, dan `docs/backend/` (catatan perubahan, rencana merge, skema). Aturan kerja untuk agen/kontributor ada di `CLAUDE.md`.
+`docs/stack.md` (stack dan kontrak API), `docs/requirement.md`, `docs/database.md`, `docs/security.md`, `docs/design.md`, dan `docs/backend/` (catatan perubahan, rencana merge, skema). Aturan kerja untuk agen/kontributor ada di `CLAUDE.md`.
