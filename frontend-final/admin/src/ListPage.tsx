@@ -51,7 +51,13 @@ export default function ListPage({ sumber, trash }: { sumber: Entity; trash: boo
   } else if (!daftar.data?.items.length) {
     isi = trash
       ? <State title="Trash kosong" text="Tidak ada item di trash." />
-      : <State title={`Belum ada ${e.nama}`} text="Data yang ditambahkan akan tampil di sini." action={tambah} />;
+      : (
+        <State
+          title={`Belum ada ${e.nama}`}
+          text="Data yang ditambahkan akan tampil di sini."
+          action={<Button asChild variant="utama"><a href={`#/${sumber}/baru`}>{`Tambah ${e.nama}`}</a></Button>}
+        />
+      );
   } else {
     isi = <Tabel sumber={sumber} items={daftar.data.items} trash={trash} muat={muat} />;
   }
