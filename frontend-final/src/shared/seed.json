@@ -1777,6 +1777,7 @@
         "Nonklinis"
       ],
       "disclaimer": "Demo ini merupakan visualisasi konseptual berdasarkan alur penelitian. Tidak digunakan untuk diagnosis, penentuan tindakan klinis, atau perencanaan implan pada pasien nyata.",
+      "aplikasi_url": null,
       "catatan_demo": "Tidak ada citra pasien, pemrosesan CBCT, atau inferensi AI yang dijalankan dalam demonstrasi ini.",
       "konteks": [
         {
