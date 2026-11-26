@@ -124,6 +124,18 @@ tes('CSP: setiap skrip inline eksekusi punya hash di csp-hash-skrip.txt; tidak a
   assert(dipakai > 0, 'tidak ada skrip inline sama sekali: hash CSP seharusnya terpakai');
 });
 
+tes('implan gigi: tombol "Buka Aplikasi Penelitian" placeholder nonaktif tanpa tautan selama aplikasi_url kosong', () => {
+  const doc = new JSDOM(teks(path.join(W, 'layanan/inference-solutions/perencanaan-implan-gigi/index.html'))).window.document;
+  const el = [...doc.querySelectorAll('button, a')].filter((e) => e.textContent.trim() === 'Buka Aplikasi Penelitian');
+  assert.equal(el.length, 1, 'tombol aplikasi harus tepat satu');
+  const seed = require(path.join(akar, 'frontend-final/src/shared/seed.json'));
+  if (seed.konten.implan_gigi.aplikasi_url) return; // sudah tersambung: LinkButton biasa, dicek tes tautan umum
+  assert.equal(el[0].tagName, 'BUTTON');
+  assert(el[0].hasAttribute('disabled'), 'placeholder harus disabled');
+  const catatan = doc.getElementById(el[0].getAttribute('aria-describedby'));
+  assert(catatan && catatan.textContent.includes('Segera tersedia'), 'catatan "Segera tersedia" tidak terhubung');
+});
+
 tes('admin: index.html memuat bundel modul; tanpa halaman masuk password', () => {
   const idx = teks(path.join(W, 'admin', 'index.html'));
   assert.match(idx, /<script type="module"[^>]*src="\/admin\/assets\/[^"]+\.js"/);

@@ -4,6 +4,8 @@ import { useRef, useState, type ComponentType } from 'react';
 import { flushSync } from 'react-dom';
 import { konten } from '../shared/content';
 import { Icon } from '../shared/ui';
+import { Button } from '../components/ui/button';
+import { LinkButton } from '../public/Common';
 import ImplantDiagram1 from './ImplantDiagram1';
 import ImplantDiagram2 from './ImplantDiagram2';
 import ImplantDiagram3 from './ImplantDiagram3';
@@ -57,6 +59,8 @@ interface ImplanData {
   judul: string;
   deskripsi: string;
   disclaimer: string;
+  /** URL aplikasi penelitian (publik). null = belum tersedia, tombol tampil nonaktif. */
+  aplikasi_url?: string | null | undefined;
   label: string[];
   konteks: { judul: string; teks: string }[];
   catatan_demo: string;
@@ -296,6 +300,15 @@ export default function ImplanGigi() {
             <Icon name="peringatan" size={18} />
             <span>{D.disclaimer}</span>
           </div>
+        </div>
+        <div className="ig-aplikasi">
+          {D.aplikasi_url
+            ? <LinkButton href={D.aplikasi_url} external>Buka Aplikasi Penelitian</LinkButton>
+            : <Button disabled aria-describedby="ig-aplikasi-catatan">Buka Aplikasi Penelitian</Button>}
+          <p id="ig-aplikasi-catatan" className="field__bantuan">
+            {D.aplikasi_url ? '' : 'Segera tersedia. '}
+            Aplikasi ini untuk keperluan penelitian, bukan diagnosis atau perencanaan tindakan pada pasien.
+          </p>
         </div>
       </header>
       <section className="bagian wadah" aria-labelledby="ig-j-konteks">

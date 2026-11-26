@@ -73,8 +73,8 @@ textarea.input { min-height: 14rem; resize: vertical; }
 .keadaan h2, .keadaan h3 { font-size: var(--judul-3); }
 .keadaan p { max-width: 38rem; color: var(--warna-teks-sekunder); }
 .keadaan--galat { background: var(--warna-galat-latar); border-color: var(--warna-galat); }
-.keadaan svg { color: var(--warna-biru); }
-.keadaan--galat svg { color: var(--warna-galat); }
+.keadaan > svg { color: var(--warna-biru); }
+.keadaan--galat > svg { color: var(--warna-galat); }
 
 /* Pagination */
 .halaman-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--jarak-2); margin-top: var(--jarak-7); }

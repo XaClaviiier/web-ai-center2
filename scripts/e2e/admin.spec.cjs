@@ -227,6 +227,26 @@ test('Log Aktivitas mencatat aksi di atas dengan username dari sesi', async ({ p
   await expect(hasil).toContainText(/Memindahkan ke trash|Menghapus permanen/);
 });
 
+test('daftar kosong: tombol "Tambah berita" teks saja, selebar isinya, membuka form baru', async ({ page }) => {
+  // Daftar dikosongkan di sisi klien agar tidak bergantung pada isi database; dipasang sebelum login karena admin langsung memuat #/berita.
+  await page.route(/\/api\/admin\/berita(\?|$)/, (r) => (r.request().method() === 'GET' ? r.fulfill({ json: { items: [] } }) : r.continue()));
+  await masukUI(page);
+  await page.goto('/admin/#/berita');
+  const kosong = page.locator('.keadaan');
+  await expect(kosong).toContainText('Belum ada berita');
+  const tombol = kosong.getByRole('link', { name: 'Tambah berita', exact: true });
+  await expect(tombol).toBeVisible();
+  expect(await tombol.locator('svg').count()).toBe(0);
+  const [lebarTombol, lebarTeks] = await tombol.evaluate((a) => {
+    const g = document.createRange(); g.selectNodeContents(a);
+    return [a.getBoundingClientRect().width, g.getBoundingClientRect().width];
+  });
+  expect(lebarTombol - lebarTeks).toBeLessThan(50); // padding+border ~39px; dengan ikon 18px + gap jadi ~65px
+  await page.screenshot({ path: 'output/playwright/admin-daftar-kosong.png' });
+  await tombol.click();
+  await expect(page).toHaveURL(/#\/berita\/baru$/);
+});
+
 test('keluar: sesi lokal dan SSO Keycloak berakhir; /admin/ kembali meminta kredensial', async ({ page, context }) => {
   test.setTimeout(240_000); // dua kemungkinan jeda batas login (masuk dan setelah keluar), masing-masing <= 61 detik
   await masukUI(page);

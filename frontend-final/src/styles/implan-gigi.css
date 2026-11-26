@@ -16,6 +16,7 @@
 .ig-kepala__sub { max-width: 46rem; font-size: var(--teks-besar); color: var(--warna-teks-sekunder); }
 .ig-label { display: flex; flex-wrap: wrap; gap: var(--jarak-2); }
 .ig-kepala .banner { width: 100%; font-size: var(--teks-kecil); }
+.ig-aplikasi { display: grid; gap: var(--jarak-2); justify-items: start; }
 
 /* Demo */
 .ig-demo { scroll-margin-top: 4.5rem; }
